@@ -1162,6 +1162,14 @@
                 // write data to request body
                 req.write(data);
             }
+
+            req.on("error", function(err){
+                log("Connection failed.", err);
+                if (typeof callback === "function") {
+                    callback(true, params);
+                }
+            });
+
             req.end();
         } catch (e) {
             // fallback
