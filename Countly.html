@@ -122,7 +122,15 @@
                 
         <p class="code-caption">SDK integration</p>
     
-    <pre class="prettyprint"><code>var Countly = require("countly-sdk-nodejs");Countly.init({  app_key: "{YOUR-APP-KEY}",  url: "https://API_HOST/",  debug: true});Countly.begin_session();</code></pre>
+    <pre class="prettyprint"><code>var Countly = require("countly-sdk-nodejs");
+
+Countly.init({
+  app_key: "{YOUR-APP-KEY}",
+  url: "https://API_HOST/",
+  debug: true
+});
+
+Countly.begin_session();</code></pre>
 
             
         
@@ -288,7 +296,17 @@
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>Countly.init({  app_key: "{YOUR-APP-KEY}",  url: "https://API_HOST/",  debug: true,  app_version: "1.0",  metrics:{     _os: "Ubuntu",     _os_version: "16.04",     _device: "aws-server"  }});</code></pre>
+    <pre class="prettyprint"><code>Countly.init({
+  app_key: "{YOUR-APP-KEY}",
+  url: "https://API_HOST/",
+  debug: true,
+  app_version: "1.0",
+  metrics:{
+     _os: "Ubuntu",
+     _os_version: "16.04",
+     _device: "aws-server"
+  }
+});</code></pre>
 
 
 
@@ -1348,12 +1366,19 @@
     
         <p class="code-caption">Adding all features under one group</p>
     
-    <pre class="prettyprint"><code>Countly.group_features({all:["sessions","events","views","crashes","attribution","users"]});//After this call Countly.add_consent("all") to allow all features
+    <pre class="prettyprint"><code>Countly.group_features({all:["sessions","events","views","crashes","attribution","users"]});
+//After this call Countly.add_consent("all") to allow all features
     </code></pre>
 
         <p class="code-caption">Grouping features</p>
     
-    <pre class="prettyprint"><code>Countly.group_features({   activity:["sessions","events","views"],   info:["attribution","users"]});//After this call Countly.add_consent("activity") to allow "sessions","events","views"//or call Countly.add_consent("info") to allow "attribution","users"//or call Countly.add_consent("crashes") to allow some separate feature</code></pre>
+    <pre class="prettyprint"><code>Countly.group_features({
+   activity:["sessions","events","views"],
+   info:["attribution","users"]
+});
+//After this call Countly.add_consent("activity") to allow "sessions","events","views"
+//or call Countly.add_consent("info") to allow "attribution","users"
+//or call Countly.add_consent("crashes") to allow some separate feature</code></pre>
 
 
 

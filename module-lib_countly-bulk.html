@@ -131,7 +131,19 @@
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>var CountlyBulk = require("countly-sdk-nodejs").Bulk;var server = new CountlyBulk({  app_key: "{YOUR-APP-KEY}",  url: "https://API_HOST/",  debug: true});//start processing queued requests or next ones that will be addedserver.start()//adding raw requestserver.add_request({begin_session:1, metrics:{_os:"Linux"}, device_id:"users_device_id", events:[{key:"Test", count:1}]});</code></pre>
+    <pre class="prettyprint"><code>var CountlyBulk = require("countly-sdk-nodejs").Bulk;
+
+var server = new CountlyBulk({
+  app_key: "{YOUR-APP-KEY}",
+  url: "https://API_HOST/",
+  debug: true
+});
+
+//start processing queued requests or next ones that will be added
+server.start()
+
+//adding raw request
+server.add_request({begin_session:1, metrics:{_os:"Linux"}, device_id:"users_device_id", events:[{key:"Test", count:1}]});</code></pre>
 
 
 
@@ -240,7 +252,12 @@
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>var server = new CountlyBulk({  app_key: "{YOUR-API-KEY}",  url: "https://API_HOST/",  debug: true});server.add_request({app_key:"somekey", devide_id:"someid", events:"[{'key':'val','count':1}]", begin_session:1});</code></pre>
+    <pre class="prettyprint"><code>var server = new CountlyBulk({
+  app_key: "{YOUR-API-KEY}",
+  url: "https://API_HOST/",
+  debug: true
+});
+server.add_request({app_key:"somekey", devide_id:"someid", events:"[{'key':'val','count':1}]", begin_session:1});</code></pre>
 
 
 
@@ -400,7 +417,12 @@
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>var server = new CountlyBulk({  app_key: "{YOUR-API-KEY}",  url: "https://API_HOST/",  debug: true});server.add_bulk_request([{app_key:"somekey", devide_id:"someid", begin_session:1}, {app_key:"somekey", devide_id:"someid", events:"[{'key':'val','count':1}]"}]);</code></pre>
+    <pre class="prettyprint"><code>var server = new CountlyBulk({
+  app_key: "{YOUR-API-KEY}",
+  url: "https://API_HOST/",
+  debug: true
+});
+server.add_bulk_request([{app_key:"somekey", devide_id:"someid", begin_session:1}, {app_key:"somekey", devide_id:"someid", events:"[{'key':'val','count':1}]"}]);</code></pre>
 
 
 
@@ -560,7 +582,12 @@
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>var server = new CountlyBulk({  app_key: "{YOUR-API-KEY}",  url: "https://API_HOST/",  debug: true});server.add_event("my_device_id", {'key':'val','count':1});</code></pre>
+    <pre class="prettyprint"><code>var server = new CountlyBulk({
+  app_key: "{YOUR-API-KEY}",
+  url: "https://API_HOST/",
+  debug: true
+});
+server.add_event("my_device_id", {'key':'val','count':1});</code></pre>
 
 
 
@@ -995,7 +1022,12 @@
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>var server = new CountlyBulk({  app_key: "{YOUR-API-KEY}",  url: "https://API_HOST/",  debug: true});server.start();</code></pre>
+    <pre class="prettyprint"><code>var server = new CountlyBulk({
+  app_key: "{YOUR-API-KEY}",
+  url: "https://API_HOST/",
+  debug: true
+});
+server.start();</code></pre>
 
 
 
@@ -1155,7 +1187,12 @@
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>var server = new CountlyBulk({  app_key: "{YOUR-API-KEY}",  url: "https://API_HOST/",  debug: true});server.stop();</code></pre>
+    <pre class="prettyprint"><code>var server = new CountlyBulk({
+  app_key: "{YOUR-API-KEY}",
+  url: "https://API_HOST/",
+  debug: true
+});
+server.stop();</code></pre>
 
 
 
@@ -1266,7 +1303,13 @@
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>var server = new CountlyBulk({  app_key: "{YOUR-API-KEY}",  url: "https://API_HOST/",  debug: true});server.add_request({device_id:"id", app_key:"key", begin_session:1});server.queue_size(); //should return 1</code></pre>
+    <pre class="prettyprint"><code>var server = new CountlyBulk({
+  app_key: "{YOUR-API-KEY}",
+  url: "https://API_HOST/",
+  debug: true
+});
+server.add_request({device_id:"id", app_key:"key", begin_session:1});
+server.queue_size(); //should return 1</code></pre>
 
 
 
@@ -1377,7 +1420,12 @@
 
     <h5>Example</h5>
     
-    <pre class="prettyprint"><code>var server = new CountlyBulk({  app_key: "{YOUR-API-KEY}",  url: "https://API_HOST/",  debug: true});var user = server.add_user({device_id:"my_device_id"});</code></pre>
+    <pre class="prettyprint"><code>var server = new CountlyBulk({
+  app_key: "{YOUR-API-KEY}",
+  url: "https://API_HOST/",
+  debug: true
+});
+var user = server.add_user({device_id:"my_device_id"});</code></pre>
 
 
 

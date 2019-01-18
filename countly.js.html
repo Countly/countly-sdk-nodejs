@@ -77,7 +77,7 @@
  * Countly.begin_session();
  */
  
- var fs = require("fs"),
+var fs = require("fs"),
     os = require("os"),
     path = require("path"),
     http = require("http"),
@@ -85,9 +85,9 @@
     cluster = require("cluster"),
     Bulk = require("./countly-bulk");
 
- var Countly = {};
+var Countly = {};
 
- Countly.Bulk = Bulk;
+Countly.Bulk = Bulk;
 (function (Countly) {
     "use strict";
     
@@ -136,7 +136,7 @@
         consents[Countly.features[i]] = {};
     }
 
-/**
+    /**
  * Initialize Countly object
  * @param {Object} conf - Countly initialization {@link Init} object with configuration options
  * @param {string} conf.app_key - app key for your app created in Countly
@@ -559,20 +559,20 @@
     * @param {string|Object} event - event key if string or Countly event same as passed to {@link Countly.add_event}
     **/
     Countly.end_event = function(event){
-       if(typeof event === "string"){
-           event = {key:event};
-       }
-       if(!event.key){
-           log("Event must have key property");
-           return;
-       }
-       if(!timedEvents[event.key]){
-           log("Timed event with key " + event.key + " was not started");
-           return;
-       }
-       event.dur = getTimestamp() - timedEvents[event.key];
-       Countly.add_event(event);
-       delete timedEvents[event.key];
+        if(typeof event === "string"){
+            event = {key:event};
+        }
+        if(!event.key){
+            log("Event must have key property");
+            return;
+        }
+        if(!timedEvents[event.key]){
+            log("Timed event with key " + event.key + " was not started");
+            return;
+        }
+        event.dur = getTimestamp() - timedEvents[event.key];
+        Countly.add_event(event);
+        delete timedEvents[event.key];
     };
     
     /**
