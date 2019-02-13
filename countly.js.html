@@ -772,6 +772,16 @@ Countly.Bulk = Bulk;
             console.error(err.stack);
             process.exit(1);
         });
+        
+        process.on('unhandledRejection', function (reason) {
+            var err = new Error('Unhandled rejection (reason: ' + (reason &amp;&amp; reason.stack ? reason.stack : reason ) + ').');
+            recordError(err, false);
+            if(cluster.isMaster){
+                forceStore();
+            }
+            console.error((new Date()).toUTCString() + " unhandledRejection:", err.message);
+            console.error(err.stack);
+        });
     };
     
     /**
