@@ -411,15 +411,17 @@ function CountlyBulkUser(conf){
     /**
     * Report user accessing specific view in your application
     * @param {string} view_name - name of the view or any other view identifier
-    * @param {string} platform - on which platforms/os did user access this view
     * @param {number} timestamp - when user accessed the view
     * @param {number} duration - how much did user spent on this view
-    * @param {boolean=} landing - true if user started using your app with this view
-    * @param {boolean=} exit - true if user exited your app after this view
-    * @param {boolean=} bounce - true if user bounced having only one view and without much interaction with the app 
+    * @param {object=} viewSegments - optional key value object with segments to report with the view
+    * @param {string} viewSegments.platform - on which platforms/os did user access this view
+    * @param {boolean=} viewSegments.landing - true if user started using your app with this view
+    * @param {boolean=} viewSegments.exit - true if user exited your app after this view
+    * @param {boolean=} viewSegments.bounce - true if user bounced having only one view and without much interaction with the app 
+    * @param {boolean=} viewSegments.{any} - provide any other key value pairs to store with view
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.report_view = function(view_name, platform, timestamp, duration, landing, exit, bounce){
+    this.report_view = function(view_name, timestamp, duration, viewSegments){
         if(this.check_consent("views")){
             var event = {
                 "key": "[CLY]_view",
@@ -428,18 +430,17 @@ function CountlyBulkUser(conf){
                 "segmentation": {
                     "name": view_name,
                     "visit":1,
-                    "segment":platform
                 }
             };
-            if(landing){
-                event.segmentation.start = 1;
+            
+            if (viewSegments) {
+                for (var key in viewSegments) {
+                    if (typeof event.segmentation[key] === "undefined") {
+                        event.segmentation[key] = viewSegments[key];
+                    }
+                }
             }
-            if(exit){
-                event.segmentation.exit = 1;
-            }
-            if(bounce){
-                event.segmentation.bounce = 1;
-            }
+            
             var query = prepareQuery({events:[event]});
             if(timestamp){
                 query.timestamp = timestamp;

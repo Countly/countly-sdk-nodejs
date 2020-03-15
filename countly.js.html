@@ -918,8 +918,9 @@ Countly.Bulk = Bulk;
     /**
     * Track which parts of application user visits
     * @param {string=} name - optional name of the view
+    * @param {object=} viewSegments - optional key value object with segments to report with the view
     **/
-    Countly.track_view = function(name){
+    Countly.track_view = function(name, viewSegments){
         reportViewDuration();
         if(name){
             lastView = name;
@@ -932,6 +933,14 @@ Countly.Bulk = Bulk;
                 "visit":1,
                 "segment":platform
             };
+            
+            if (viewSegments) {
+                for (var key in viewSegments) {
+                    if (typeof segments[key] === "undefined") {
+                        segments[key] = viewSegments[key];
+                    }
+                }
+            }
             
             //track pageview
             if(Countly.check_consent("views")){
@@ -949,9 +958,10 @@ Countly.Bulk = Bulk;
     /**
     * Track which parts of application user visits. Alias of {@link track_view} method for compatability with Web SDK
     * @param {string=} name - optional name of the view
+    * @param {object=} viewSegments - optional key value object with segments to report with the view
     **/
-    Countly.track_pageview = function(name){
-        Countly.track_view(name);
+    Countly.track_pageview = function(name, viewSegments){
+        Countly.track_view(name, viewSegments);
     };
     
     /**
