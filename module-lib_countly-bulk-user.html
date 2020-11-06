@@ -189,7 +189,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
 
     
 
-    <h4 class="name" id=".group_features"><span class="type-signature">(static) </span>group_features<span class="signature">(features)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".group_features"><span class="type-signature">(static) </span>group_features<span class="signature">(groupedFeatures)</span><span class="type-signature"></span></h4>
 
     
 
@@ -201,7 +201,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line87">line 87</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line86">line 86</a>
     </li></ul></dd>
     
 
@@ -298,7 +298,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
 
         <tr>
             
-                <td class="name"><code>features</code></td>
+                <td class="name"><code>groupedFeatures</code></td>
             
 
             <td class="type">
@@ -344,7 +344,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
 
     
 
-    <h4 class="name" id=".check_consent"><span class="type-signature">(static) </span>check_consent<span class="signature">(feature)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".check_consent"><span class="type-signature">(static) </span>check_consent<span class="signature">(feature)</span><span class="type-signature"> &rarr; {bool}</span></h4>
 
     
 
@@ -472,6 +472,28 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    true if consent is given, false if it is not
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">bool</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -2831,7 +2853,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
 
     
 
-    <h4 class="name" id=".report_feedback"><span class="type-signature">(static) </span>report_feedback<span class="signature">(feedback)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".report_feedback"><span class="type-signature">(static) </span>report_feedback<span class="signature">(feedback, timestamp<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="module-lib_countly-bulk-user.html">module:lib/countly-bulk-user</a>}</span></h4>
 
     
 
@@ -2843,7 +2865,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line409">line 409</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line411">line 411</a>
     </li></ul></dd>
     
 
@@ -2909,6 +2931,8 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
         
 
@@ -2933,6 +2957,14 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
             
             </td>
 
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
             
 
             
@@ -3192,6 +3224,39 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
         </tr>
 
     
+
+        <tr>
+            
+                <td class="name"><code>timestamp</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">timestamp when feedback was acquired</td>
+        </tr>
+
+    
     </tbody>
 </table>
 
@@ -3210,6 +3275,28 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    instance
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="module-lib_countly-bulk-user.html">module:lib/countly-bulk-user</a></span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -3218,7 +3305,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
 
     
 
-    <h4 class="name" id=".report_trace"><span class="type-signature">(static) </span>report_trace<span class="signature">(trace)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".report_trace"><span class="type-signature">(static) </span>report_trace<span class="signature">(trace)</span><span class="type-signature"> &rarr; {<a href="module-lib_countly-bulk-user.html">module:lib/countly-bulk-user</a>}</span></h4>
 
     
 
@@ -3230,7 +3317,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line447">line 447</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line450">line 450</a>
     </li></ul></dd>
     
 
@@ -3562,6 +3649,28 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    instance
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="module-lib_countly-bulk-user.html">module:lib/countly-bulk-user</a></span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -3582,7 +3691,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line499">line 499</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line502">line 502</a>
     </li></ul></dd>
     
 
@@ -4575,7 +4684,7 @@ var user = server.add_user({device_id:"my_device_id"});</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line551">line 551</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line554">line 554</a>
     </li></ul></dd>
     
 
@@ -4781,7 +4890,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line561">line 561</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line564">line 564</a>
     </li></ul></dd>
     
 
@@ -4965,7 +5074,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line570">line 570</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line573">line 573</a>
     </li></ul></dd>
     
 
@@ -5123,7 +5232,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line579">line 579</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line582">line 582</a>
     </li></ul></dd>
     
 
@@ -5281,7 +5390,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line589">line 589</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line592">line 592</a>
     </li></ul></dd>
     
 
@@ -5462,7 +5571,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line599">line 599</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line602">line 602</a>
     </li></ul></dd>
     
 
@@ -5643,7 +5752,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line609">line 609</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line612">line 612</a>
     </li></ul></dd>
     
 
@@ -5824,7 +5933,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line619">line 619</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line622">line 622</a>
     </li></ul></dd>
     
 
@@ -6005,7 +6114,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line629">line 629</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line632">line 632</a>
     </li></ul></dd>
     
 
@@ -6189,7 +6298,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line639">line 639</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line642">line 642</a>
     </li></ul></dd>
     
 
@@ -6373,7 +6482,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line649">line 649</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line652">line 652</a>
     </li></ul></dd>
     
 
@@ -6557,7 +6666,7 @@ user.custom_save();</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line657">line 657</a>
+        <a href="countly-bulk-user.js.html">countly-bulk-user.js</a>, <a href="countly-bulk-user.js.html#line660">line 660</a>
     </li></ul></dd>
     
 
@@ -6680,7 +6789,7 @@ user.custom_save();</code></pre>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>

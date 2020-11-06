@@ -77,7 +77,7 @@
  *
  * Countly.begin_session();
  */
- 
+
 var fs = require("fs"),
     os = require("os"),
     path = require("path"),
@@ -89,9 +89,9 @@ var fs = require("fs"),
 var Countly = {};
 
 Countly.Bulk = Bulk;
-(function (Countly) {
+(function() {
     "use strict";
-    
+
     var SDK_VERSION = "20.04";
     var SDK_NAME = "javascript_native_nodejs";
 
@@ -127,16 +127,16 @@ Countly.Bulk = Bulk;
         lastParams = {},
         startTime,
         __data = {};
-        
+
     /**
     * Array with list of available features that you can require consent for
-    */ 
-    Countly.features = ["sessions","events","views","crashes","attribution","users","location","star-rating"];
-    
+    */
+    Countly.features = ["sessions", "events", "views", "crashes", "attribution", "users", "location", "star-rating", "apm", "feedback", "remote-config"];
+
     //create object to store consents
     var consents = {};
-    for(var i = 0; i &lt; Countly.features.length; i++){
-        consents[Countly.features[i]] = {};
+    for (var feat = 0; feat &lt; Countly.features.length; feat++) {
+        consents[Countly.features[feat]] = {};
     }
 
     /**
@@ -183,56 +183,58 @@ Countly.Bulk = Bulk;
  *   }
  * });
  */
-    Countly.init = function(ob){
-        if(!inited){
+    Countly.init = function(conf) {
+        if (!inited) {
             startTime = getTimestamp();
             inited = true;
-            ob = ob || {};
+            conf = conf || {};
             timedEvents = {};
-            beatInterval = ob.interval || Countly.interval || beatInterval;
-            queueSize = ob.queue_size || Countly.queue_size || queueSize;
-            failTimeoutAmount = ob.fail_timeout || Countly.fail_timeout || failTimeoutAmount;
-            sessionUpdate = ob.session_update || Countly.session_update || sessionUpdate;
-            maxEventBatch = ob.max_events || Countly.max_events || maxEventBatch;
-            metrics = ob.metrics || Countly.metrics || {};
-            maxCrashLogs = ob.max_logs || Countly.max_logs || maxCrashLogs;
-            Countly.debug = ob.debug || Countly.debug || false;
-            Countly.app_key = ob.app_key || Countly.app_key || null;
-            Countly.url = stripTrailingSlash(ob.url || Countly.url || "");
-            Countly.app_version = ob.app_version || Countly.app_version || "0.0";
-            Countly.country_code = ob.country_code || Countly.country_code || null;
-            Countly.city = ob.city || Countly.city || null;
-            Countly.ip_address = ob.ip_address || Countly.ip_address || null;
-            Countly.force_post = ob.force_post || Countly.force_post || false;
-            Countly.storage_path = ob.storage_path || Countly.storage_path || "../data/";
-            Countly.require_consent = ob.require_consent || Countly.require_consent || false;
-            Countly.remote_config = ob.remote_config || Countly.remote_config || false;
-            Countly.http_options = ob.http_options || Countly.http_options || null;
+            beatInterval = conf.interval || Countly.interval || beatInterval;
+            queueSize = conf.queue_size || Countly.queue_size || queueSize;
+            failTimeoutAmount = conf.fail_timeout || Countly.fail_timeout || failTimeoutAmount;
+            sessionUpdate = conf.session_update || Countly.session_update || sessionUpdate;
+            maxEventBatch = conf.max_events || Countly.max_events || maxEventBatch;
+            metrics = conf.metrics || Countly.metrics || {};
+            maxCrashLogs = conf.max_logs || Countly.max_logs || maxCrashLogs;
+            Countly.debug = conf.debug || Countly.debug || false;
+            Countly.app_key = conf.app_key || Countly.app_key || null;
+            Countly.url = stripTrailingSlash(conf.url || Countly.url || "");
+            Countly.app_version = conf.app_version || Countly.app_version || "0.0";
+            Countly.country_code = conf.country_code || Countly.country_code || null;
+            Countly.city = conf.city || Countly.city || null;
+            Countly.ip_address = conf.ip_address || Countly.ip_address || null;
+            Countly.force_post = conf.force_post || Countly.force_post || false;
+            Countly.storage_path = conf.storage_path || Countly.storage_path || "../data/";
+            Countly.require_consent = conf.require_consent || Countly.require_consent || false;
+            Countly.remote_config = conf.remote_config || Countly.remote_config || false;
+            Countly.http_options = conf.http_options || Countly.http_options || null;
 
             var dir = path.resolve(__dirname, Countly.storage_path);
-            try{
-                if (!fs.existsSync(dir)){
+            try {
+                if (!fs.existsSync(dir)) {
                     fs.mkdirSync(dir);
                 }
-            } catch(ex){
+            }
+            catch (ex) {
                 //problem creating dir
+                // eslint-disable-next-line no-console
                 console.log(ex.stack);
             }
-            
-            if(Countly.url === ""){
+
+            if (Countly.url === "") {
                 log("Please provide server URL");
             }
-            else{
+            else {
                 log("Countly initialized");
                 if (cluster.isMaster) {
-                    Countly.device_id = ob.device_id || Countly.device_id || getId();
+                    Countly.device_id = conf.device_id || Countly.device_id || getId();
                     storeSet("cly_id", Countly.device_id);
                     requestQueue = storeGet("cly_queue", []);
                     eventQueue = storeGet("cly_event", []);
                     remoteConfigs = storeGet("cly_remote_configs", {});
                     heartBeat();
                     //listen to current workers
-                    if(cluster.workers){
+                    if (cluster.workers) {
                         for (var id in cluster.workers) {
                             cluster.workers[id].on("message", handleWorkerMessage);
                         }
@@ -248,7 +250,7 @@ Countly.Bulk = Bulk;
             }
         }
     };
-    
+
     /**
     * Modify feature groups for consent management. Allows you to group multiple features under one feature group
     * @param {object} features - object to define feature name as key and core features as value
@@ -263,168 +265,170 @@ Countly.Bulk = Bulk;
     * //After this call Countly.add_consent("activity") to allow "sessions","events","views"
     * //or call Countly.add_consent("info") to allow "attribution","users"
     * //or call Countly.add_consent("crashes") to allow some separate feature
-    */ 
-    Countly.group_features = function(features){
-        if(features){
-            for(var i in features){
-                if(!consents[i]){
-                    if(typeof features[i] === "string"){
-                        consents[i] = {features:[features[i]]};
+    */
+    Countly.group_features = function(features) {
+        if (features) {
+            for (var i in features) {
+                if (!consents[i]) {
+                    if (typeof features[i] === "string") {
+                        consents[i] = {features: [features[i]]};
                     }
-                    else if(features[i] &amp;&amp; features[i].constructor === Array &amp;&amp; features[i].length){
-                        consents[i] = {features:features[i]};
+                    else if (features[i] &amp;&amp; features[i].constructor === Array &amp;&amp; features[i].length) {
+                        consents[i] = {features: features[i]};
                     }
-                    else{
-                        log("Incorrect feature list for "+i+" value: "+features[i]);
+                    else {
+                        log("Incorrect feature list for " + i + " value: " + features[i]);
                     }
                 }
-                else{
-                    log("Feature name "+i+" is already reserved");
+                else {
+                    log("Feature name " + i + " is already reserved");
                 }
             }
         }
-        else{
-            log("Incorrect features: "+features);
+        else {
+            log("Incorrect features: " + features);
         }
     };
-    
+
     /**
     * Check if consent is given for specific feature (either core feature of from custom feature group)
     * @param {string} feature - name of the feature, possible values, "sessions","events","views","crashes","attribution","users" or customly provided through {@link Countly.group_features}
+    * @returns {bool} true if consent is given, false if not
     */
-    Countly.check_consent = function(feature){
-        if(!Countly.require_consent){
+    Countly.check_consent = function(feature) {
+        if (!Countly.require_consent) {
             //we don't need to have specific consents
             return true;
         }
-        if(consents[feature]){
+        if (consents[feature]) {
             return (consents[feature] &amp;&amp; consents[feature].optin) ? true : false;
         }
-        else{
-            log("No feature available for "+feature);
+        else {
+            log("No feature available for " + feature);
         }
         return false;
     };
-    
+
     /**
     * Check if any consent is given, for some cases, when crucial parts are like device_id are needed for any request
+    * @returns {bool} true if any consent is given, false if not
     */
-    Countly.check_any_consent = function(){
-        if(!Countly.require_consent){
+    Countly.check_any_consent = function() {
+        if (!Countly.require_consent) {
             //we don't need to have consents
             return true;
         }
-        for(var i in consents){
-            if(consents[i] &amp;&amp; consents[i].optin){
+        for (var i in consents) {
+            if (consents[i] &amp;&amp; consents[i].optin) {
                 return true;
             }
         }
         return false;
     };
-    
+
     /**
     * Add consent for specific feature, meaning, user allowed to track that data (either core feature of from custom feature group)
     * @param {string|array} feature - name of the feature, possible values, "sessions","events","views","crashes","attribution","users" or customly provided through {@link Countly.group_features}
     */
-    Countly.add_consent = function(feature){
-        log("Adding consent for "+feature);
-        if(feature.constructor === Array){
-            for(var i = 0; i &lt; feature.length; i++){
+    Countly.add_consent = function(feature) {
+        log("Adding consent for " + feature);
+        if (feature.constructor === Array) {
+            for (var i = 0; i &lt; feature.length; i++) {
                 Countly.add_consent(feature[i]);
             }
         }
-        else if(consents[feature]){
-            if(consents[feature].features){
+        else if (consents[feature]) {
+            if (consents[feature].features) {
                 consents[feature].optin = true;
                 //this is added group, let's iterate through sub features
                 Countly.add_consent(consents[feature].features);
             }
-            else{
+            else {
                 //this is core feature
-                if(consents[feature].optin !== true){
+                if (consents[feature].optin !== true) {
                     syncConsents[feature] = true;
                     consents[feature].optin = true;
                     updateConsent();
-                    setTimeout(function(){
-                        if(feature === "sessions" &amp;&amp; lastParams.begin_session){
+                    setTimeout(function() {
+                        if (feature === "sessions" &amp;&amp; lastParams.begin_session) {
                             Countly.begin_session.apply(Countly, lastParams.begin_session);
                             lastParams.begin_session = null;
                         }
-                        else if(feature === "views" &amp;&amp; lastParams.track_pageview){
+                        else if (feature === "views" &amp;&amp; lastParams.track_pageview) {
                             lastView = null;
                             Countly.track_pageview.apply(Countly, lastParams.track_pageview);
                             lastParams.track_pageview = null;
                         }
-                        if(lastParams.change_id){
+                        if (lastParams.change_id) {
                             Countly.change_id.apply(Countly, lastParams.change_id);
                             lastParams.change_id = null;
                         }
-                    },1); 
+                    }, 1);
                 }
             }
         }
-        else{
-            log("No feature available for "+feature);
+        else {
+            log("No feature available for " + feature);
         }
     };
-    
-    
+
+
     /**
     * Remove consent for specific feature, meaning, user opted out to track that data (either core feature of from custom feature group)
     * @param {string|array} feature - name of the feature, possible values, "sessions","events","views","crashes","attribution","users" or customly provided through {@link Countly.group_features}
     */
-    Countly.remove_consent = function(feature){
-        log("Removing consent for "+feature);
-        if(feature.constructor === Array){
-            for(var i = 0; i &lt; feature.length; i++){
+    Countly.remove_consent = function(feature) {
+        log("Removing consent for " + feature);
+        if (feature.constructor === Array) {
+            for (var i = 0; i &lt; feature.length; i++) {
                 Countly.remove_consent(feature[i]);
             }
         }
-        else if(consents[feature]){
-            if(consents[feature].features){
+        else if (consents[feature]) {
+            if (consents[feature].features) {
                 //this is added group, let's iterate through sub features
                 Countly.remove_consent(consents[feature].features);
             }
-            else{
+            else {
                 //this is core feature
-                if(consents[feature].optin !== false){
+                if (consents[feature].optin !== false) {
                     syncConsents[feature] = false;
                     updateConsent();
                 }
             }
             consents[feature].optin = false;
         }
-        else{
-            log("No feature available for "+feature);
+        else {
+            log("No feature available for " + feature);
         }
     };
-    
+
     var consentTimer;
-    var updateConsent = function(){
-        if(consentTimer){
+    var updateConsent = function() {
+        if (consentTimer) {
             //delay syncing consents
             clearTimeout(consentTimer);
             consentTimer = null;
         }
-        consentTimer = setTimeout(function(){
-            if(Object.keys(syncConsents).length){
+        consentTimer = setTimeout(function() {
+            if (Object.keys(syncConsents).length) {
                 //we have consents to sync, create request
-                toRequestQueue({consent:JSON.stringify(syncConsents)});
+                toRequestQueue({consent: JSON.stringify(syncConsents)});
                 //clear consents that needs syncing
                 syncConsents = {};
             }
         }, 1000);
     };
-    
-    
+
+
     /**
     * Start session
     * @param {boolean} noHeartBeat - true if you don't want to use internal heartbeat to manage session
     */
-    
-    Countly.begin_session = function(noHeartBeat){
-        if(Countly.check_consent("sessions")){
-            if(!sessionStarted){
+
+    Countly.begin_session = function(noHeartBeat) {
+        if (Countly.check_consent("sessions")) {
+            if (!sessionStarted) {
                 log("Session started");
                 lastBeat = getTimestamp();
                 sessionStarted = true;
@@ -435,49 +439,49 @@ Countly.Bulk = Bulk;
                 toRequestQueue(req);
             }
         }
-        else{
+        else {
             lastParams.begin_session = arguments;
         }
     };
-    
+
     /**
     * Report session duration
     * @param {int} sec - amount of seconds to report for current session
     */
-    Countly.session_duration = function(sec){
-        if(Countly.check_consent("sessions")){
-            if(sessionStarted){
+    Countly.session_duration = function(sec) {
+        if (Countly.check_consent("sessions")) {
+            if (sessionStarted) {
                 log("Session extended", sec);
-                toRequestQueue({session_duration:sec});
+                toRequestQueue({session_duration: sec});
             }
         }
     };
-    
+
     /**
     * End current session
     * @param {int} sec - amount of seconds to report for current session, before ending it
     */
-    Countly.end_session = function(sec){
-        if(Countly.check_consent("sessions")){
-            if(sessionStarted){
-                sec = sec || getTimestamp()-lastBeat;
+    Countly.end_session = function(sec) {
+        if (Countly.check_consent("sessions")) {
+            if (sessionStarted) {
+                sec = sec || getTimestamp() - lastBeat;
                 log("Ending session");
                 reportViewDuration();
                 sessionStarted = false;
-                toRequestQueue({end_session:1, session_duration:sec});
+                toRequestQueue({end_session: 1, session_duration: sec});
             }
         }
     };
-    
+
     /**
     * Change current user/device id
     * @param {string} newId - new user/device ID to use
     * @param {boolean=} merge - move data from old ID to new ID on server
     **/
-    Countly.change_id = function(newId, merge){
-        if(cluster.isMaster){
-            if(Countly.device_id !== newId){
-                if(!merge){
+    Countly.change_id = function(newId, merge) {
+        if (cluster.isMaster) {
+            if (Countly.device_id !== newId) {
+                if (!merge) {
                     //empty event queue
                     if (eventQueue.length > 0) {
                         toRequestQueue({ events: JSON.stringify(eventQueue) });
@@ -493,15 +497,15 @@ Countly.Bulk = Bulk;
                 Countly.device_id = newId;
                 storeSet("cly_id", Countly.device_id);
                 log("Changing id");
-                if(merge){
-                    if(Countly.check_any_consent()){
-                        toRequestQueue({old_device_id:oldId});
+                if (merge) {
+                    if (Countly.check_any_consent()) {
+                        toRequestQueue({old_device_id: oldId});
                     }
-                    else{
+                    else {
                         lastParams.change_id = arguments;
                     }
                 }
-                else{
+                else {
                     //start new session for new id
                     Countly.begin_session(!autoExtend);
                 }
@@ -514,11 +518,11 @@ Countly.Bulk = Bulk;
                 }
             }
         }
-        else{
-            process.send({ cly: {change_id: newId, merge:merge} });
+        else {
+            process.send({ cly: {change_id: newId, merge: merge} });
         }
     };
-    
+
     /**
     * Report custom event
     * @param {Event} event - Countly {@link Event} object
@@ -527,24 +531,28 @@ Countly.Bulk = Bulk;
     * @param {number=} event.sum - sum to report with event (if any)
     * @param {number=} event.dur - duration to report with event (if any)
     * @param {Object=} event.segmentation - object with segments key /values
-    **/   
-    Countly.add_event = function(event){
-        if(Countly.check_consent("events")){
+    **/
+    Countly.add_event = function(event) {
+        if (Countly.check_consent("events")) {
             add_cly_events(event);
         }
     };
-    
-    //internal method for events, in case there is no consent for custom events, but internal events has consents
-    function add_cly_events(event){
-        if(!event.key){
+
+    /**
+    *  Add events to event queue
+    *  @memberof Countly._internals
+    *  @param {Event} event - countly event
+    */
+    function add_cly_events(event) {
+        if (!event.key) {
             log("Event must have key property");
             return;
         }
-        if(cluster.isMaster){
-            if(!event.count){
+        if (cluster.isMaster) {
+            if (!event.count) {
                 event.count = 1;
             }
-            
+
             var props = ["key", "count", "sum", "dur", "segmentation"];
             var e = getProperties(event, props);
             e.timestamp = getMsTimestamp();
@@ -555,36 +563,36 @@ Countly.Bulk = Bulk;
             eventQueue.push(e);
             storeSet("cly_event", eventQueue);
         }
-        else{
+        else {
             process.send({ cly: {event: event} });
         }
     }
-    
+
     /**
     * Start timed event, which will fill in duration property upon ending automatically
     * @param {string} key - event name that will be used as key property
     **/
-    Countly.start_event = function(key){
-        if(timedEvents[key]){
+    Countly.start_event = function(key) {
+        if (timedEvents[key]) {
             log("Timed event with key " + key + " already started");
             return;
         }
         timedEvents[key] = getTimestamp();
     };
-    
+
     /**
     * End timed event
     * @param {string|Object} event - event key if string or Countly event same as passed to {@link Countly.add_event}
     **/
-    Countly.end_event = function(event){
-        if(typeof event === "string"){
-            event = {key:event};
+    Countly.end_event = function(event) {
+        if (typeof event === "string") {
+            event = {key: event};
         }
-        if(!event.key){
+        if (!event.key) {
             log("Event must have key property");
             return;
         }
-        if(!timedEvents[event.key]){
+        if (!timedEvents[event.key]) {
             log("Timed event with key " + event.key + " was not started");
             return;
         }
@@ -592,7 +600,7 @@ Countly.Bulk = Bulk;
         Countly.add_event(event);
         delete timedEvents[event.key];
     };
-    
+
     /**
     * Report user data
     * @param {Object} user - Countly {@link UserDetails} object
@@ -606,14 +614,14 @@ Countly.Bulk = Bulk;
     * @param {number=} user.byear - user's birth year used to calculate current age
     * @param {Object=} user.custom - object with custom key value properties you want to save with user
     **/
-    Countly.user_details = function(user){
-        if(Countly.check_consent("users")){
+    Countly.user_details = function(user) {
+        if (Countly.check_consent("users")) {
             log("Adding userdetails: ", user);
             var props = ["name", "username", "email", "organization", "phone", "picture", "gender", "byear", "custom"];
             toRequestQueue({user_details: JSON.stringify(getProperties(user, props))});
         }
     };
-    
+
     /**************************
     * Modifying custom property values of user details
     * Possible modification commands
@@ -627,23 +635,23 @@ Countly.Bulk = Bulk;
     *  - addToSet, creates an array property, if property does not exist, and adds unique value to array, only if it does not yet exist in array
     **************************/
     var customData = {};
-    var change_custom_property = function(key, value, mod){
-        if(Countly.check_consent("users")){
-            if(!customData[key]){
+    var change_custom_property = function(key, value, mod) {
+        if (Countly.check_consent("users")) {
+            if (!customData[key]) {
                 customData[key] = {};
             }
-            if(mod === "$push" || mod === "$pull" || mod === "$addToSet"){
-                if(!customData[key][mod]){
+            if (mod === "$push" || mod === "$pull" || mod === "$addToSet") {
+                if (!customData[key][mod]) {
                     customData[key][mod] = [];
                 }
                 customData[key][mod].push(value);
             }
-            else{
+            else {
                 customData[key][mod] = value;
             }
         }
     };
-    
+
     /**
     * Control user related custom properties. Don't forget to call save after finishing manipulation of custom data
     * @namespace Countly.userData
@@ -664,7 +672,7 @@ Countly.Bulk = Bulk;
         * @param {string} key - name of the property to attach to user
         * @param {string|number} value - value to store under provided property
         **/
-        set: function(key, value){
+        set: function(key, value) {
             customData[key] = value;
         },
         /**
@@ -672,21 +680,21 @@ Countly.Bulk = Bulk;
         * @param {string} key - name of the property to attach to user
         * @param {string|number} value - value to store under provided property
         **/
-        set_once: function(key, value){
+        set_once: function(key, value) {
             change_custom_property(key, value, "$setOnce");
         },
         /**
         * Unset's/delete's user's custom property
         * @param {string} key - name of the property to delete
         **/
-        unset: function (key) {
+        unset: function(key) {
             customData[key] = "";
         },
         /**
         * Increment value under the key of this user's custom properties by one
         * @param {string} key - name of the property to attach to user
         **/
-        increment: function(key){
+        increment: function(key) {
             change_custom_property(key, 1, "$inc");
         },
         /**
@@ -694,7 +702,7 @@ Countly.Bulk = Bulk;
         * @param {string} key - name of the property to attach to user
         * @param {number} value - value by which to increment server value
         **/
-        increment_by: function(key, value){
+        increment_by: function(key, value) {
             change_custom_property(key, value, "$inc");
         },
         /**
@@ -702,7 +710,7 @@ Countly.Bulk = Bulk;
         * @param {string} key - name of the property to attach to user
         * @param {number} value - value by which to multiply server value
         **/
-        multiply: function(key, value){
+        multiply: function(key, value) {
             change_custom_property(key, value, "$mul");
         },
         /**
@@ -710,7 +718,7 @@ Countly.Bulk = Bulk;
         * @param {string} key - name of the property to attach to user
         * @param {number} value - value which to compare to server's value and store maximal value of both provided
         **/
-        max: function(key, value){
+        max: function(key, value) {
             change_custom_property(key, value, "$max");
         },
         /**
@@ -718,7 +726,7 @@ Countly.Bulk = Bulk;
         * @param {string} key - name of the property to attach to user
         * @param {number} value - value which to compare to server's value and store minimal value of both provided
         **/
-        min: function(key, value){
+        min: function(key, value) {
             change_custom_property(key, value, "$min");
         },
         /**
@@ -726,7 +734,7 @@ Countly.Bulk = Bulk;
         * @param {string} key - name of the property to attach to user
         * @param {string|number} value - value which to add to array
         **/
-        push: function(key, value){
+        push: function(key, value) {
             change_custom_property(key, value, "$push");
         },
         /**
@@ -734,7 +742,7 @@ Countly.Bulk = Bulk;
         * @param {string} key - name of the property to attach to user
         * @param {string|number} value - value which to add to array
         **/
-        push_unique: function(key, value){
+        push_unique: function(key, value) {
             change_custom_property(key, value, "$addToSet");
         },
         /**
@@ -742,39 +750,39 @@ Countly.Bulk = Bulk;
         * @param {string} key - name of the property
         * @param {string|number} value - value which to remove from array
         **/
-        pull: function(key, value){
+        pull: function(key, value) {
             change_custom_property(key, value, "$pull");
         },
         /**
         * Save changes made to user's custom properties object and send them to server
         **/
-        save: function(){
-            if(Countly.check_consent("users")){
-                toRequestQueue({user_details: JSON.stringify({custom:customData})});
+        save: function() {
+            if (Countly.check_consent("users")) {
+                toRequestQueue({user_details: JSON.stringify({custom: customData})});
             }
             customData = {};
         }
     };
-    
+
     /**
     * Report user conversion to the server (when user signup or made a purchase, or whatever your conversion is)
     * @param {string} campaign_id - id of campaign, the last part of the countly campaign link
     * @param {string=} campaign_user_id - id of user's clicked on campaign link, if you have one
     **/
-    Countly.report_conversion = function(campaign_id, campaign_user_id){
-        if(Countly.check_consent("attribution")){
-            if(campaign_id &amp;&amp; campaign_user_id){
+    Countly.report_conversion = function(campaign_id, campaign_user_id) {
+        if (Countly.check_consent("attribution")) {
+            if (campaign_id &amp;&amp; campaign_user_id) {
                 toRequestQueue({campaign_id: campaign_id, campaign_user: campaign_user_id});
             }
-            else if(campaign_id){
+            else if (campaign_id) {
                 toRequestQueue({campaign_id: campaign_id});
             }
-            else{
+            else {
                 log("No campaign data found");
             }
         }
     };
-    
+
     /**
     * Provide information about user
     * @param {Object} feedback - object with feedback properties
@@ -786,8 +794,8 @@ Countly.Bulk = Bulk;
     * @param {string=} feedback.email - user's email
     * @param {string=} feedback.comment - user's comment
     **/
-    Countly.report_feedback = function (feedback) {
-        if (Countly.check_consent("star-rating")) {
+    Countly.report_feedback = function(feedback) {
+        if (Countly.check_consent("star-rating") || Countly.check_consent("feedback")) {
             if (!feedback.widget_id) {
                 log("Feedback must contain widget_id property");
                 return;
@@ -812,64 +820,68 @@ Countly.Bulk = Bulk;
             }
         }
     };
-    
+
     /**
     * Automatically track javascript errors that happen on the nodejs process
     * @param {string=} segments - additional key value pairs you want to provide with error report, like versions of libraries used, etc.
     **/
-    Countly.track_errors = function(segments){
+    Countly.track_errors = function(segments) {
         crashSegments = segments;
-        process.on("uncaughtException", function (err) {
+        process.on("uncaughtException", function(err) {
             recordError(err, false);
-            if(cluster.isMaster){
+            if (cluster.isMaster) {
                 forceStore();
             }
+            // eslint-disable-next-line no-console
             console.error((new Date()).toUTCString() + " uncaughtException:", err.message);
+            // eslint-disable-next-line no-console
             console.error(err.stack);
             process.exit(1);
         });
-        
-        process.on('unhandledRejection', function (reason) {
-            var err = new Error('Unhandled rejection (reason: ' + (reason &amp;&amp; reason.stack ? reason.stack : reason ) + ').');
+
+        process.on('unhandledRejection', function(reason) {
+            var err = new Error('Unhandled rejection (reason: ' + (reason &amp;&amp; reason.stack ? reason.stack : reason) + ').');
             recordError(err, false);
-            if(cluster.isMaster){
+            if (cluster.isMaster) {
                 forceStore();
             }
+            // eslint-disable-next-line no-console
             console.error((new Date()).toUTCString() + " unhandledRejection:", err.message);
+            // eslint-disable-next-line no-console
             console.error(err.stack);
         });
     };
-    
+
     /**
     * Log an exception that you catched through try and catch block and handled yourself and just want to report it to server
     * @param {Object} err - error exception object provided in catch block
     * @param {string=} segments - additional key value pairs you want to provide with error report, like versions of libraries used, etc.
     **/
-    Countly.log_error = function(err, segments){
+    Countly.log_error = function(err, segments) {
         recordError(err, true, segments);
     };
-    
+
     /**
     * Add new line in the log of breadcrumbs of what was done did, will be included together with error report
     * @param {string} record - any text describing an action
     **/
-    Countly.add_log = function(record){
-        if(Countly.check_consent("crashes")){
-            if(crashLogs.length > maxCrashLogs) {
+    Countly.add_log = function(record) {
+        if (Countly.check_consent("crashes")) {
+            if (crashLogs.length > maxCrashLogs) {
                 crashLogs.shift();
             }
             crashLogs.push(record);
         }
     };
-    
+
     /**
     * Fetch remote config
     * @param {array=} keys - Array of keys to fetch, if not provided will fetch all keys
     * @param {array=} omit_keys - Array of keys to omit, if provided will fetch all keys except provided ones
     * @param {function=} callback - Callback to notify with first param error and second param remote config object
     **/
-    Countly.fetch_remote_config = function (keys, omit_keys, callback) {
-        if (Countly.check_any_consent()) {
+    Countly.fetch_remote_config = function(keys, omit_keys, callback) {
+        if (Countly.check_consent("remote-config")) {
             var request = {
                 method: "fetch_remote_config"
             };
@@ -895,7 +907,7 @@ Countly.Bulk = Bulk;
                 }
             }
             prepareRequest(request);
-            makeRequest(Countly.url, readPath, request, function(err, params, responseText){
+            makeRequest(Countly.url, readPath, request, function(err, params, responseText) {
                 try {
                     var configs = JSON.parse(responseText);
                     if (request.keys || request.omit_keys) {
@@ -912,7 +924,7 @@ Countly.Bulk = Bulk;
                         storeSet("cly_remote_configs", remoteConfigs);
                     }
                 }
-                catch(ex) {
+                catch (ex) {
                     //silent catch
                 }
                 if (typeof callback === "function") {
@@ -920,58 +932,65 @@ Countly.Bulk = Bulk;
                 }
             });
         }
+        else {
+            log("Remote config requires explicit consent");
+            if (typeof callback === "function") {
+                callback(new Error("Remote config requires explicit consent"), remoteConfigs);
+            }
+        }
     };
 
     /**
     * Get Remote config object or specific value for provided key
     * @param {string=} key - if provided, will return value for key, or return whole object
+    * @returns {varies} remote config value
     **/
-    Countly.get_remote_config = function (key) {
+    Countly.get_remote_config = function(key) {
         if (typeof key !== "undefined") {
             return remoteConfigs[key];
         }
         return remoteConfigs;
     };
 
-    
+
     /**
     * Stop tracking duration time for this user/device
     **/
-    Countly.stop_time = function(){
+    Countly.stop_time = function() {
         trackTime = false;
         storedDuration = getTimestamp() - lastBeat;
         lastViewStoredDuration = getTimestamp() - lastViewTime;
     };
-    
+
     /**
     * Start tracking duration time for this user/device, by default it is automatically if you scalled (@link begin_session)
     **/
-    Countly.start_time = function(){
+    Countly.start_time = function() {
         trackTime = true;
         lastBeat = getTimestamp() - storedDuration;
         lastViewTime = getTimestamp() - lastViewStoredDuration;
         lastViewStoredDuration = 0;
     };
-    
+
     /**
     * Track which parts of application user visits
     * @param {string=} name - optional name of the view
     * @param {object=} viewSegments - optional key value object with segments to report with the view
     **/
-    Countly.track_view = function(name, viewSegments){
+    Countly.track_view = function(name, viewSegments) {
         reportViewDuration();
-        if(name){
+        if (name) {
             lastView = name;
             lastViewTime = getTimestamp();
-            if(!platform) {
+            if (!platform) {
                 getMetrics();
             }
             var segments = {
                 "name": name,
-                "visit":1,
-                "segment":platform
+                "visit": 1,
+                "segment": platform
             };
-            
+
             if (viewSegments) {
                 for (var key in viewSegments) {
                     if (typeof segments[key] === "undefined") {
@@ -979,29 +998,29 @@ Countly.Bulk = Bulk;
                     }
                 }
             }
-            
+
             //track pageview
-            if(Countly.check_consent("views")){
+            if (Countly.check_consent("views")) {
                 add_cly_events({
                     "key": "[CLY]_view",
                     "segmentation": segments
                 });
             }
-            else{
+            else {
                 lastParams.track_pageview = arguments;
             }
         }
     };
-    
+
     /**
     * Track which parts of application user visits. Alias of {@link track_view} method for compatability with Web SDK
     * @param {string=} name - optional name of the view
     * @param {object=} viewSegments - optional key value object with segments to report with the view
     **/
-    Countly.track_pageview = function(name, viewSegments){
+    Countly.track_pageview = function(name, viewSegments) {
         Countly.track_view(name, viewSegments);
     };
-    
+
     /**
      * Report performance trace
      * @param {Object} trace - apm trace object
@@ -1012,7 +1031,7 @@ Countly.Bulk = Bulk;
      * @param {Object} trace.app_metrics - key/value metrics like duration, to report with trace where value is number
      * @param {Object=} trace.apm_attr - object profiling attributes (not yet supported)
      */
-    Countly.report_trace = function (trace) {
+    Countly.report_trace = function(trace) {
         if (Countly.check_consent("apm")) {
             var props = ["type", "name", "stz", "etz", "apm_metrics", "apm_attr"];
             for (var i = 0; i &lt; props.length; i++) {
@@ -1031,11 +1050,11 @@ Countly.Bulk = Bulk;
             log("Adding APM trace: ", e);
         }
     };
-    
+
     /**
      *  Report app start trace
      */
-    Countly.report_app_start = function () {
+    Countly.report_app_start = function() {
         //do on next tick to allow synchronous code to load
         process.nextTick(function() {
             var start = Math.floor(process.uptime() * 1000);
@@ -1051,42 +1070,45 @@ Countly.Bulk = Bulk;
             });
         });
     };
-    
+
     /**
     * Make raw request with provided parameters
     * @example Countly.request({app_key:"somekey", devide_id:"someid", events:"[{'key':'val','count':1}]", begin_session:1});
     * @param {Object} request - object with key/values which will be used as request parameters
     **/
-    Countly.request = function(request){
-        if(!request.app_key || !request.device_id){
+    Countly.request = function(request) {
+        if (!request.app_key || !request.device_id) {
             log("app_key or device_id is missing");
             return;
         }
-        if(cluster.isMaster){
+        if (cluster.isMaster) {
             requestQueue.push(request);
             storeSet("cly_queue", requestQueue);
         }
-        else{
+        else {
             process.send({ cly: {request: request} });
         }
     };
-    
+
     /**
     *  PRIVATE METHODS
     **/
-    
-    function reportViewDuration(){
-        if(lastView){
-            if(!platform){
+
+    /**
+    *  Report duration of how long user was on this view
+    */
+    function reportViewDuration() {
+        if (lastView) {
+            if (!platform) {
                 getMetrics();
             }
             var segments = {
                 "name": lastView,
-                "segment":platform
+                "segment": platform
             };
 
             //track pageview
-            if(Countly.check_consent("views")){
+            if (Countly.check_consent("views")) {
                 add_cly_events({
                     "key": "[CLY]_view",
                     "dur": getTimestamp() - lastViewTime,
@@ -1096,87 +1118,95 @@ Countly.Bulk = Bulk;
             lastView = null;
         }
     }
-    
-    //prepare request by adding basic info to it
+
+    /**
+    *  Prepare request params by adding common properties to it
+    *  @param {Object} request - request object
+    */
     function prepareRequest(request) {
         request.app_key = Countly.app_key;
         request.device_id = Countly.device_id;
         request.sdk_name = SDK_NAME;
         request.sdk_version = SDK_VERSION;
-        if(Countly.check_consent("location")){
-            if(Countly.country_code){
+        if (Countly.check_consent("location")) {
+            if (Countly.country_code) {
                 request.country_code = Countly.country_code;
             }
-            if(Countly.city){
+            if (Countly.city) {
                 request.city = Countly.city;
             }
-            if(Countly.ip_address !== null){
+            if (Countly.ip_address !== null) {
                 request.ip_address = Countly.ip_address;
             }
         }
-        else{
+        else {
             request.location = "";
         }
-            
+
         request.timestamp = getMsTimestamp();
         var date = new Date();
         request.hour = date.getHours();
         request.dow = date.getDay();
     }
-    
-    //insert request to queue
-    function toRequestQueue(request){
-        if(cluster.isMaster){
-            if(!Countly.app_key || !Countly.device_id){
+
+    /**
+    *  Add request to request queue
+    *  @param {Object} request - object with request parameters
+    */
+    function toRequestQueue(request) {
+        if (cluster.isMaster) {
+            if (!Countly.app_key || !Countly.device_id) {
                 log("app_key or device_id is missing");
                 return;
             }
             prepareRequest(request);
-          
-            if(requestQueue.length > queueSize){
+
+            if (requestQueue.length > queueSize) {
                 requestQueue.shift();
             }
 
             requestQueue.push(request);
             storeSet("cly_queue", requestQueue);
         }
-        else{
+        else {
             process.send({ cly: {cly_queue: request} });
         }
     }
-    
-    //heart beat
-    function heartBeat(){
-        
+
+    /**
+    *  Makin request making and data processing loop
+    */
+    function heartBeat() {
+
         //extend session if needed
-        if(sessionStarted &amp;&amp; autoExtend &amp;&amp; trackTime){
+        if (sessionStarted &amp;&amp; autoExtend &amp;&amp; trackTime) {
             var last = getTimestamp();
-            if(last - lastBeat > sessionUpdate){
+            if (last - lastBeat > sessionUpdate) {
                 Countly.session_duration(last - lastBeat);
                 lastBeat = last;
             }
         }
-        
+
         //process event queue
-        if(eventQueue.length > 0){
-            if(eventQueue.length &lt;= maxEventBatch){
+        if (eventQueue.length > 0) {
+            if (eventQueue.length &lt;= maxEventBatch) {
                 toRequestQueue({events: JSON.stringify(eventQueue)});
                 eventQueue = [];
             }
-            else{
+            else {
                 var events = eventQueue.splice(0, maxEventBatch);
                 toRequestQueue({events: JSON.stringify(events)});
             }
             storeSet("cly_event", eventQueue);
         }
-        
+
         //process request queue with event queue
-        if(requestQueue.length > 0 &amp;&amp; readyToProcess &amp;&amp; getTimestamp() > failTimeout){
+        if (requestQueue.length > 0 &amp;&amp; readyToProcess &amp;&amp; getTimestamp() > failTimeout) {
             readyToProcess = false;
             var params = requestQueue.shift();
             //check if any consent to sync
-            if(Object.keys(syncConsents).length){
-                if(consentTimer){
+            if (Object.keys(syncConsents).length) {
+                if (consentTimer) {
                     clearTimeout(consentTimer);
                     consentTimer = null;
                 }
@@ -1184,129 +1214,160 @@ Countly.Bulk = Bulk;
                 syncConsents = {};
             }
             log("Processing request", params);
-            makeRequest(Countly.url, apiPath, params, function(err, params){
-                log("Request Finished", params, err);
-                if(err){
-                    requestQueue.unshift(params);
+            makeRequest(Countly.url, apiPath, params, function(err, res) {
+                log("Request Finished", res, err);
+                if (err) {
+                    requestQueue.unshift(res);
                     failTimeout = getTimestamp() + failTimeoutAmount;
                 }
                 storeSet("cly_queue", requestQueue);
                 readyToProcess = true;
             });
         }
-        
+
         setTimeout(heartBeat, beatInterval);
     }
-    
-    //get ID
-    function getId(){
+
+    /**
+    *  Get device ID, stored one, or generate new one
+    *  @returns {String} device id
+    */
+    function getId() {
         return storeGet("cly_id", null) || generateUUID();
     }
-    
-    //generate UUID
+
+    /**
+     *  Generate random UUID value
+     *  @returns {String} random UUID value
+     */
     function generateUUID() {
         var d = new Date().getTime();
         var uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-            var r = (d + Math.random()*16)%16 | 0;
-            d = Math.floor(d/16);
-            return (c==="x" ? r : (r&amp;0x3|0x8)).toString(16);
+            var r = (d + Math.random() * 16) % 16 | 0;
+            d = Math.floor(d / 16);
+            return (c === "x" ? r : (r &amp; 0x3 | 0x8)).toString(16);
         });
         return uuid;
     }
-    
-    //get metrics of the browser
-    function getMetrics(){
+
+    /**
+    *  Get metrics of the browser or config object
+    *  @returns {Object} Metrics object
+    */
+    function getMetrics() {
         var m = JSON.parse(JSON.stringify(metrics));
-        
+
         //getting app version
         m._app_version = m._app_version || Countly.app_version;
-        
+
         m._os = m._os || os.type();
         m._os_version = m._os_version || os.release();
         platform = os.type();
-        
+
         log("Got metrics", m);
         return m;
     }
-    
-    //log stuff
-    function log(){
-        if(Countly.debug &amp;&amp; typeof console !== "undefined"){
-            if(arguments[1] &amp;&amp; typeof arguments[1] === "object"){
+
+    /**
+     *  Log data if debug mode is enabled
+     */
+    function log() {
+        if (Countly.debug &amp;&amp; typeof console !== "undefined") {
+            if (arguments[1] &amp;&amp; typeof arguments[1] === "object") {
                 arguments[1] = JSON.stringify(arguments[1]);
             }
-            console.log( Array.prototype.slice.call(arguments).join("\n") );
+            // eslint-disable-next-line no-console
+            console.log(Array.prototype.slice.call(arguments).join("\n"));
         }
     }
-    
-    //get current timestamp
-    function getTimestamp(){
+
+    /**
+     *  Get current timestamp
+     *  @returns {number} unix timestamp in seconds
+     */
+    function getTimestamp() {
         return Math.floor(new Date().getTime() / 1000);
     }
-    
-    //get unique timestamp in miliseconds
-    function getMsTimestamp(){
+
+    /**
+     *  Get unique timestamp in miliseconds
+     *  @returns {number} miliseconds timestamp
+     */
+    function getMsTimestamp() {
         var ts = new Date().getTime();
-        if(lastMsTs >= ts){
+        if (lastMsTs >= ts) {
             lastMsTs++;
         }
-        else{
+        else {
             lastMsTs = ts;
         }
         return lastMsTs;
     }
-    
-    function recordError(err, nonfatal, segments){
-        if(Countly.check_consent("crashes") &amp;&amp; err){
+
+    /**
+    *  Record and report error
+    *  @param {Error} err - Error object
+    *  @param {Boolean} nonfatal - nonfatal if true and false if fatal
+    *  @param {Object} segments - custom crash segments
+    */
+    function recordError(err, nonfatal, segments) {
+        if (Countly.check_consent("crashes") &amp;&amp; err) {
             segments = segments || crashSegments;
             var error = "";
-            if(typeof err === "object"){
-                if(typeof err.stack !== "undefined"){
+            if (typeof err === "object") {
+                if (typeof err.stack !== "undefined") {
                     error = err.stack;
                 }
-                else{
-                    if(typeof err.name !== "undefined"){
-                        error += err.name+":";
+                else {
+                    if (typeof err.name !== "undefined") {
+                        error += err.name + ":";
                     }
-                    if(typeof err.message !== "undefined"){
-                        error += err.message+"\n";
+                    if (typeof err.message !== "undefined") {
+                        error += err.message + "\n";
                     }
-                    if(typeof err.fileName !== "undefined"){
-                        error += "in "+err.fileName+"\n";
+                    if (typeof err.fileName !== "undefined") {
+                        error += "in " + err.fileName + "\n";
                     }
-                    if(typeof err.lineNumber !== "undefined"){
-                        error += "on "+err.lineNumber;
+                    if (typeof err.lineNumber !== "undefined") {
+                        error += "on " + err.lineNumber;
                     }
-                    if(typeof err.columnNumber !== "undefined"){
-                        error += ":"+err.columnNumber;
+                    if (typeof err.columnNumber !== "undefined") {
+                        error += ":" + err.columnNumber;
                     }
                 }
             }
-            else{
-                error = err+"";
+            else {
+                error = err + "";
             }
             nonfatal = (nonfatal) ? true : false;
-            var metrics = getMetrics();
-            var ob = {_os:metrics._os, _os_version:metrics._os_version, _error:error, _app_version:metrics._app_version, _run:getTimestamp()-startTime};
-            
+            var m = getMetrics();
+            var ob = {_os: m._os, _os_version: m._os_version, _error: error, _app_version: m._app_version, _run: getTimestamp() - startTime};
+
             ob._not_os_specific = true;
-            
-            if(crashLogs.length > 0){
+            ob._javascript = true;
+
+            if (crashLogs.length > 0) {
                 ob._logs = crashLogs.join("\n");
             }
             crashLogs = [];
             ob._nonfatal = nonfatal;
-            
-            if(typeof segments !== "undefined"){
+
+            if (typeof segments !== "undefined") {
                 ob._custom = segments;
             }
-            
+
             toRequestQueue({crash: JSON.stringify(ob)});
         }
     }
-    
-    //sending HTTP request
-    function makeRequest(url, path, params, callback) {
+
+    /**
+    *  Making HTTP request
+    *  @param {String} url - URL where to make request
+    *  @param {String} api - API endpoint
+    *  @param {Object} params - key value object with URL params
+    *  @param {Function} callback - callback when request finished or failed
+    */
+    function makeRequest(url, api, params, callback) {
         try {
             log("Sending HTTP request");
             var serverOptions = parseUrl(url);
@@ -1315,54 +1376,54 @@ Countly.Bulk = Bulk;
             var options = {
                 host: serverOptions.host,
                 port: serverOptions.port,
-                path: path+"?"+data,
+                path: api + "?" + data,
                 method: "GET"
             };
-            
-            if(data.length >= 2000){
+
+            if (data.length >= 2000) {
                 method = "POST";
             }
-            else if(Countly.force_post){
+            else if (Countly.force_post) {
                 method = "POST";
             }
-            
-            if(method === "POST"){
+
+            if (method === "POST") {
                 options.method = "POST";
-                options.path = path;
+                options.path = api;
                 options.headers = {
                     "Content-Type": "application/x-www-form-urlencoded",
                     "Content-Length": Buffer.byteLength(data)
                 };
             }
-            
+
             if (typeof Countly.http_options === "function") {
                 Countly.http_options(options);
             }
             var protocol = http;
-            if(url.indexOf("https") === 0){
+            if (url.indexOf("https") === 0) {
                 protocol = https;
             }
             var req = protocol.request(options, function(res) {
                 var str = "";
-                res.on("data", function (chunk) {
+                res.on("data", function(chunk) {
                     str += chunk;
                 });
-            
-                res.on("end", function () {
-                    if(res.statusCode >= 200 &amp;&amp; res.statusCode &lt; 300){
+
+                res.on("end", function() {
+                    if (res.statusCode >= 200 &amp;&amp; res.statusCode &lt; 300) {
                         callback(false, params, str);
                     }
-                    else{
+                    else {
                         callback(true, params);
                     }
                 });
             });
-            if(method === "POST"){
+            if (method === "POST") {
                 // write data to request body
                 req.write(data);
             }
 
-            req.on("error", function(err){
+            req.on("error", function(err) {
                 log("Connection failed.", err);
                 if (typeof callback === "function") {
                     callback(true, params);
@@ -1370,147 +1431,226 @@ Countly.Bulk = Bulk;
             });
 
             req.end();
-        } catch (e) {
+        }
+        catch (e) {
             // fallback
             log("Failed HTTP request", e);
-            if (typeof callback === "function") { callback(true, params); }
+            if (typeof callback === "function") {
+                callback(true, params);
+            }
         }
     }
-    
-    //convert JSON object to query params
-    function prepareParams(params){
+
+    /**
+     *  Convert JSON object to query params
+     *  @param {Object} params - object with url params
+     *  @returns {String} query string
+     */
+    function prepareParams(params) {
         var str = [];
-        for(var i in params){
-            str.push(i+"="+encodeURIComponent(params[i]));
+        for (var i in params) {
+            str.push(i + "=" + encodeURIComponent(params[i]));
         }
         return str.join("&amp;");
     }
-    
-    //removing trailing slashes
+
+    /**
+     *  Removing trailing slashes
+     *  @memberof Countly._internals
+     *  @param {String} str - string from which to remove traling slash
+     *  @returns {String} modified string
+     */
     function stripTrailingSlash(str) {
-        if(str.substr(str.length - 1) === "/") {
+        if (str.substr(str.length - 1) === "/") {
             return str.substr(0, str.length - 1);
         }
         return str;
     }
-    
-    //parsing host and port information from url
+
+    /**
+     *  Parsing host and port information from url
+     *  @param {String} url - url to which request will be made
+     *  @returns {Object} Server options
+     */
     function parseUrl(url) {
         var serverOptions = {
             host: "localhost",
             port: 80
         };
-        if(Countly.url.indexOf("https") === 0){
+        if (Countly.url.indexOf("https") === 0) {
             serverOptions.port = 443;
         }
         var host = url.split("://").pop();
         serverOptions.host = host;
         var lastPos = host.indexOf(":");
         if (lastPos > -1) {
-            serverOptions.host = host.slice(0,lastPos);
-            serverOptions.port = Number(host.slice(lastPos+1,host.length));
+            serverOptions.host = host.slice(0, lastPos);
+            serverOptions.port = Number(host.slice(lastPos + 1, host.length));
         }
         return serverOptions;
     }
-    
-    //retrieve only specific properties from object
-    function getProperties(orig, props){
+
+    /**
+     *  Retrieve only specific properties from object
+     *  @param {Object} orig - object from which to get properties
+     *  @param {Array} props - list of properties to get
+     *  @returns {Object} Object with requested properties
+     */
+    function getProperties(orig, props) {
         var ob = {};
         var prop;
-        for(var i = 0; i &lt; props.length; i++){
+        for (var i = 0; i &lt; props.length; i++) {
             prop = props[i];
-            if(typeof orig[prop] !== "undefined"){
+            if (typeof orig[prop] !== "undefined") {
                 ob[prop] = orig[prop];
             }
         }
         return ob;
     }
-    
-    function handleWorkerMessage(msg){
-        if(msg.cly){
-            if(msg.cly.cly_queue){
+
+    /**
+     *  Handle messages from forked workers
+     *  @param {Object} msg - message from worker
+     */
+    function handleWorkerMessage(msg) {
+        if (msg.cly) {
+            if (msg.cly.cly_queue) {
                 toRequestQueue(msg.cly.cly_queue);
             }
-            else if(msg.cly.change_id){
+            else if (msg.cly.change_id) {
                 Countly.change_id(msg.cly.change_id, msg.cly.merge);
             }
-            else if(msg.cly.event){
+            else if (msg.cly.event) {
                 Countly.add_event(msg.cly.event);
             }
-            else if(msg.cly.request){
+            else if (msg.cly.request) {
                 Countly.request(msg.cly.request);
             }
         }
     }
-    
-    var readFile = function(key){
-        var dir = path.resolve(__dirname, Countly.storage_path+"__"+key+".json");
-        
+
+    /**
+     *  Read value from file
+     *  @param {String} key - key for file
+     *  @returns {varies} value in file
+     */
+    var readFile = function(key) {
+        var dir = path.resolve(__dirname, Countly.storage_path + "__" + key + ".json");
+
         //try reading data file
         var data;
-        try{
+        try {
             data = fs.readFileSync(dir);
-        } catch (ex) {
+        }
+        catch (ex) {
             //ther was no file, probably new init
             data = null;
         }
-    
-        try{
+
+        try {
             //trying to parse json string
             data = JSON.parse(data);
-        } catch (ex) {
+        }
+        catch (ex) {
             //problem parsing, corrupted file?
+            // eslint-disable-next-line no-console
             console.log(ex.stack);
             //backup corrupted file data
-            fs.writeFile(path.resolve(__dirname, Countly.storage_path+"__"+key+"."+getTimestamp()+Math.random()+".json"), data, function(){});
+            fs.writeFile(path.resolve(__dirname, Countly.storage_path + "__" + key + "." + getTimestamp() + Math.random() + ".json"), data, function() {});
             //start with new clean object
             data = null;
         }
         return data;
     };
-    
-    var forceStore = function(){
-        for(var i in __data){
-            var dir = path.resolve(__dirname, Countly.storage_path+"__"+i+".json");
+
+    /**
+     *  Force store data synchronously on unrecoverable errors to preserve it for next launch
+     */
+    var forceStore = function() {
+        for (var i in __data) {
+            var dir = path.resolve(__dirname, Countly.storage_path + "__" + i + ".json");
             var ob = {};
             ob[i] = __data[i];
-            try{
+            try {
                 fs.writeFileSync(dir, JSON.stringify(ob));
             }
-            catch(ex){
+            catch (ex) {
                 //tried to save whats possible
+                // eslint-disable-next-line no-console
                 console.log(ex.stack);
             }
         }
     };
-    
-    var storeSet = function(key, value) {
-        __data[key] = value;
-        var dir = path.resolve(__dirname, Countly.storage_path+"__"+key+".json");
+
+    var asyncWriteLock = false;
+    var asyncWriteQueue = [];
+
+    /**
+     *  Write to file and process queue while in asyncWriteLock
+     *  @param {String} key - key for value to store
+     *  @param {varies} value - value to store
+     *  @param {Function} callback - callback to call when done storing
+     */
+    var writeFile = function(key, value, callback) {
         var ob = {};
         ob[key] = value;
-        try{
-            fs.writeFileSync(dir, JSON.stringify(ob));
+        var dir = path.resolve(__dirname, Countly.storage_path + "__" + key + ".json");
+        fs.writeFile(dir, JSON.stringify(ob), function(err) {
+            if (err) {
+                // eslint-disable-next-line no-console
+                console.log(err);
+            }
+            if (typeof callback === "function") {
+                callback(err);
+            }
+            if (asyncWriteQueue.length) {
+                setTimeout(function() {
+                    var arr = asyncWriteQueue.shift();
+                    writeFile(arr[0], arr[1], arr[2]);
+                }, 0);
+            }
+            else {
+                asyncWriteLock = false;
+            }
+        });
+    };
+
+    /**
+     *  Save value in storage
+     *  @param {String} key - key for value to store
+     *  @param {varies} value - value to store
+     *  @param {Function} callback - callback to call when done storing
+     */
+    var storeSet = function(key, value, callback) {
+        __data[key] = value;
+        if (!asyncWriteLock) {
+            asyncWriteLock = true;
+            writeFile(key, value, callback);
         }
-        catch(ex){
-            //problem saving file
-            console.log(ex.stack);
+        else {
+            asyncWriteQueue.push([key, value, callback]);
         }
     };
-       
+
+    /**
+     *  Get value from storage
+     *  @param {String} key - key of value to get
+     *  @param {varies} def - default value to use if not set
+     *  @returns {varies} value for the key
+     */
     var storeGet = function(key, def) {
-        if(typeof __data[key] === "undefined"){
+        if (typeof __data[key] === "undefined") {
             var ob = readFile(key);
-            if(!ob){
+            if (!ob) {
                 __data[key] = def;
             }
-            else{
+            else {
                 __data[key] = ob[key];
             }
         }
         return __data[key];
     };
-}(Countly));
+}());
 
 module.exports = Countly;
 </code></pre>
@@ -1538,7 +1678,7 @@ module.exports = Countly;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>

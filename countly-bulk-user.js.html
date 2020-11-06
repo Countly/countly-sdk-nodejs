@@ -84,7 +84,6 @@
  * @param {string=} conf.ip_address - ip address of your user
  * @param {boolean} [conf.debug=false] - output debug info into console
  * @param {boolean} [conf.require_consent=false] - Pass true if you are implementing GDPR compatible consent management. It would prevent running any functionality without proper consent
- * @returns {module:lib/countly-bulk-user} instance
  * @example
  * var CountlyBulk = require("countly-sdk-nodejs").Bulk;
  *
@@ -93,43 +92,43 @@
  *   url: "https://API_HOST/",
  *   debug: true
  * });
- 
+ *
  * //adding requests by user
  * var user = server.add_user({device_id:"my_device_id"});
  * user.begin_session().add_event({key:"Test", count:1})
  */
-function CountlyBulkUser(conf){
+function CountlyBulkUser(conf) {
     "use strict";
-    
+
     var sessionStart = 0,
         syncConsents = {},
         lastParams = {};
-    
+
     /**
     * Array with list of available features that you can require consent for
-    */ 
-    var features = ["sessions","events","views","crashes","attribution","users","star-rating","location"];
-    
+    */
+    var features = ["sessions", "events", "views", "crashes", "attribution", "users", "star-rating", "location", "apm", "feedback", "remote-config"];
+
     //create object to store consents
     var consents = {};
-    for(var i = 0; i &lt; features.length; i++){
-        consents[features[i]] = {};
+    for (var feat = 0; feat &lt; features.length; feat++) {
+        consents[features[feat]] = {};
     }
 
-    if(!conf.device_id){
+    if (!conf.device_id) {
         log("device_id is missing");
         return;
     }
-    
-    if(!conf.server){
+
+    if (!conf.server) {
         log("server instance is missing");
         return;
     }
-    
-    
+
+
     /**
     * Modify feature groups for consent management. Allows you to group multiple features under one feature group
-    * @param {object} features - object to define feature name as key and core features as value
+    * @param {object} groupedFeatures - object to define feature name as key and core features as value
     * @example &lt;caption>Adding all features under one group&lt;/caption>
     * user.group_features({all:["sessions","events","views","crashes","attribution","users"]});
     * //After this call user.add_consent("all") to allow all features
@@ -141,138 +140,139 @@ function CountlyBulkUser(conf){
     * //After this call user.add_consent("activity") to allow "sessions","events","views"
     * //or call user.add_consent("info") to allow "attribution","users"
     * //or call user.add_consent("crashes") to allow some separate feature
-    */ 
-    this.group_features = function(features){
-        if(features){
-            for(var i in features){
-                if(!consents[i]){
-                    if(typeof features[i] === "string"){
-                        consents[i] = {features:[features[i]]};
+    */
+    this.group_features = function(groupedFeatures) {
+        if (groupedFeatures) {
+            for (var i in groupedFeatures) {
+                if (!consents[i]) {
+                    if (typeof groupedFeatures[i] === "string") {
+                        consents[i] = {features: [groupedFeatures[i]]};
                     }
-                    else if(features[i] &amp;&amp; features[i].constructor === Array &amp;&amp; features[i].length){
-                        consents[i] = {features:features[i]};
+                    else if (groupedFeatures[i] &amp;&amp; groupedFeatures[i].constructor === Array &amp;&amp; groupedFeatures[i].length) {
+                        consents[i] = {features: groupedFeatures[i]};
                     }
-                    else{
-                        log("Incorrect feature list for "+i+" value: "+features[i]);
+                    else {
+                        log("Incorrect feature list for " + i + " value: " + groupedFeatures[i]);
                     }
                 }
-                else{
-                    log("Feature name "+i+" is already reserved");
+                else {
+                    log("Feature name " + i + " is already reserved");
                 }
             }
         }
-        else{
-            log("Incorrect features: "+features);
+        else {
+            log("Incorrect features: " + groupedFeatures);
         }
     };
-    
+
     /**
     * Check if consent is given for specific feature (either core feature of from custom feature group)
     * @param {string} feature - name of the feature, possible values, "sessions","events","views","crashes","attribution","users" or customly provided through {@link CountlyBulkUser.group_features}
+    * @returns {bool} true if consent is given, false if it is not
     */
-    this.check_consent = function(feature){
-        if(!conf.require_consent){
+    this.check_consent = function(feature) {
+        if (!conf.require_consent) {
             //we don't need to have specific consents
             return true;
         }
-        if(consents[feature]){
+        if (consents[feature]) {
             return (consents[feature] &amp;&amp; consents[feature].optin) ? true : false;
         }
-        else{
-            log("No feature available for "+feature);
+        else {
+            log("No feature available for " + feature);
         }
         return false;
     };
-    
+
     /**
     * Add consent for specific feature, meaning, user allowed to track that data (either core feature of from custom feature group). Add consent before adding any data, or else this data will be ignored, as per not having consent
     * @param {string|array} feature - name of the feature, possible values, "sessions","events","views","crashes","attribution","users" or customly provided through {@link CountlyBulkUser.group_features}
     */
-    this.add_consent = function(feature){
-        log("Adding consent for "+feature);
-        if(feature.constructor === Array){
-            for(var i = 0; i &lt; feature.length; i++){
+    this.add_consent = function(feature) {
+        log("Adding consent for " + feature);
+        if (feature.constructor === Array) {
+            for (var i = 0; i &lt; feature.length; i++) {
                 this.add_consent(feature[i]);
             }
         }
-        else if(consents[feature]){
-            if(consents[feature].features){
+        else if (consents[feature]) {
+            if (consents[feature].features) {
                 consents[feature].optin = true;
                 //this is added group, let's iterate through sub features
                 this.add_consent(consents[feature].features);
             }
-            else{
+            else {
                 //this is core feature
-                if(consents[feature].optin !== true){
+                if (consents[feature].optin !== true) {
                     syncConsents[feature] = true;
                     consents[feature].optin = true;
                     updateConsent();
-                    setTimeout(function(){
-                        if(feature === "sessions" &amp;&amp; lastParams.begin_session){
+                    setTimeout(function() {
+                        if (feature === "sessions" &amp;&amp; lastParams.begin_session) {
                             this.begin_session.apply(this, lastParams.begin_session);
                             lastParams.begin_session = null;
                         }
-                        else if(feature === "views" &amp;&amp; lastParams.track_pageview){
+                        else if (feature === "views" &amp;&amp; lastParams.track_pageview) {
                             this.track_pageview.apply(this, lastParams.track_pageview);
                             lastParams.track_pageview = null;
                         }
-                    },1);
+                    }, 1);
                 }
             }
         }
-        else{
-            log("No feature available for "+feature);
+        else {
+            log("No feature available for " + feature);
         }
     };
-    
-    
+
+
     /**
     * Remove consent for specific feature, meaning, user opted out to track that data (either core feature of from custom feature group)
     * @param {string|array} feature - name of the feature, possible values, "sessions","events","views","crashes","attribution","users" or customly provided through {@link CountlyBulkUser.group_features}
     */
-    this.remove_consent = function(feature){
-        log("Removing consent for "+feature);
-        if(feature.constructor === Array){
-            for(var i = 0; i &lt; feature.length; i++){
+    this.remove_consent = function(feature) {
+        log("Removing consent for " + feature);
+        if (feature.constructor === Array) {
+            for (var i = 0; i &lt; feature.length; i++) {
                 this.remove_consent(feature[i]);
             }
         }
-        else if(consents[feature]){
-            if(consents[feature].features){
+        else if (consents[feature]) {
+            if (consents[feature].features) {
                 //this is added group, let's iterate through sub features
                 this.remove_consent(consents[feature].features);
             }
-            else{
+            else {
                 //this is core feature
-                if(consents[feature].optin !== false){
+                if (consents[feature].optin !== false) {
                     syncConsents[feature] = false;
                     updateConsent();
                 }
             }
             consents[feature].optin = false;
         }
-        else{
-            log("No feature available for "+feature);
+        else {
+            log("No feature available for " + feature);
         }
     };
-    
+
     var consentTimer;
-    var updateConsent = function(){
-        if(consentTimer){
+    var updateConsent = function() {
+        if (consentTimer) {
             //delay syncing consents
             clearTimeout(consentTimer);
             consentTimer = null;
         }
-        consentTimer = setTimeout(function(){
-            if(Object.keys(syncConsents).length){
+        consentTimer = setTimeout(function() {
+            if (Object.keys(syncConsents).length) {
                 //we have consents to sync, create request
-                conf.server.add_bulk_request([{consent:JSON.stringify(syncConsents)}]);
+                conf.server.add_bulk_request([{consent: JSON.stringify(syncConsents)}]);
                 //clear consents that needs syncing
                 syncConsents = {};
             }
         }, 1000);
     };
-    
+
     /**
     * Start user's sesssion
     * @param {Object} metrics - provide {@link Metrics} for this user/device, or else will try to collect what's possible
@@ -288,44 +288,44 @@ function CountlyBulkUser(conf){
     * @param {number} timestamp - timestamp when session started
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.begin_session = function(metrics, seconds, timestamp){
-        if(this.check_consent("sessions")){
+    this.begin_session = function(metrics, seconds, timestamp) {
+        if (this.check_consent("sessions")) {
             var bulk = [];
-            var query = prepareQuery({begin_session:1, metrics:metrics});
-            if(this.check_consent("location")){
-                if(conf.country_code){
+            var query = prepareQuery({begin_session: 1, metrics: metrics});
+            if (this.check_consent("location")) {
+                if (conf.country_code) {
                     query.country_code = conf.country_code;
                 }
-                if(conf.city){
+                if (conf.city) {
                     query.city = conf.city;
                 }
             }
-            else{
+            else {
                 query.location = "";
             }
-            if(timestamp){
+            if (timestamp) {
                 sessionStart = timestamp;
                 query.timestamp = timestamp;
             }
             bulk.push(query);
-            
+
             seconds = parseInt(seconds || 0);
-            
-            var beatCount = Math.ceil(seconds/60);
-            for(var i = 0; i &lt; beatCount; i++){
-                if(seconds > 0){
+
+            var beatCount = Math.ceil(seconds / 60);
+            for (var i = 0; i &lt; beatCount; i++) {
+                if (seconds > 0) {
                     query = prepareQuery();
-                    if(seconds > 60){
+                    if (seconds > 60) {
                         query.session_duration = 60;
                     }
-                    else{
+                    else {
                         query.session_duration = seconds;
                     }
-                    if(conf.ip_address){
+                    if (conf.ip_address) {
                         query.ip_address = conf.ip_address;
                     }
-                    if(timestamp){
-                        query.timestamp = timestamp+((i+1)*60);
+                    if (timestamp) {
+                        query.timestamp = timestamp + ((i + 1) * 60);
                     }
                     seconds -= 60;
                     bulk.push(query);
@@ -333,12 +333,12 @@ function CountlyBulkUser(conf){
             }
             conf.server.add_bulk_request(bulk);
         }
-        else{
+        else {
             lastParams.begin_session = arguments;
         }
         return this;
     };
-    
+
     /**
     * Report custom event
     * @param {Event} event - Countly {@link Event} object
@@ -350,13 +350,13 @@ function CountlyBulkUser(conf){
     * @param {Object=} event.segmentation - object with segments key /values
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.add_event = function(event){
-        if(this.check_consent("events")){
+    this.add_event = function(event) {
+        if (this.check_consent("events")) {
             conf.server.add_event(conf.device_id, event);
         }
         return this;
     };
-    
+
     /**
     * Report user data
     * @param {Object} user - Countly {@link UserDetails} object
@@ -371,15 +371,15 @@ function CountlyBulkUser(conf){
     * @param {Object=} user.custom - object with custom key value properties you want to save with user
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.user_details = function(user){
-        if(this.check_consent("users")){
+    this.user_details = function(user) {
+        if (this.check_consent("users")) {
             var props = ["name", "username", "email", "organization", "phone", "picture", "gender", "byear", "custom"];
             var query = prepareQuery({user_details: getProperties(user, props)});
             conf.server.add_request(query);
         }
         return this;
     };
-    
+
     /**
     * Report user conversion to the server (when you retrieved countly campaign data, for example through Android INSTALL_REFERER intent)
     * @param {string} campaign_id - id of campaign, the last part of the countly campaign link
@@ -387,27 +387,27 @@ function CountlyBulkUser(conf){
     * @param {number=} timestamp - timestamp of the conversion
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.report_conversion = function(campaign_id, campaign_user_id, timestamp){
-        if(this.check_consent("attribution")){
+    this.report_conversion = function(campaign_id, campaign_user_id, timestamp) {
+        if (this.check_consent("attribution")) {
             var query = prepareQuery();
-            
-            if(campaign_id){
+
+            if (campaign_id) {
                 query.campaign_id = campaign_id;
             }
-            
-            if(campaign_user_id){
+
+            if (campaign_user_id) {
                 query.campaign_user = campaign_user_id;
             }
-            
-            if(timestamp || sessionStart !== 0){
+
+            if (timestamp || sessionStart !== 0) {
                 query.timestamp = timestamp || sessionStart;
             }
-            
+
             conf.server.add_request(query);
         }
         return this;
     };
-    
+
     /**
     * Report user accessing specific view in your application
     * @param {string} view_name - name of the view or any other view identifier
@@ -421,18 +421,18 @@ function CountlyBulkUser(conf){
     * @param {boolean=} viewSegments.{any} - provide any other key value pairs to store with view
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.report_view = function(view_name, timestamp, duration, viewSegments){
-        if(this.check_consent("views")){
+    this.report_view = function(view_name, timestamp, duration, viewSegments) {
+        if (this.check_consent("views")) {
             var event = {
                 "key": "[CLY]_view",
                 "dur": duration,
                 "count": 1,
                 "segmentation": {
                     "name": view_name,
-                    "visit":1,
+                    "visit": 1,
                 }
             };
-            
+
             if (viewSegments) {
                 for (var key in viewSegments) {
                     if (typeof event.segmentation[key] === "undefined") {
@@ -440,19 +440,19 @@ function CountlyBulkUser(conf){
                     }
                 }
             }
-            
-            var query = prepareQuery({events:[event]});
-            if(timestamp){
+
+            var query = prepareQuery({events: [event]});
+            if (timestamp) {
                 query.timestamp = timestamp;
             }
             conf.server.add_request(query);
         }
-        else{
+        else {
             lastParams.track_pageview = arguments;
         }
         return this;
     };
-    
+
     /**
     * Provide information about user
     * @param {Object} feedback - object with feedback properties
@@ -463,9 +463,11 @@ function CountlyBulkUser(conf){
     * @param {boolean=} feedback.contactMe - did user give consent to contact him
     * @param {string=} feedback.email - user's email
     * @param {string=} feedback.comment - user's comment
+    * @param {number=} timestamp - timestamp when feedback was acquired
+    * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.report_feedback = function (feedback, timestamp) {
-        if (this.check_consent("star-rating")) {
+    this.report_feedback = function(feedback, timestamp) {
+        if (this.check_consent("star-rating") || this.check_consent("feedback")) {
             if (!feedback.widget_id) {
                 log("Feedback must contain widget_id property");
                 return;
@@ -481,7 +483,7 @@ function CountlyBulkUser(conf){
                     count: 1,
                     segmentation: {}
                 };
-                if(timestamp){
+                if (timestamp) {
                     event.timestamp = timestamp;
                 }
                 event.segmentation = getProperties(feedback, props);
@@ -491,7 +493,7 @@ function CountlyBulkUser(conf){
         }
         return this;
     };
-    
+
     /**
      * Report performance trace
      * @param {Object} trace - apm trace object
@@ -501,8 +503,9 @@ function CountlyBulkUser(conf){
      * @param {number} trace.etz - end timestamp
      * @param {Object} trace.app_metrics - key/value metrics like duration, to report with trace where value is number
      * @param {Object=} trace.apm_attr - object profiling attributes (not yet supported)
+     * @returns {module:lib/countly-bulk-user} instance
      */
-    this.report_trace = function (trace) {
+    this.report_trace = function(trace) {
         if (this.check_consent("apm")) {
             var props = ["type", "name", "stz", "etz", "apm_metrics", "apm_attr"];
             for (var i = 0; i &lt; props.length; i++) {
@@ -523,7 +526,7 @@ function CountlyBulkUser(conf){
         }
         return this;
     };
-    
+
     /**
     * Report crash
     * @param {Object} crash - object containing information about crash and state of device
@@ -554,33 +557,33 @@ function CountlyBulkUser(conf){
     * @param {number} timestamp - when crash happened
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.report_crash = function(crash, timestamp){
-        if(this.check_consent("crashes")){
-            var query = prepareQuery({crash:crash});
-            if(timestamp){
+    this.report_crash = function(crash, timestamp) {
+        if (this.check_consent("crashes")) {
+            var query = prepareQuery({crash: crash});
+            if (timestamp) {
                 query.timestamp = timestamp;
             }
             conf.server.add_request(query);
         }
         return this;
     };
-    
+
     var customData = {};
-    var change_custom_property = function(key, value, mod){
-        if(!customData[key]){
+    var change_custom_property = function(key, value, mod) {
+        if (!customData[key]) {
             customData[key] = {};
         }
-        if(mod === "$push" || mod === "$pull" || mod === "$addToSet"){
-            if(!customData[key][mod]){
+        if (mod === "$push" || mod === "$pull" || mod === "$addToSet") {
+            if (!customData[key][mod]) {
                 customData[key][mod] = [];
             }
             customData[key][mod].push(value);
         }
-        else{
+        else {
             customData[key][mod] = value;
         }
     };
-    
+
     /**
     * Sets user's custom property value
     * @param {string} key - name of the property to attach to user
@@ -606,7 +609,7 @@ function CountlyBulkUser(conf){
     * //send all custom property modified data to server
     * user.custom_save();
     **/
-    this.custom_set = function(key, value){
+    this.custom_set = function(key, value) {
         customData[key] = value;
         return this;
     };
@@ -616,7 +619,7 @@ function CountlyBulkUser(conf){
     * @param {string|number} value - value to store under provided property
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_set_once = function(key, value){
+    this.custom_set_once = function(key, value) {
         change_custom_property(key, value, "$setOnce");
         return this;
     };
@@ -625,7 +628,7 @@ function CountlyBulkUser(conf){
     * @param {string} key - name of the property to delete
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_unset = function (key) {
+    this.custom_unset = function(key) {
         customData[key] = "";
         return this;
     };
@@ -634,7 +637,7 @@ function CountlyBulkUser(conf){
     * @param {string} key - name of the property to attach to user
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_increment = function(key){
+    this.custom_increment = function(key) {
         change_custom_property(key, 1, "$inc");
         return this;
     };
@@ -644,7 +647,7 @@ function CountlyBulkUser(conf){
     * @param {number} value - value by which to increment server value
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_increment_by = function(key, value){
+    this.custom_increment_by = function(key, value) {
         change_custom_property(key, value, "$inc");
         return this;
     };
@@ -654,7 +657,7 @@ function CountlyBulkUser(conf){
     * @param {number} value - value by which to multiply server value
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_multiply = function(key, value){
+    this.custom_multiply = function(key, value) {
         change_custom_property(key, value, "$mul");
         return this;
     };
@@ -664,7 +667,7 @@ function CountlyBulkUser(conf){
     * @param {number} value - value which to compare to server's value and store maximal value of both provided
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_max = function(key, value){
+    this.custom_max = function(key, value) {
         change_custom_property(key, value, "$max");
         return this;
     };
@@ -674,7 +677,7 @@ function CountlyBulkUser(conf){
     * @param {number} value - value which to compare to server's value and store minimal value of both provided
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_min = function(key, value){
+    this.custom_min = function(key, value) {
         change_custom_property(key, value, "$min");
         return this;
     };
@@ -684,7 +687,7 @@ function CountlyBulkUser(conf){
     * @param {string|number} value - value which to add to array
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_push = function(key, value){
+    this.custom_push = function(key, value) {
         change_custom_property(key, value, "$push");
         return this;
     };
@@ -694,7 +697,7 @@ function CountlyBulkUser(conf){
     * @param {string|number} value - value which to add to array
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_push_unique = function(key, value){
+    this.custom_push_unique = function(key, value) {
         change_custom_property(key, value, "$addToSet");
         return this;
     };
@@ -704,7 +707,7 @@ function CountlyBulkUser(conf){
     * @param {string|number} value - value which to remove from array
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_pull = function(key, value){
+    this.custom_pull = function(key, value) {
         change_custom_property(key, value, "$pull");
         return this;
     };
@@ -712,43 +715,56 @@ function CountlyBulkUser(conf){
     * Save changes made to user's custom properties object and send them to server
     * @returns {module:lib/countly-bulk-user} instance
     **/
-    this.custom_save = function(){
-        if(this.check_consent("users")){
-            var query = prepareQuery({user_details:{custom:customData}});
+    this.custom_save = function() {
+        if (this.check_consent("users")) {
+            var query = prepareQuery({user_details: {custom: customData}});
             conf.server.add_request(query);
         }
         customData = {};
         return this;
     };
-    
-    //log stuff
-    function log(){
-        if(conf.debug &amp;&amp; typeof console !== "undefined"){
-            if(arguments[1] &amp;&amp; typeof arguments[1] === "object"){
+
+    /**
+     *  Log data if debug mode is enabled
+     */
+    function log() {
+        if (conf.debug &amp;&amp; typeof console !== "undefined") {
+            if (arguments[1] &amp;&amp; typeof arguments[1] === "object") {
                 arguments[1] = JSON.stringify(arguments[1]);
             }
-            console.log( Array.prototype.slice.call(arguments).join("\n") );
+            // eslint-disable-next-line no-console
+            console.log(Array.prototype.slice.call(arguments).join("\n"));
         }
     }
-    
-    function prepareQuery(query){
+
+    /**
+     *  Prepare query parameters
+     *  @param {Object} query - query params
+     *  @returns {Object} enhanced query params
+     */
+    function prepareQuery(query) {
         query = query || {};
-        if(!query.device_id){
+        if (!query.device_id) {
             query.device_id = conf.device_id;
         }
-        if(conf.ip_address &amp;&amp; this.check_consent("location")){
+        if (conf.ip_address &amp;&amp; this.check_consent("location")) {
             query.ip_address = conf.ip_address;
         }
         return query;
     }
-    
-    //retrieve only specific properties from object
-    function getProperties(orig, props){
+
+    /**
+     *  Retrieve only specific properties from object
+     *  @param {Object} orig - object from which to get properties
+     *  @param {Array} props - list of properties to get
+     *  @returns {Object} Object with requested properties
+     */
+    function getProperties(orig, props) {
         var ob = {};
         var prop;
-        for(var i = 0; i &lt; props.length; i++){
+        for (var i = 0; i &lt; props.length; i++) {
             prop = props[i];
-            if(typeof orig[prop] !== "undefined"){
+            if (typeof orig[prop] !== "undefined") {
                 ob[prop] = orig[prop];
             }
         }
@@ -782,7 +798,7 @@ module.exports = CountlyBulkUser;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>

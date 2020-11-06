@@ -75,7 +75,7 @@
  * //adding raw request
  * server.add_request({begin_session:1, metrics:{_os:"Linux"}, device_id:"users_device_id", events:[{key:"Test", count:1}]});
  */
- 
+
 var fs = require("fs"),
     path = require("path"),
     http = require("http"),
@@ -99,7 +99,6 @@ var fs = require("fs"),
  * @param {boolean} [conf.force_post=false] - force using post method for all requests
  * @param {string} [conf.storage_path="../bulk_data/"] - where SDK would store data, including id, queues, etc
  * @param {string} [conf.http_options=] - function to get http options by reference and overwrite them, before running each request
- * @returns {module:lib/countly-bulk} instance
  * @example
  * var server = new CountlyBulk({
  *   app_key: "{YOUR-API-KEY}",
@@ -107,14 +106,14 @@ var fs = require("fs"),
  *   debug: true
  * });
  */
-function CountlyBulk(conf){
+function CountlyBulk(conf) {
     "use strict";
-    
+
     var SDK_VERSION = "20.04";
     var SDK_NAME = "javascript_native_nodejs_bulk";
-    
+
     var empty_queue_callback = null;
-    
+
     var initiated = false,
         lastMsTs = 0,
         apiPath = "/i/bulk",
@@ -122,19 +121,19 @@ function CountlyBulk(conf){
         empty_count = 0,
         readyToProcess = true,
         __data = {};
-    
-    if(!conf.app_key){
+
+    if (!conf.app_key) {
         log("app_key is missing");
         return;
     }
-    
-    if(!conf.url){
+
+    if (!conf.url) {
         log("url is missing");
         return;
     }
-    
+
     conf.url = stripTrailingSlash(conf.url);
-    
+
     conf.debug = conf.debug || false;
     conf.interval = conf.interval || 5000;
     conf.bulk_size = conf.bulk_size || 50;
@@ -145,21 +144,23 @@ function CountlyBulk(conf){
     conf.persist_queue = conf.persist_queue || false;
     conf.storage_path = conf.storage_path || "../bulk_data/";
     conf.http_options = conf.http_options || null;
-    
-    var dir = path.resolve(__dirname, conf.storage_path);
-    if(conf.persist_queue){
-        try{
-            if (!fs.existsSync(dir)){
-                fs.mkdirSync(dir);
+
+    var mainDir = path.resolve(__dirname, conf.storage_path);
+    if (conf.persist_queue) {
+        try {
+            if (!fs.existsSync(mainDir)) {
+                fs.mkdirSync(mainDir);
             }
-        } catch(ex){
-            //problem creating dir
+        }
+        catch (ex) {
+            //problem creating directory
+            // eslint-disable-next-line no-console
             console.log(ex.stack);
         }
     }
-    
+
     this.conf = conf;
-    
+
     /**
     * Add raw request with provided query string parameters
     * @example 
@@ -172,24 +173,24 @@ function CountlyBulk(conf){
     * @param {Object} query - object with key/values which will be used as query string parameters
     * @returns {module:lib/countly-bulk} instance
     **/
-    this.add_request = function(query){
-        if(cluster.isMaster){
-            if(!query.device_id){
+    this.add_request = function(query) {
+        if (cluster.isMaster) {
+            if (!query.device_id) {
                 log("device_id is missing", query);
                 return;
             }
-            
-            if(!query.app_key){
+
+            if (!query.app_key) {
                 query.app_key = conf.app_key;
             }
-            
-            if((query.timestamp + "").length !== 13 &amp;&amp; (query.timestamp + "").length !== 10){
+
+            if ((query.timestamp + "").length !== 13 &amp;&amp; (query.timestamp + "").length !== 10) {
                 log("incorrect timestamp format", query);
             }
             query.sdk_name = SDK_NAME;
             query.sdk_version = SDK_VERSION;
             query.timestamp = query.timestamp || getMsTimestamp();
-            var date = new Date((query.timestamp + "").length === 13 ? query.timestamp : parseInt(query.timestamp)*1000);
+            var date = new Date((query.timestamp + "").length === 13 ? query.timestamp : parseInt(query.timestamp) * 1000);
             query.hour = query.hour || date.getHours();
             query.dow = query.dow || date.getDay();
 
@@ -197,12 +198,12 @@ function CountlyBulk(conf){
             log("adding request", query);
             storeSet("cly_req_queue", requestQueue);
         }
-        else{
+        else {
             process.send({ cly_bulk: {cly_queue: query} });
         }
         return this;
     };
-    
+
     /**
     * Add multiple raw requests each with provided query string parameters
     * @example 
@@ -212,31 +213,31 @@ function CountlyBulk(conf){
     *   debug: true
     * });
     * server.add_bulk_request([{app_key:"somekey", devide_id:"someid", begin_session:1}, {app_key:"somekey", devide_id:"someid", events:"[{'key':'val','count':1}]"}]);
-    * @param {Array} bulk - array with multiple request objects that can be provided with {@link CountlyBulk.add_request}
+    * @param {Array} requests - array with multiple request objects that can be provided with {@link CountlyBulk.add_request}
     * @returns {module:lib/countly-bulk} instance
     **/
-    this.add_bulk_request = function(requests){
-        if(cluster.isMaster){
+    this.add_bulk_request = function(requests) {
+        if (cluster.isMaster) {
             var query;
-            for(var i in requests){
+            for (var i in requests) {
                 query = requests[i];
-                if(!query.device_id){
+                if (!query.device_id) {
                     log("device_id is missing", query);
                     return;
                 }
-                
-                if(!query.app_key){
+
+                if (!query.app_key) {
                     query.app_key = conf.app_key;
                 }
-                
-                if((query.timestamp + "").length !== 13 &amp;&amp; (query.timestamp + "").length !== 10){
+
+                if ((query.timestamp + "").length !== 13 &amp;&amp; (query.timestamp + "").length !== 10) {
                     log("incorrect timestamp format", query);
                 }
-                
+
                 query.sdk_name = SDK_NAME;
                 query.sdk_version = SDK_VERSION;
                 query.timestamp = query.timestamp || getMsTimestamp();
-                var date = new Date((query.timestamp + "").length === 13 ? query.timestamp : parseInt(query.timestamp)*1000);
+                var date = new Date((query.timestamp + "").length === 13 ? query.timestamp : parseInt(query.timestamp) * 1000);
                 query.hour = query.hour || date.getHours();
                 query.dow = query.dow || date.getDay();
                 log("adding bulk request", query);
@@ -244,12 +245,12 @@ function CountlyBulk(conf){
             }
             storeSet("cly_req_queue", requestQueue);
         }
-        else{
+        else {
             process.send({ cly_bulk: {cly_bulk_queue: requests} });
         }
         return this;
     };
-    
+
     /**
     * Add raw event data for specific user (events are bulked by users)
     * @example 
@@ -269,40 +270,40 @@ function CountlyBulk(conf){
     * @param {number=} event.timestamp - timestamp when event occurred
     * @returns {module:lib/countly-bulk} instance
     **/
-    this.add_event = function(device_id, event){
-        if(!device_id){
+    this.add_event = function(device_id, event) {
+        if (!device_id) {
             log("device_id is missing");
             return;
         }
-        
-        if(!event.key){
+
+        if (!event.key) {
             log("Event must have key property");
             return;
         }
-        if(cluster.isMaster){
-            if(!event.count){
+        if (cluster.isMaster) {
+            if (!event.count) {
                 event.count = 1;
             }
-            
+
             var props = ["key", "count", "sum", "dur", "segmentation", "timestamp"];
             var e = getProperties(event, props);
             e.timestamp = e.timestamp || getMsTimestamp();
-            var date = new Date((e.timestamp + "").length === 13 ? e.timestamp : parseInt(e.timestamp)*1000);
+            var date = new Date((e.timestamp + "").length === 13 ? e.timestamp : parseInt(e.timestamp) * 1000);
             e.hour = date.getHours();
             e.dow = date.getDay();
             log("Adding event: ", event);
-            if(!eventQueue[device_id]){
+            if (!eventQueue[device_id]) {
                 eventQueue[device_id] = [];
             }
             eventQueue[device_id].push(e);
             storeSet("cly_bulk_event", eventQueue);
         }
-        else{
-            process.send({ cly_bulk: {device_id:device_id, event: event} });
+        else {
+            process.send({ cly_bulk: {device_id: device_id, event: event} });
         }
         return this;
     };
-    
+
     /**
     * Start processing requests
     * @param {function} callback - to call when queue is empty and you can stop server
@@ -315,9 +316,9 @@ function CountlyBulk(conf){
     * });
     * server.start();
     **/
-    this.start = function(callback){
+    this.start = function(callback) {
         if (cluster.isMaster) {
-            if(!initiated){
+            if (!initiated) {
                 empty_queue_callback = callback;
                 initiated = true;
                 heartBeat();
@@ -325,7 +326,7 @@ function CountlyBulk(conf){
         }
         return this;
     };
-    
+
     /**
     * Stop processing requests
     * @returns {module:lib/countly-bulk} instance
@@ -337,11 +338,11 @@ function CountlyBulk(conf){
     * });
     * server.stop();
     **/
-    this.stop = function(){
+    this.stop = function() {
         initiated = false;
         return this;
     };
-    
+
     /**
     * Manually check queue size
     * @returns {number} amount of items in queue
@@ -354,21 +355,21 @@ function CountlyBulk(conf){
     * server.add_request({device_id:"id", app_key:"key", begin_session:1});
     * server.queue_size(); //should return 1
     **/
-    this.queue_size = function(){
+    this.queue_size = function() {
         var eventCount = 0;
-        for(var i in eventQueue){
+        for (var i in eventQueue) {
             eventCount += eventQueue[i].length;
         }
-        return Math.ceil(eventCount/conf.max_events) + Math.ceil(requestQueue.length/conf.bulk_size) + bulkQueue.length;
+        return Math.ceil(eventCount / conf.max_events) + Math.ceil(requestQueue.length / conf.bulk_size) + bulkQueue.length;
     };
-    
+
     /**
     * Create specific user to easier send information about specific user
-    * @param {Object} conf - CountlyBulkUser configuration options
-    * @param {string} conf.device_id - identification of the user
-    * @param {string=} conf.country_code - country code for your user
-    * @param {string=} conf.city - name of the city of your user
-    * @param {string=} conf.ip_address - ip address of your user
+    * @param {Object} userConf - CountlyBulkUser configuration options
+    * @param {string} userConf.device_id - identification of the user
+    * @param {string=} userConf.country_code - country code for your user
+    * @param {string=} userConf.city - name of the city of your user
+    * @param {string=} userConf.ip_address - ip address of your user
     * @returns {module:lib/countly-bulk-user} instance
     * @example 
     * var server = new CountlyBulk({
@@ -378,145 +379,174 @@ function CountlyBulk(conf){
     * });
     * var user = server.add_user({device_id:"my_device_id"});
     **/
-    this.add_user = function(conf){
-        conf.server = this;
-        return new BulkUser(conf);
+    this.add_user = function(userConf) {
+        userConf.server = this;
+        return new BulkUser(userConf);
     };
-    
-    //insert request to queue
-    function toBulkRequestQueue(bulkRequest){
+
+    /**
+     *  Insert request to queue
+     *  @param {Object} bulkRequest - bulk request object
+     */
+    function toBulkRequestQueue(bulkRequest) {
         bulkQueue.push(bulkRequest);
         storeSet("cly_bulk_queue", bulkQueue);
     }
     var self = this;
-    //heart beat
-    function heartBeat(){
+
+    /**
+    *  Makin request making and data processing loop
+    */
+    function heartBeat() {
         var isEmpty = true;
         //process event queue
         var eventChanges = false;
-        for(var device_id in eventQueue){
-            if(eventQueue[device_id].length > 0){
+        for (var device_id in eventQueue) {
+            if (eventQueue[device_id].length > 0) {
                 eventChanges = true;
-                if(eventQueue[device_id].length &lt;= conf.max_events){
-                    self.add_request({device_id:device_id, events: eventQueue[device_id]});
+                if (eventQueue[device_id].length &lt;= conf.max_events) {
+                    self.add_request({device_id: device_id, events: eventQueue[device_id]});
                     eventQueue[device_id] = [];
                 }
-                else{
+                else {
                     var events = eventQueue[device_id].splice(0, conf.max_events);
-                    self.add_request({device_id:device_id, events: events});
+                    self.add_request({device_id: device_id, events: events});
                 }
             }
         }
-        if(eventChanges){
+        if (eventChanges) {
             isEmpty = false;
             storeSet("cly_bulk_event", eventQueue);
         }
-        
+
         //process request queue into bulk requests
-        if(requestQueue.length > 0){
+        if (requestQueue.length > 0) {
             isEmpty = false;
-            if(requestQueue.length &lt;= conf.bulk_size){
-                toBulkRequestQueue({app_key:conf.app_key, requests: JSON.stringify(requestQueue)});
+            if (requestQueue.length &lt;= conf.bulk_size) {
+                toBulkRequestQueue({app_key: conf.app_key, requests: JSON.stringify(requestQueue)});
                 requestQueue = [];
             }
-            else{
+            else {
                 var requests = requestQueue.splice(0, conf.bulk_size);
-                toBulkRequestQueue({app_key:conf.app_key, requests: JSON.stringify(requests)});
+                toBulkRequestQueue({app_key: conf.app_key, requests: JSON.stringify(requests)});
             }
             storeSet("cly_req_queue", requestQueue);
         }
-        
+
         //process bulk request queue
-        if(bulkQueue.length > 0 &amp;&amp; readyToProcess &amp;&amp; getTimestamp() > failTimeout){
+        if (bulkQueue.length > 0 &amp;&amp; readyToProcess &amp;&amp; getTimestamp() > failTimeout) {
             isEmpty = false;
             readyToProcess = false;
             var params = bulkQueue.shift();
             log("Processing request", params);
-            makeRequest(params, function(err, params){
-                log("Request Finished", params, err);
-                if(err){
-                    bulkQueue.unshift(params);
+            makeRequest(params, function(err, res) {
+                log("Request Finished", res, err);
+                if (err) {
+                    bulkQueue.unshift(res);
                     failTimeout = getTimestamp() + conf.fail_timeout;
                 }
                 storeSet("cly_bulk_queue", bulkQueue);
                 readyToProcess = true;
             });
         }
-        
-        if(isEmpty){
+
+        if (isEmpty) {
             empty_count++;
-            if(empty_count === 3){
+            if (empty_count === 3) {
                 empty_count = 0;
-                if(empty_queue_callback){
+                if (empty_queue_callback) {
                     empty_queue_callback();
                 }
             }
         }
-        
-        if(initiated){
+
+        if (initiated) {
             setTimeout(heartBeat, conf.interval);
         }
     }
-    
-    //log stuff
-    function log(){
-        if(conf.debug &amp;&amp; typeof console !== "undefined"){
-            if(arguments[1] &amp;&amp; typeof arguments[1] === "object"){
+
+    /**
+     *  Log data if debug mode is enabled
+     */
+    function log() {
+        if (conf.debug &amp;&amp; typeof console !== "undefined") {
+            if (arguments[1] &amp;&amp; typeof arguments[1] === "object") {
                 arguments[1] = JSON.stringify(arguments[1]);
             }
-            console.log( Array.prototype.slice.call(arguments).join("\n") );
+            // eslint-disable-next-line no-console
+            console.log(Array.prototype.slice.call(arguments).join("\n"));
         }
     }
-    
-    //get unique timestamp in miliseconds
-    function getMsTimestamp(){
+
+    /**
+     *  Get unique timestamp in miliseconds
+     *  @returns {number} miliseconds timestamp
+     */
+    function getMsTimestamp() {
         var ts = new Date().getTime();
-        if(lastMsTs >= ts){
+        if (lastMsTs >= ts) {
             lastMsTs++;
         }
-        else{
+        else {
             lastMsTs = ts;
         }
         return lastMsTs;
     }
-    
-    //parsing host and port information from url
+
+    /**
+     *  Parsing host and port information from url
+     *  @param {String} url - url to which request will be made
+     *  @returns {Object} Server options
+     */
     function parseUrl(url) {
         var serverOptions = {
             host: "localhost",
             port: 80
         };
-        if(url.indexOf("https") === 0){
+        if (url.indexOf("https") === 0) {
             serverOptions.port = 443;
         }
         var host = url.split("://").pop();
         serverOptions.host = host;
         var lastPos = host.indexOf(":");
         if (lastPos > -1) {
-            serverOptions.host = host.slice(0,lastPos);
-            serverOptions.port = Number(host.slice(lastPos+1,host.length));
+            serverOptions.host = host.slice(0, lastPos);
+            serverOptions.port = Number(host.slice(lastPos + 1, host.length));
         }
         return serverOptions;
     }
-    
-    //convert JSON object to query params
-    function prepareParams(params){
+
+    /**
+     *  Convert JSON object to query params
+     *  @param {Object} params - object with url params
+     *  @returns {String} query string
+     */
+    function prepareParams(params) {
         var str = [];
-        for(var i in params){
-            str.push(i+"="+encodeURIComponent(params[i]));
+        for (var i in params) {
+            str.push(i + "=" + encodeURIComponent(params[i]));
         }
         return str.join("&amp;");
     }
-    
-    //removing trailing slashes
+
+    /**
+     *  Removing trailing slashes
+     *  @memberof Countly._internals
+     *  @param {String} str - string from which to remove traling slash
+     *  @returns {String} modified string
+     */
     function stripTrailingSlash(str) {
-        if(str.substr(str.length - 1) === "/") {
+        if (str.substr(str.length - 1) === "/") {
             return str.substr(0, str.length - 1);
         }
         return str;
     }
-    
-    //sending HTTP request
+
+    /**
+    *  Making HTTP request
+    *  @param {Object} params - key value object with URL params
+    *  @param {Function} callback - callback when request finished or failed
+    */
     function makeRequest(params, callback) {
         try {
             log("Sending HTTP request");
@@ -526,18 +556,18 @@ function CountlyBulk(conf){
             var options = {
                 host: serverOptions.host,
                 port: serverOptions.port,
-                path: apiPath+"?"+data,
+                path: apiPath + "?" + data,
                 method: "GET"
             };
-            
-            if(data.length >= 2000){
+
+            if (data.length >= 2000) {
                 method = "POST";
             }
-            else if(conf.force_post){
+            else if (conf.force_post) {
                 method = "POST";
             }
-            
-            if(method === "POST"){
+
+            if (method === "POST") {
                 options.method = "POST";
                 options.path = apiPath;
                 options.headers = {
@@ -549,151 +579,214 @@ function CountlyBulk(conf){
                 conf.http_options(options);
             }
             var protocol = http;
-            if(conf.url.indexOf("https") === 0){
+            if (conf.url.indexOf("https") === 0) {
                 protocol = https;
             }
             var req = protocol.request(options, function(res) {
                 var str = "";
-                res.on("data", function (chunk) {
+                res.on("data", function(chunk) {
                     str += chunk;
                 });
-            
-                res.on("end", function () {
-                    try{
+
+                res.on("end", function() {
+                    try {
                         str = JSON.parse(str);
                     }
-                    catch(ex){
+                    catch (ex) {
                         str = {};
                     }
-                    if(res.statusCode >= 200 &amp;&amp; res.statusCode &lt; 300 &amp;&amp; str.result === "Success"){
+                    if (res.statusCode >= 200 &amp;&amp; res.statusCode &lt; 300 &amp;&amp; str.result === "Success") {
                         callback(false, params);
                     }
-                    else{
+                    else {
                         callback(true, params);
                     }
                 });
             });
-            if(method === "POST"){
+            if (method === "POST") {
                 // write data to request body
                 req.write(data);
             }
 
-            req.on("error", function(err){
+            req.on("error", function(err) {
                 log("Connection failed.", err);
                 if (typeof callback === "function") {
                     callback(true, params);
                 }
             });
-            
+
             req.end();
-        } catch (e) {
+        }
+        catch (e) {
             // fallback
             log("Failed HTTP request", e);
-            if (typeof callback === "function") { callback(true, params); }
+            if (typeof callback === "function") {
+                callback(true, params);
+            }
         }
     }
-       
-    //get current timestamp
-    function getTimestamp(){
+
+    /**
+     *  Get current timestamp
+     *  @returns {number} unix timestamp in seconds
+     */
+    function getTimestamp() {
         return Math.floor(new Date().getTime() / 1000);
     }
-    
-    //retrieve only specific properties from object
-    function getProperties(orig, props){
+
+    /**
+     *  Retrieve only specific properties from object
+     *  @param {Object} orig - object from which to get properties
+     *  @param {Array} props - list of properties to get
+     *  @returns {Object} Object with requested properties
+     */
+    function getProperties(orig, props) {
         var ob = {};
         var prop;
-        for(var i = 0; i &lt; props.length; i++){
+        for (var i = 0; i &lt; props.length; i++) {
             prop = props[i];
-            if(typeof orig[prop] !== "undefined"){
+            if (typeof orig[prop] !== "undefined") {
                 ob[prop] = orig[prop];
             }
         }
         return ob;
     }
-    
-    function handleWorkerMessage(msg){
-        if(msg.cly_bulk){
-            if(msg.cly_bulk.cly_queue){
+
+    /**
+     *  Handle messages from forked workers
+     *  @param {Object} msg - message from worker
+     */
+    function handleWorkerMessage(msg) {
+        if (msg.cly_bulk) {
+            if (msg.cly_bulk.cly_queue) {
                 self.add_request(msg.cly_bulk.cly_queue);
             }
-            else if(msg.cly_bulk.cly_bulk_queue){
+            else if (msg.cly_bulk.cly_bulk_queue) {
                 self.add_bulk_request(msg.cly_bulk.cly_bulk_queue);
             }
-            else if(msg.cly_bulk.event &amp;&amp; msg.cly_bulk.device_id){
+            else if (msg.cly_bulk.event &amp;&amp; msg.cly_bulk.device_id) {
                 self.add_event(msg.cly_bulk.device_id, msg.cly_bulk.event);
             }
         }
     }
-    
-    var readFile = function(key){
+
+    /**
+     *  Read value from file
+     *  @param {String} key - key for file
+     *  @returns {varies} value in file
+     */
+    var readFile = function(key) {
         var data;
-        if(conf.persist_queue){
-            var dir = path.resolve(__dirname, conf.storage_path+"__"+key+".json");
-            
+        if (conf.persist_queue) {
+            var dir = path.resolve(__dirname, conf.storage_path + "__" + key + ".json");
+
             //try reading data file
-            try{
+            try {
                 data = fs.readFileSync(dir);
-            } catch (ex) {
+            }
+            catch (ex) {
                 //ther was no file, probably new init
                 data = null;
             }
-        
-            try{
+
+            try {
                 //trying to parse json string
                 data = JSON.parse(data);
-            } catch (ex) {
+            }
+            catch (ex) {
                 //problem parsing, corrupted file?
+                // eslint-disable-next-line no-console
                 console.log(ex.stack);
                 //backup corrupted file data
-                fs.writeFile(path.resolve(__dirname, conf.storage_path+"__"+key+"."+getTimestamp()+Math.random()+".json"), data, function(){});
+                fs.writeFile(path.resolve(__dirname, conf.storage_path + "__" + key + "." + getTimestamp() + Math.random() + ".json"), data, function() {});
                 //start with new clean object
                 data = null;
             }
         }
         return data;
     };
-    
-    var storeSet = function(key, value) {
-        if(conf.persist_queue){
-            __data[key] = value;
-            var dir = path.resolve(__dirname, conf.storage_path+"__"+key+".json");
-            var ob = {};
-            ob[key] = value;
-            try{
-                fs.writeFileSync(dir, JSON.stringify(ob));
+
+    var asyncWriteLock = false;
+    var asyncWriteQueue = [];
+
+    /**
+     *  Write to file and process queue while in asyncWriteLock
+     *  @param {String} key - key for value to store
+     *  @param {varies} value - value to store
+     *  @param {Function} callback - callback to call when done storing
+     */
+    var writeFile = function(key, value, callback) {
+        var ob = {};
+        ob[key] = value;
+        var dir = path.resolve(__dirname, conf.storage_path + "__" + key + ".json");
+        fs.writeFile(dir, JSON.stringify(ob), function(err) {
+            if (err) {
+                // eslint-disable-next-line no-console
+                console.log(err);
             }
-            catch(ex){
-                //problem saving file
-                console.log(ex.stack);
+            if (typeof callback === "function") {
+                callback(err);
             }
+            if (asyncWriteQueue.length) {
+                setTimeout(function() {
+                    var arr = asyncWriteQueue.shift();
+                    writeFile(arr[0], arr[1], arr[2]);
+                }, 0);
+            }
+            else {
+                asyncWriteLock = false;
+            }
+        });
+    };
+
+    /**
+     *  Save value in storage
+     *  @param {String} key - key for value to store
+     *  @param {varies} value - value to store
+     *  @param {Function} callback - callback to call when done storing
+     */
+    var storeSet = function(key, value, callback) {
+        __data[key] = value;
+        if (!asyncWriteLock) {
+            asyncWriteLock = true;
+            writeFile(key, value, callback);
+        }
+        else {
+            asyncWriteQueue.push([key, value, callback]);
         }
     };
-    
+
+    /**
+     *  Get value from storage
+     *  @param {String} key - key of value to get
+     *  @param {varies} def - default value to use if not set
+     *  @returns {varies} value for the key
+     */
     var storeGet = function(key, def) {
-        if(typeof __data[key] === "undefined"){
+        if (typeof __data[key] === "undefined") {
             var ob = readFile(key);
-            if(!ob){
+            if (!ob) {
                 __data[key] = def;
             }
-            else{
+            else {
                 __data[key] = ob[key];
             }
         }
         return __data[key];
     };
-    
+
     //listen to current workers
-    if(cluster.workers){
+    if (cluster.workers) {
         for (var id in cluster.workers) {
             cluster.workers[id].on("message", handleWorkerMessage);
         }
     }
-    
+
     //handle future workers
     cluster.on("fork", function(worker) {
         worker.on("message", handleWorkerMessage);
     });
-    
+
     var requestQueue = storeGet("cly_req_queue", []),
         eventQueue = storeGet("cly_bulk_event", {}),
         bulkQueue = storeGet("cly_bulk_queue", []);
@@ -725,7 +818,7 @@ module.exports = CountlyBulk;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
