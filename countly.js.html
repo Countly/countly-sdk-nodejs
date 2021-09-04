@@ -212,7 +212,7 @@ Countly.Bulk = Bulk;
             var dir = path.resolve(__dirname, Countly.storage_path);
             try {
                 if (!fs.existsSync(dir)) {
-                    fs.mkdirSync(dir);
+                    fs.mkdirSync(dir, { recursive: true });
                 }
             }
             catch (ex) {
