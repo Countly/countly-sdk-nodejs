@@ -1,4 +1,4 @@
-## 21.11
+## 21.11.0
 - Increased the default max event batch size to 100.
 
 ## 20.11
