@@ -1,5 +1,5 @@
 # Countly NodeJS SDK 
-[![Build Status](https://travis-ci.org/Countly/countly-sdk-nodejs.svg?branch=master)](https://travis-ci.org/Countly/countly-sdk-nodejs) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/e68f25fa4a9b4990bdb213554901728b)](https://www.codacy.com/app/ar2rsawseen/countly-sdk-nodejs?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-nodejs&amp;utm_campaign=Badge_Grade) [![npm version](https://badge.fury.io/js/countly-sdk-nodejs.svg)](https://badge.fury.io/js/countly-sdk-nodejs) [![Inline docs](https://inch-ci.org/github/Countly/countly-sdk-nodejs.svg?branch=master)](https://inch-ci.org/github/Countly/countly-sdk-nodejs)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e68f25fa4a9b4990bdb213554901728b)](https://www.codacy.com/app/ar2rsawseen/countly-sdk-nodejs?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-nodejs&amp;utm_campaign=Badge_Grade) [![npm version](https://badge.fury.io/js/countly-sdk-nodejs.svg)](https://badge.fury.io/js/countly-sdk-nodejs) [![Inline docs](https://inch-ci.org/github/Countly/countly-sdk-nodejs.svg?branch=master)](https://inch-ci.org/github/Countly/countly-sdk-nodejs)
 
 
 ## What's Countly?
