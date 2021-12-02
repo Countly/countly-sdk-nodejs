@@ -1,5 +1,6 @@
 ## 21.11.0
 - Increased the default max event batch size to 100.
+- Logs are now color coded and indicate log levels.
 
 ## 20.11
 - Add javascript flag to reported errors
