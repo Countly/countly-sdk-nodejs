@@ -188,7 +188,7 @@ var tests = [
     },
 
     function(data) {
-        assert.equal(data, "Adding userdetails: ");
+        assert.equal(data, "Trying to add userdetails: ");
     },
     function(data) {
         assert.deepEqual(JSON.parse(data), {"name": "Arturs Sosins", "username": "ar2rsawseen", "email": "test@test.com", "organization": "Countly", "phone": "+37112345678", "picture": "https://pbs.twimg.com/profile_images/1442562237/012_n_400x400.jpg", "gender": "M", "byear": 1987, "custom": {"key1": "value1", "key2": "value2"}});
