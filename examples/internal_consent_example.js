@@ -4,13 +4,16 @@ var Countly = require("../lib/countly.js");
 Countly.init({
     app_key: "YOUR_APP_KEY",
     url: "https://try.count.ly", //your server goes here
-    debug: true
+    debug: true,
+    require_consent: true //check for consent
 });
 
 //begin session
 Countly.begin_session();
+Countly.add_consent(["sessions", "events", "views", "users", "star-rating", "apm", "feedback"]);
 
-//add custom event to see if event consent is given
+
+//add custom event to see if "event" consent will be given
 Countly.add_event({
     "key": "This is a custom event",
     "count": 1,
@@ -19,7 +22,7 @@ Countly.add_event({
     }
 });
 
-//add internal events to see if they get their respective consents instead of event consent
+//add internal events to see if they get their "respective consents" instead of "event" consent
 Countly.add_event({
     "key": "[CLY]_view",
     "count": 1,
