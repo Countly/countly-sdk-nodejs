@@ -1,4 +1,5 @@
 ## 21.11.0
+- !! Major breaking change !! Changing device ID without merging will now clear the current consent. Consent has to be given again after performing this action.
 - ! Minor breaking change ! Multiple values now have a default limit adjustable at initialization:
     - Maximum size of all string keys is now 128 characters by default.
     - Maximum size of all values in key-value pairs is now 256 characters by default.
