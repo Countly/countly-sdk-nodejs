@@ -1,5 +1,6 @@
 ## 21.11.0
 - !! Major breaking change !! Changing device ID without merging will now clear the current consent. Consent has to be given again after performing this action.
+- ! Minor breaking change ! After initialization, the logging/debugging mode can only be changed with `Countly.setLoggingEnabled` instead of `Countly.debug` now.
 - Increased the default max event batch size to 100.
 - Logs are now color coded and indicate log levels.
 
