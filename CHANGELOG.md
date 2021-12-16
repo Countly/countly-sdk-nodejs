@@ -7,6 +7,7 @@
     - Maximum amount of breadcrumbs that can be recorded at once is now 100 by default.
     - Maximum stack trace lines per thread is now 30 by default.
     - Maximum stack trace line length is now 200 by default. 
+- ! Minor breaking change ! After initialization, the logging/debugging mode can only be changed with `Countly.setLoggingEnabled` instead of `Countly.debug` now.
 - Increased the default max event batch size to 100.
 
 ## 20.11
