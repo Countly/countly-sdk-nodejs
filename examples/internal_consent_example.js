@@ -10,7 +10,7 @@ Countly.init({
 
 //begin session
 Countly.begin_session();
-Countly.add_consent(["sessions", "events", "views", "users", "star-rating", "apm", "feedback"]);
+Countly.add_consent(["events"]);
 
 
 //add custom event to see if "event" consent will be given
@@ -22,6 +22,8 @@ Countly.add_event({
     }
 });
 
+Countly.remove_consent(["events"]);
+Countly.add_consent(["sessions", "views", "users", "star-rating", "apm", "feedback"]);
 //add internal events to see if they get their "respective consents" instead of "event" consent
 Countly.add_event({
     "key": "[CLY]_view",
