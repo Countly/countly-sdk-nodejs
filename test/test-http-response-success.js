@@ -14,22 +14,22 @@ describe("Response success suite", ()=>{
         var result = cc.isResponseValid(200, str);
         assert.equal(result, false);
     });
-    it("Check if wrong response that includes result in it returns false", ()=>{
+    it("Check if wrong response that does not include result in it returns false", ()=>{
         var str = '{"end": "Success"}';
         var result = cc.isResponseValid(200, str);
         assert.equal(result, false);
     });
-    it("Check if wrong statusCode returns false", ()=>{
+    it("Check if wrong statusCode greater than 300 returns false", ()=>{
         var str = '{"result": "Success"}';
         var result = cc.isResponseValid(400, str);
         assert.equal(result, false);
     });
-    it("Check if wrong statusCode returns false", ()=>{
+    it("Check if wrong statusCode less than 200 returns false", ()=>{
         var str = '{"result": "Success"}';
         var result = cc.isResponseValid(100, str);
         assert.equal(result, false);
     });
-    it("Check if wrong statusCode returns false", ()=>{
+    it("Check if wrong statusCode 300 returns false", ()=>{
         var str = '{"result": "Success"}';
         var result = cc.isResponseValid(300, str);
         assert.equal(result, false);
@@ -39,17 +39,12 @@ describe("Response success suite", ()=>{
         var result = cc.isResponseValid(200, str);
         assert.equal(result, true);
     });
-    it("Check if can parse JSON and returns true", ()=>{
-        var str = '{"result": "Success"}';
-        var result = cc.isResponseValid(200, str);
-        assert.equal(result, true);
-    });
     it("Check if there is no statusCode it returns false", ()=>{
         var str = '{"result": "Success"}';
         var result = cc.isResponseValid({}.a, str);
         assert.equal(result, false);
     });
-    it("Check if just string/ non object returns false", ()=>{
+    it("Check if just string/non-object returns false", ()=>{
         var str = "RESULT";
         var result = cc.isResponseValid(200, str);
         assert.equal(result, false);
