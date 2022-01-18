@@ -1,480 +1,789 @@
 /* global describe, it, */
-var path = require("path"),
+var assert = require("assert"),
     fs = require("fs"),
-    assert = require("assert"),
-    os = require("os"),
-    cp = require("child_process"),
-    exec = cp.exec;
+    hp = require("../test/helpers/helper-functions");
 
-var dir = path.resolve(__dirname, "../");
 
-describe("Running simple example", function() {
-    it("example should finish", function(done) {
-        this.timeout(120000);
-        var handler = function(error, stdout) {
-            var parts = stdout.split("\n");
-            parts.pop();
-            for (var i = 0; i < 85; i++) {
-                // eslint-disable-next-line no-loop-func
-                describe(parts[i], function() {
-                    runTest(i, tests[i], parts[i]);
-                });
-            }
-            describe("Clearing data", function() {
-                it("should remove data", function() {
-                    fs.unlinkSync(dir + "/data/__cly_event.json");
-                    fs.unlinkSync(dir + "/data/__cly_id.json");
-                    fs.unlinkSync(dir + "/data/__cly_queue.json");
-                });
-            });
-            done();
-        };
-        var cmd = "node " + dir + "/examples/example.js";
-        exec(cmd, handler);
+
+describe("1.1 Check event key", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+        assert.ok(!fs.existsSync(hp.eventDir));
+        assert.ok(!fs.existsSync(hp.reqDir));
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function(done) {
+        //send custom event
+        hp.customEvent();
+        setTimeout(done, hp.mpan);
+    });
+    it("Check queue", function() {
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"key":"in_app_purchase"'));
+    });
+});
+describe("1.2 Check event segmentation", function() {
+    it("Clean storage", function(done) {
+        setTimeout(done, hp.span);
+        //clear previous data
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"segmentation":{"app_version":"1.0","country":"Turkey"}'));
+    });
+});
+describe("1.3 Check event parameters", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"count":3,"sum":2.97,"dur":1000'));
+    });
+});
+describe("1.4 Check event timestamp", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"timestamp"'));
+    });
+});
+describe("1.5 Check event hour", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"hour"'));
+    });
+});
+describe("1.6 Check event dow", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"dow"'));
+    });
+});
+describe("1.7 Check event dow", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"dow"'));
+    });
+});
+describe("2.1 Check request key and ID", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"app_key":"YOUR_APP_KEY","device_id"'));
+    });
+});
+describe("2.2 Check sdk name", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"sdk_name":"javascript_native_nodejs"'));
+    });
+});
+describe("2.3 Check sdk version", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"sdk_version"'));
+    });
+});
+describe("2.4 Check timestamp", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"timestamp"'));
     });
 });
 
-function testMetrics(data) {
-    data = JSON.parse(data);
-    assert.equal(data._app_version, "0.0");
-    assert.ok(data._os, os.type());
-    assert.ok(data._os_version, os.release());
-}
-
-function testBeginSession(data) {
-    data = JSON.parse(data);
-    assert.equal(data.begin_session, 1);
-    assert.equal(data.app_key, "YOUR_APP_KEY");
-    assert.ok(data.device_id);
-    assert.ok(data.timestamp);
-    assert.ok(typeof data.hour !== "undefined");
-    assert.ok(typeof data.dow !== "undefined");
-    testMetrics(data.metrics);
-}
-
-function testSessionDuration(data) {
-    data = JSON.parse(data);
-    assert.ok(data.session_duration >= 60 && data.session_duration <= 61);
-    assert.equal(data.app_key, "YOUR_APP_KEY");
-    assert.ok(data.device_id);
-    assert.ok(data.timestamp);
-    assert.ok(typeof data.hour !== "undefined");
-    assert.ok(typeof data.dow !== "undefined");
-}
-
-function testEndSession(data) {
-    data = JSON.parse(data);
-    assert.equal(data.end_session, 1);
-    assert.ok(data.session_duration >= 9 && data.session_duration <= 11);
-    assert.equal(data.app_key, "YOUR_APP_KEY");
-    assert.ok(data.device_id);
-    assert.ok(data.timestamp);
-    assert.ok(typeof data.hour !== "undefined");
-    assert.ok(typeof data.dow !== "undefined");
-}
-
-function testEvent(data) {
-    data = JSON.parse(data);
-    assert.ok(data.events);
-    data.events = JSON.parse(data.events);
-    for (var i = 0; i < data.events.length; i++) {
-        assert.ok(data.events[i].key);
-        assert.ok(data.events[i].count);
-        assert.ok(data.events[i].timestamp);
-        assert.ok(typeof data.events[i].hour !== "undefined");
-        assert.ok(typeof data.events[i].dow !== "undefined");
-    }
-    assert.equal(data.app_key, "YOUR_APP_KEY");
-    assert.ok(data.device_id);
-    assert.ok(data.timestamp);
-    assert.ok(typeof data.hour !== "undefined");
-    assert.ok(typeof data.dow !== "undefined");
-}
-
-function testUserDetails(data) {
-    data = JSON.parse(data);
-    assert.ok(data.user_details);
-    data.user_details = JSON.parse(data.user_details);
-    assert.ok(data.user_details.name);
-    assert.ok(data.user_details.username);
-    assert.ok(data.user_details.email);
-    assert.ok(data.user_details.organization);
-    assert.ok(data.user_details.phone);
-    assert.ok(data.user_details.picture);
-    assert.ok(data.user_details.gender);
-    assert.ok(data.user_details.byear);
-    assert.ok(data.user_details.custom);
-    assert.equal(data.app_key, "YOUR_APP_KEY");
-    assert.ok(data.device_id);
-    assert.ok(data.timestamp);
-    assert.ok(typeof data.hour !== "undefined");
-    assert.ok(typeof data.dow !== "undefined");
-}
-
-function testCrash(data) {
-    data = JSON.parse(data);
-    assert.ok(data.crash);
-    data.crash = JSON.parse(data.crash);
-    assert.ok(data.crash._os);
-    assert.ok(data.crash._os_version);
-    assert.ok(data.crash._error);
-    assert.equal(data.crash._app_version, "0.0");
-    assert.ok(data.crash._run);
-    assert.ok(data.crash._not_os_specific);
-    assert.ok(data.crash._nonfatal);
-    assert.equal(data.app_key, "YOUR_APP_KEY");
-    assert.ok(data.device_id);
-    assert.ok(data.timestamp);
-    assert.ok(typeof data.hour !== "undefined");
-    assert.ok(typeof data.dow !== "undefined");
-}
-
-var tests = [
-    //0
-    function(data) {
-        assert.equal(data, "Countly initialized");
-    },
-    //1
-    function(data) {
-        assert.equal(data, "Session started");
-    },
-    //2
-    function(data) {
-        assert.equal(data, "Got metrics");
-    },
-    //3
-    function(data) {
-        testMetrics(data);
-    },
-    //4
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //5
-    function(data) {
-        testBeginSession(data);
-    },
-    //6
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //7
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //8
-    function(data) {
-        testBeginSession(data);
-    },
-    //9
-    function(data) {
-        assert(data === "false");
-    },
-    //10
-    function(data) {
-        assert.equal(data, "Adding event: ");
-    },
-    //11
-    function(data) {
-        assert.deepEqual(JSON.parse(data), {"key": "in_app_purchase", "count": 3, "sum": 2.97, "dur": 1000, "segmentation": {"app_version": "1.0", "country": "Turkey"}});
-    },
-    //12
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //13
-    function(data) {
-        testEvent(data);
-    },
-    //14
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //15
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //16
-    function(data) {
-        testEvent(data);
-    },
-    //17
-    function(data) {
-        assert(data === "false");
-    },
-    //18
-    function(data) {
-        assert.equal(data, "Adding userdetails: ");
-    },
-    //19
-    function(data) {
-        assert.deepEqual(JSON.parse(data), {"name": "Arturs Sosins", "username": "ar2rsawseen", "email": "test@test.com", "organization": "Countly", "phone": "+37112345678", "picture": "https://pbs.twimg.com/profile_images/1442562237/012_n_400x400.jpg", "gender": "M", "byear": 1987, "custom": {"key1": "value1", "key2": "value2"}});
-    },
-    //20
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //21
-    function(data) {
-        testUserDetails(data);
-    },
-    //22
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //23
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //24
-    function(data) {
-        testUserDetails(data);
-    },
-    //25
-    function(data) {
-        assert(data === "false");
-    },
-    //26
-    function(data) {
-        assert.equal(data, "Adding event: ");
-    },
-    //27
-    function(data) {
-        assert.deepEqual(JSON.parse(data), {"key": "[CLY]_view", "segmentation": {"name": "test1", "visit": 1, "segment": os.type()}, "count": 1});
-    },
-    //28
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //29
-    function(data) {
-        testEvent(data);
-    },
-    //30
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //31
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //32
-    function(data) {
-        testEvent(data);
-    },
-    //33
-    function(data) {
-        assert(data === "false");
-    },
-    //34
-    function(data) {
-        assert.equal(data, "Got metrics");
-    },
-    //35
-    function(data) {
-        testMetrics(data);
-    },
-    //36
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //37
-    function(data) {
-        testCrash(data);
-    },
-    //38
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //39
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //40
-    function(data) {
-        testCrash(data);
-    },
-    //41
-    function(data) {
-        assert(data === "false");
-    },
-    //42
-    function(data) {
-        assert.equal(data, "Adding event: ");
-    },
-    //43
-    function(data) {
-        assert.deepEqual(JSON.parse(data), {"key": "timed", "count": 1, "segmentation": {"app_version": "1.0", "country": "Turkey"}, "dur": 25});
-    },
-    //44
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //45
-    function(data) {
-        testEvent(data);
-    },
-    //46
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //47
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //48
-    function(data) {
-        testEvent(data);
-    },
-    //49
-    function(data) {
-        assert(data === "false");
-    },
-    //50
-    function(data) {
-        assert.equal(data, "Adding event: ");
-    },
-    //51
-    function(data) {
-        assert.deepEqual(JSON.parse(data), {"key": "[CLY]_view", "dur": 40, "segmentation": {"name": "test1", "segment": os.type()}, "count": 1});
-    },
-    //52
-    function(data) {
-        assert.equal(data, "Adding event: ");
-    },
-    //53
-    function(data) {
-        assert.deepEqual(JSON.parse(data), {"key": "[CLY]_view", "segmentation": {"name": "test1", "visit": 1, "segment": os.type()}, "count": 1});
-    },
-    //54
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //55
-    function(data) {
-        testEvent(data);
-    },
-    //56
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //57
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //58
-    function(data) {
-        testEvent(data);
-    },
-    //59
-    function(data) {
-        assert(data === "false");
-    },
-    //60
-    function(data) {
-        assert.equal(data, "Session extended");
-    },
-    //61
-    function(data) {
-        assert(data >= 60 && data <= 61);
-    },
-    //62
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //63
-    function(data) {
-        testSessionDuration(data);
-    },
-    //64
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //65
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //66
-    function(data) {
-        testSessionDuration(data);
-    },
-    //67
-    function(data) {
-        assert(data === "false");
-    },
-    //68
-    function(data) {
-        assert.equal(data, "Ending session");
-    },
-    //69
-    function(data) {
-        assert.equal(data, "Adding event: ");
-    },
-    //70
-    function(data) {
-        assert.deepEqual(JSON.parse(data), {"key": "[CLY]_view", "dur": 15, "segmentation": {"name": "test1", "segment": os.type()}, "count": 1});
-    },
-    //71
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //72
-    function(data) {
-        testEndSession(data);
-    },
-    //73
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //74
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //75
-    function(data) {
-        testEndSession(data);
-    },
-    //76
-    function(data) {
-        assert(data === "false");
-    },
-    //77
-    function(data) {
-        assert.equal(data, "Processing request");
-    },
-    //78
-    function(data) {
-        testEvent(data);
-    },
-    //79
-    function(data) {
-        assert.equal(data, "Sending HTTP request");
-    },
-    //80
-    function(data) {
-        assert.equal(data, "Request Finished");
-    },
-    //81
-    function(data) {
-        testEvent(data);
-    },
-    //82
-    function(data) {
-        assert(data === "false");
-    },
-    //83
-    function(data) {
-        assert.equal(data, "Got metrics");
-    },
-    //84
-    function(data) {
-        testMetrics(data);
-    },
-];
-
-function runTest(id, test, data) {
-    it("verifying test output: " + id, function(done) {
-        test(data);
-        done();
+describe("2.5 Check hour", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
     });
-}
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"hour"'));
+    });
+});
+describe("2.6 Check dow", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send event", function() {
+        //send custom event
+        hp.customEvent();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"dow"'));
+    });
+});
+describe("3.1 Check user details", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"user_details"'));
+    });
+});
+describe("3.2 Check user detail name", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"name\\":\\"Barturiana Sosinsiava\\"'));
+    });
+});
+describe("3.3 Check user detail username", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"username\\":\\"bar2rawwen\\"'));
+    });
+});
+describe("3.4 Check user detail email", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"email\\":\\"test@test.com\\"'));
+    });
+});
+describe("3.5 Check user detail organization", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"organization\\":\\"Dukely\\"'));
+    });
+});
+describe("3.6 Check user detail phone", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"phone\\":\\"+123456789\\"'));
+    });
+});
+describe("3.7 Check user detail picture", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"picture\\":\\"https://ps.timg.com/profile_images/52237/011_n_400x400.jpg\\"'));
+    });
+});
+describe("3.8 Check user detail gender", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"gender\\":\\"Non-binary\\"'));
+    });
+});
+describe("3.9 Check user detail birth year", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"byear\\":1987'));
+    });
+});
+describe("3.10 Check user detail segmentation", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Send user details", function() {
+        //send custom event
+        hp.userDetails();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"custom\\":{\\"key1 segment\\":\\"value1 segment\\",\\"key2 segment\\":\\"value2 segment\\"}'));
+    });
+});
+
+describe("4.1 Check session", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Start session", function() {
+        //send custom event
+        hp.beginSession();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"begin_session":1'));
+    });
+});
+describe("4.2 Check session metrics", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Start session", function() {
+        //send custom event
+        hp.beginSession();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"metrics":"{'));
+    });
+});
+describe("4.3 Check session app version", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Start session", function() {
+        //send custom event
+        hp.beginSession();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"_app_version\\"'));
+    });
+});
+describe("4.4 Check session os", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Start session", function() {
+        //send custom event
+        hp.beginSession();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"_os\\"'));
+    });
+});
+describe("4.5 Check session os version", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Start session", function() {
+        //send custom event
+        hp.beginSession();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var req = fs.readFileSync(hp.reqDir, "utf-8");
+        assert.ok(req.includes('"_os_version\\"'));
+    });
+});
+describe("5.1 Check track view key", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Track view", function() {
+        //send custom event
+        hp.trackView();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"key":"[CLY]_view"'));
+    });
+});
+describe("5.2 Check track view count", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Track view", function() {
+        //send custom event
+        hp.trackView();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"count":1'));
+    });
+});
+describe("5.3 Check track view segmentation", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Track view", function() {
+        //send custom event
+        hp.trackView();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"segmentation"'));
+    });
+});
+describe("5.4 Check track view name", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Track view", function() {
+        //send custom event
+        hp.trackView();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"name":"test1"'));
+    });
+});
+describe("5.5 Check track view visit", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Track view", function() {
+        //send custom event
+        hp.trackView();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"visit":1'));
+    });
+});
+describe("5.5 Check track view segment", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Track view", function() {
+        //send custom event
+        hp.trackView();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = fs.readFileSync(hp.eventDir, "utf-8");
+        assert.ok(event.includes('"segment"'));
+    });
+});
+describe("5.6 Check track view timestamp", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Track view", function() {
+        //send custom event
+        hp.trackView();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = JSON.parse(fs.readFileSync(hp.eventDir, "utf-8")).cly_event;
+        assert.ok(event[event.length - 1].timestamp);
+    });
+});
+describe("5.7 Check track view hour", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Track view", function() {
+        //send custom event
+        hp.trackView();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = JSON.parse(fs.readFileSync(hp.eventDir, "utf-8")).cly_event;
+        assert.ok(event[event.length - 1].hour);
+    });
+});
+describe("5.8 Check track view dow", function() {
+    it("Clean storage", function(done) {
+        //clear previous data
+        setTimeout(done, hp.span);
+        hp.clearStorage();
+    });
+    it("Initialize Countly", function() {
+        //initialize SDK
+        hp.initMain();
+    });
+    it("Track view", function() {
+        //send custom event
+        hp.trackView();
+    });
+    it("Check queue", function(done) {
+        setTimeout(done, hp.mpan);
+        //read event queue
+        var event = JSON.parse(fs.readFileSync(hp.eventDir, "utf-8")).cly_event;
+        assert.ok(event[event.length - 1].dow);
+    });
+});
