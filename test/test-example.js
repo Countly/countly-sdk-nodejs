@@ -787,3 +787,8 @@ describe("5.8 Check track view dow", function() {
         assert.ok(event[event.length - 1].dow);
     });
 });
+describe("Close the deal", function() {
+    it("End it all", function() {
+        process.exit(0);
+    });
+});
