@@ -1,7 +1,7 @@
 /* global describe, it, */
 var fs = require("fs"),
     assert = require("assert"),
-    hp = require("../test/helpers/helper-functions"),
+    hp = require("./helpers/helper-functions"),
     cc = require("../lib/countly-common");
 
 
