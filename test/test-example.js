@@ -204,7 +204,7 @@ var tests = [
     },
     //18
     function(data) {
-        assert.equal(data, "Adding userdetails: ");
+        assert.equal(data, "Trying to add userdetails: ");
     },
     //19
     function(data) {
