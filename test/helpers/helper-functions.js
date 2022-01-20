@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-unused-vars */
 var path = require("path"),
     fs = require("fs"),
@@ -6,10 +7,9 @@ var path = require("path"),
 //standard init for tests
 function initLimitsMain() {
     Countly.init({
-        app_key: "YOUR_APP_KEY_HERE",
-        url: "https://try.count.ly", //your server goes here
+        app_key: "YOUR_APP_KEY",
+        url: "https://try.count.ly",
         max_events: -1,
-        interval: 100,
         max_key_length: 8, //set maximum key length here
         max_value_size: 8, //set maximum value length here
         max_segmentation_values: 3, //set maximum segmentation number here
@@ -19,15 +19,28 @@ function initLimitsMain() {
     });
 }
 
+
 var dir = path.resolve(__dirname, "../../");
 var idDir = (dir + "\\data\\__cly_id.json");
 var eventDir = (dir + "\\data\\__cly_event.json");
 var reqDir = (dir + "\\data\\__cly_queue.json");
-var span = 1000;
-var mpan = 3000;
+var span = 50;
+var mpan = 5000;
+
+function readEventQueue() {
+    var a = JSON.parse(fs.readFileSync(eventDir, "utf-8")).cly_event;
+    return a;
+}
+
+function readRequestQueue() {
+    var a = JSON.parse(fs.readFileSync(reqDir, "utf-8")).cly_queue;
+    return a;
+}
 
 //queue files clearing logic
 function clearStorage() {
+    //Resets Countly
+    Countly.halt();
     if (fs.existsSync(idDir)) {
         fs.unlinkSync(idDir);
     }
@@ -132,5 +145,7 @@ module.exports = {
     trackLimitsPageView,
     addLog,
     userLimitsData,
-    errorLog
+    errorLog,
+    readEventQueue,
+    readRequestQueue
 };
