@@ -25,6 +25,7 @@ function readRequestQueue() {
 function clearStorage() {
     //Resets Countly
     Countly.halt();
+    Countly.remove_consent_internal(Countly.features, false);
     if (fs.existsSync(idDir)) {
         fs.unlinkSync(idDir);
     }
@@ -38,6 +39,7 @@ function clearStorage() {
 
 module.exports = {
     clearStorage,
+    eventDir,
     span,
     mpan,
     readEventQueue,
