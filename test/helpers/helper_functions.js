@@ -9,7 +9,7 @@ var idDir = (dir + "\\data\\__cly_id.json");
 var eventDir = (dir + "\\data\\__cly_event.json");
 var reqDir = (dir + "\\data\\__cly_queue.json");
 //timeout variables
-var span = 75;
+var span = 375;
 var mpan = 100;
 //parsing event queue
 function readEventQueue() {
