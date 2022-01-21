@@ -38,7 +38,7 @@ describe("User details tests", function() {
         //read event queue
         setTimeout(() => {
             var req = hp.readRequestQueue()[0];
-            hp.userDetailValidator(userDetailObj, req);
+            hp.userDetailRequestValidator(userDetailObj, req);
             done();
         }, hp.span);
     });

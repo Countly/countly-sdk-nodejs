@@ -78,7 +78,7 @@ function eventValidator(eventObject, eventQueue, time) {
  * @param {Object} resultingObject - Resulting object wrt the request 
  * @param {String} id - Specific ID to verify
  */
-function commonValidator(resultingObject, id) {
+function requestBaseParamValidator(resultingObject, id) {
     if (typeof id === 'undefined') {
         id = Countly.device_id;
     }
@@ -95,8 +95,8 @@ function commonValidator(resultingObject, id) {
  * @param {Object} validator - Object from cly_queue that corresponds to the tested crash's recording  
  * @param {Boolean} nonfatal - true if it is not a fatality 
  */
-function crashValidator(validator, nonfatal) {
-    commonValidator(validator);
+function crashRequestValidator(validator, nonfatal) {
+    requestBaseParamValidator(validator);
     var crash = JSON.parse(validator.crash);
     assert.ok(crash._os);
     assert.ok(crash._os_version);
@@ -115,9 +115,9 @@ function crashValidator(validator, nonfatal) {
  * @param {Number} time - Expected time for between session duration
  * @param {String} id - Initial ID if changed
  */
-function sessionValidator(beginSs, endSs, time, id) {
+function sessionRequestValidator(beginSs, endSs, time, id) {
     //begin_session
-    commonValidator(beginSs, id);
+    requestBaseParamValidator(beginSs, id);
     var metrics = JSON.parse(beginSs.metrics);
     assert.ok(metrics._os);
     assert.ok(metrics._os_version);
@@ -125,7 +125,7 @@ function sessionValidator(beginSs, endSs, time, id) {
     assert.equal(1, beginSs.begin_session);
     //end_session
     if (typeof endSs !== 'undefined') {
-        commonValidator(endSs);
+        requestBaseParamValidator(endSs);
         assert.equal(1, endSs.end_session);
         assert.equal(time, endSs.session_duration);
     }
@@ -135,8 +135,8 @@ function sessionValidator(beginSs, endSs, time, id) {
  * @param {Object} originalDetails - Original object that contains user details  
  * @param {Object} details - Object from cly_queue that corresponds to user details recording  
  */
-function userDetailValidator(originalDetails, details) {
-    commonValidator(details);
+function userDetailRequestValidator(originalDetails, details) {
+    requestBaseParamValidator(details);
     var user = JSON.parse(details.user_details);
     assert.equal(originalDetails.name, user.name);
     assert.equal(originalDetails.username, user.username);
@@ -158,7 +158,7 @@ function userDetailValidator(originalDetails, details) {
  * @param {Object} viewObj - Object from cly_event that corresponds to page view recording  
  * @param {Number} time - Expected duration if any 
  */
-function pageViewValidator(name, viewObj, time) {
+function viewEventValidator(name, viewObj, time) {
     assert.equal('[CLY]_view', viewObj.key);
     assert.equal(1, viewObj.count);
     assert.ok(typeof viewObj.timestamp !== 'undefined');
@@ -181,8 +181,8 @@ module.exports = {
     readEventQueue,
     readRequestQueue,
     eventValidator,
-    crashValidator,
-    sessionValidator,
-    userDetailValidator,
-    pageViewValidator
+    crashRequestValidator,
+    sessionRequestValidator,
+    userDetailRequestValidator,
+    viewEventValidator
 };

@@ -26,7 +26,7 @@ describe("View test", function() {
         //read event queue
         setTimeout(() => {
             var event = hp.readEventQueue()[0];
-            hp.pageViewValidator(pageNameOne, event);
+            hp.viewEventValidator(pageNameOne, event);
             done();
         }, hp.span);
     });
@@ -43,11 +43,11 @@ describe("View test", function() {
             setTimeout(() => {
                 var event = hp.readEventQueue();
                 //start view
-                hp.pageViewValidator(pageNameOne, event[0]);
+                hp.viewEventValidator(pageNameOne, event[0]);
                 //end view with recording duration
-                hp.pageViewValidator(pageNameOne, event[1], (hp.mpan / 1000));
+                hp.viewEventValidator(pageNameOne, event[1], (hp.mpan / 1000));
                 //start second view
-                hp.pageViewValidator(pageNameOne, event[2]);
+                hp.viewEventValidator(pageNameOne, event[2]);
                 done();
             }, hp.span);
         }, hp.mpan);
@@ -64,12 +64,13 @@ describe("View test", function() {
             //read event queue
             setTimeout(() => {
                 var event = hp.readEventQueue();
+                console.log(event);
                 //start view
-                hp.pageViewValidator(pageNameOne, event[0]);
+                hp.viewEventValidator(pageNameOne, event[0]);
                 //end view with recording duration
-                hp.pageViewValidator(pageNameOne, event[1], (hp.mpan / 1000));
+                hp.viewEventValidator(pageNameOne, event[1], (hp.mpan / 1000));
                 //start second view
-                hp.pageViewValidator(pageNameTwo, event[2]);
+                hp.viewEventValidator(pageNameTwo, event[2]);
                 done();
             }, hp.span);
         }, hp.mpan);

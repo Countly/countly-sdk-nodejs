@@ -30,7 +30,7 @@ describe("Crash tests", function() {
         //read event queue
         setTimeout(() => {
             var req = hp.readRequestQueue()[0];
-            hp.crashValidator(req, true);
+            hp.crashRequestValidator(req, true);
             done();
         }, hp.span);
     });
@@ -48,7 +48,7 @@ describe("Crash tests", function() {
         it("Validate unhandled rejection recording", function(done) {
             setTimeout(() => {
                 var req = hp.readRequestQueue()[0];
-                hp.crashValidator(req, false);
+                hp.crashRequestValidator(req, false);
                 done();
             }, hp.mpan);
         });

@@ -25,7 +25,7 @@ describe("Sessions tests", function() {
             setTimeout(() => {
                 var beg = hp.readRequestQueue()[0];
                 var end = hp.readRequestQueue()[1];
-                hp.sessionValidator(beg, end, (hp.mpan / 1000));
+                hp.sessionRequestValidator(beg, end, (hp.mpan / 1000));
                 done();
             }, hp.span);
         }, hp.mpan);
