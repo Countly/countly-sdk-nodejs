@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 /* global describe, it, */
-var assert = require("assert"),
-    Countly = require("../lib/countly"),
+var Countly = require("../lib/countly"),
     hp = require("./helpers/helper_functions");
 
 //init function
@@ -13,7 +12,26 @@ function initMain() {
         max_events: -1
     });
 }
-
+//an event object to use 
+var eventObj = {
+    "key": "in_app_purchase",
+    "count": 3,
+    "sum": 2.97,
+    "dur": 1000,
+    "segmentation": {
+        "app_version": "1.0",
+        "country": "Turkey"
+    }
+};
+// a timed event object
+var timedEventObj = {
+    "key": "timed",
+    "count": 1,
+    "segmentation": {
+        "app_version": "1.0",
+        "country": "Turkey"
+    }
+};
 describe("Events tests", function() {
     it("Record and check custom event", function(done) {
         //clear previous data
@@ -21,28 +39,11 @@ describe("Events tests", function() {
         //initialize SDK
         initMain();
         //send custom event
-        Countly.add_event({
-            "key": "in_app_purchase",
-            "count": 3,
-            "sum": 2.97,
-            "dur": 1000,
-            "segmentation": {
-                "app_version": "1.0",
-                "country": "Turkey"
-            }
-        });
+        Countly.add_event(eventObj);
         //read event queue
         setTimeout(() => {
             var event = hp.readEventQueue()[0];
-            assert.equal(event.key, "in_app_purchase");
-            assert.equal(event.count, 3);
-            assert.equal(event.sum, 2.97);
-            assert.equal(event.dur, 1000);
-            assert.ok(event.timestamp);
-            assert.ok(event.hour);
-            assert.ok(event.dow);
-            assert.equal(event.segmentation.app_version, '1.0');
-            assert.equal(event.segmentation.country, 'Turkey');
+            hp.eventValidator(eventObj, event);
             done();
         }, hp.span);
     });
@@ -53,27 +54,15 @@ describe("Events tests", function() {
         initMain();
         //send timed event
         Countly.start_event("timed");
-        Countly.end_event({
-            "key": "timed",
-            "count": 1,
-            "segmentation": {
-                "app_version": "1.0",
-                "country": "Turkey"
-            }
-        });
-        //read event queue
         setTimeout(() => {
-            var event = hp.readEventQueue()[0];
-            assert.equal(event.key, "timed");
-            assert.equal(event.count, 1);
-            assert.equal(event.dur, 0);
-            assert.ok(event.timestamp);
-            assert.ok(event.hour);
-            assert.ok(event.dow);
-            assert.equal(event.segmentation.app_version, '1.0');
-            assert.equal(event.segmentation.country, 'Turkey');
-            done();
-        }, hp.span);
+            Countly.end_event(timedEventObj);
+            //read event queue
+            setTimeout(() => {
+                var event = hp.readEventQueue()[0];
+                hp.eventValidator(timedEventObj, event, (hp.mpan / 1000));
+                done();
+            }, hp.span);
+        }, hp.mpan);
     });
 
 });
