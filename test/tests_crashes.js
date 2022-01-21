@@ -9,6 +9,7 @@ function initMain() {
     Countly.init({
         app_key: "YOUR_APP_KEY",
         url: "https://try.count.ly",
+        interval: 10000,
         max_events: -1
     });
 }
