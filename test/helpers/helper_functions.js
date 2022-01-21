@@ -87,8 +87,8 @@ function commonValidator(resultingObject, id) {
     assert.ok(typeof resultingObject.sdk_name !== 'undefined');
     assert.ok(typeof resultingObject.sdk_version !== 'undefined');
     assert.ok(typeof resultingObject.timestamp !== 'undefined');
-    assert.ok(typeof resultingObject.hour !== 'undefined');
-    assert.ok(typeof resultingObject.dow !== 'undefined');
+    assert.ok(resultingObject.dow > -1 && resultingObject.dow < 24);
+    assert.ok(resultingObject.dow > 0 && resultingObject.dow < 8);
 }
 /**
  * bunch of tests specifically gathered for testing crashes
@@ -129,7 +129,28 @@ function sessionValidator(beginSs, endSs, time, id) {
         assert.equal(1, endSs.end_session);
         assert.equal(time, endSs.session_duration);
     }
-
+}
+/**
+ * bunch of tests specifically gathered for testing user details
+ * @param {Object} originalDetails - Original object that contains user details  
+ * @param {Object} details - Object from cly_queue that corresponds to user details recording  
+ */
+function userDetailValidator(originalDetails, details) {
+    commonValidator(details);
+    var user = JSON.parse(details.user_details);
+    assert.equal(originalDetails.name, user.name);
+    assert.equal(originalDetails.username, user.username);
+    assert.equal(originalDetails.email, user.email);
+    assert.equal(originalDetails.organization, user.organization);
+    assert.equal(originalDetails.phone, user.phone);
+    assert.equal(originalDetails.picture, user.picture);
+    assert.equal(originalDetails.gender, user.gender);
+    assert.equal(originalDetails.byear, user.byear);
+    if (typeof originalDetails.custom !== 'undefined') {
+        for (var key in originalDetails.custom) {
+            assert.equal(originalDetails.custom[key], user.custom[key]);
+        }
+    }
 }
 //exports
 module.exports = {
@@ -140,5 +161,6 @@ module.exports = {
     readRequestQueue,
     eventValidator,
     crashValidator,
-    sessionValidator
+    sessionValidator,
+    userDetailValidator
 };
