@@ -76,10 +76,14 @@ function eventValidator(eventObject, eventQueue, time) {
 /**
  * bunch of tests specifically gathered for other validators
  * @param {Object} resultingObject - Resulting object wrt the request 
+ * @param {String} id - Specific ID to verify
  */
-function commonValidator(resultingObject) {
+function commonValidator(resultingObject, id) {
+    if (typeof id === 'undefined') {
+        id = Countly.device_id;
+    }
     assert.equal(Countly.app_key, resultingObject.app_key);
-    assert.equal(Countly.device_id, resultingObject.device_id);
+    assert.equal(id, resultingObject.device_id);
     assert.ok(typeof resultingObject.sdk_name !== 'undefined');
     assert.ok(typeof resultingObject.sdk_version !== 'undefined');
     assert.ok(typeof resultingObject.timestamp !== 'undefined');
@@ -104,6 +108,29 @@ function crashValidator(validator, nonfatal) {
     assert.equal(true, crash._javascript);
     assert.equal(true, crash._not_os_specific);
 }
+/**
+ * bunch of tests specifically gathered for testing sessions
+ * @param {Object} beginSs - Object from cly_queue that corresponds to begin session recording  
+ * @param {Object} endSs - Object from cly_queue that corresponds to end session recording  
+ * @param {Number} time - Expected time for between session duration
+ * @param {String} id - Initial ID if changed
+ */
+function sessionValidator(beginSs, endSs, time, id) {
+    //begin_session
+    commonValidator(beginSs, id);
+    var metrics = JSON.parse(beginSs.metrics);
+    assert.ok(metrics._os);
+    assert.ok(metrics._os_version);
+    assert.ok(metrics._app_version);
+    assert.equal(1, beginSs.begin_session);
+    //end_session
+    if (typeof endSs !== 'undefined') {
+        commonValidator(endSs);
+        assert.equal(1, endSs.end_session);
+        assert.equal(time, endSs.session_duration);
+    }
+
+}
 //exports
 module.exports = {
     clearStorage,
@@ -112,5 +139,6 @@ module.exports = {
     readEventQueue,
     readRequestQueue,
     eventValidator,
-    crashValidator
+    crashValidator,
+    sessionValidator
 };
