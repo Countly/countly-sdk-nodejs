@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 /* global describe, it, runthis */
-var assert = require("assert"),
-    Countly = require("../lib/countly"),
+var Countly = require("../lib/countly"),
     hp = require("./helpers/helper_functions");
 
 //init function
@@ -31,21 +30,7 @@ describe("Crash tests", function() {
         //read event queue
         setTimeout(() => {
             var req = hp.readRequestQueue()[0];
-            var crash = JSON.parse(req.crash);
-            assert.ok(crash._os);
-            assert.ok(crash._os_version);
-            assert.ok(crash._error);
-            assert.equal(crash._app_version, "0.0");
-            assert.equal(crash._run, 0);
-            assert.ok(crash._not_os_specific);
-            assert.ok(crash._nonfatal);
-            assert.equal(req.app_key, "YOUR_APP_KEY");
-            assert.ok(req.device_id);
-            assert.ok(req.sdk_name);
-            assert.ok(req.sdk_version);
-            assert.ok(req.timestamp);
-            assert.ok(typeof req.hour !== "undefined");
-            assert.ok(typeof req.dow !== "undefined");
+            hp.crashValidator(req, true);
             done();
         }, hp.span);
     });
@@ -63,21 +48,7 @@ describe("Crash tests", function() {
         it("Validate unhandled rejection recording", function(done) {
             setTimeout(() => {
                 var req = hp.readRequestQueue()[0];
-                var crash = JSON.parse(req.crash);
-                assert.ok(crash._os);
-                assert.ok(crash._os_version);
-                assert.ok(crash._error);
-                assert.equal(crash._app_version, "0.0");
-                assert.equal(crash._run, 0);
-                assert.ok(crash._not_os_specific);
-                assert.equal(crash._nonfatal, false);
-                assert.equal(req.app_key, "YOUR_APP_KEY");
-                assert.ok(req.device_id);
-                assert.ok(req.sdk_name);
-                assert.ok(req.sdk_version);
-                assert.ok(req.timestamp);
-                assert.ok(typeof req.hour !== "undefined");
-                assert.ok(typeof req.dow !== "undefined");
+                hp.crashValidator(req, false);
                 done();
             }, hp.mpan);
         });

@@ -39,7 +39,7 @@ function clearStorage() {
 /**
  * bunch of tests specifically gathered for testing events
  * @param {Object} eventObject - Original event object to test
- * @param {Object} eventQueue - Object from cly_queue that corresponds to the tested object's recording  
+ * @param {Object} eventQueue - Object from cly_event that corresponds to the tested object's recording  
  * @param {Number} time - Expected time for timed event duration
  */
 function eventValidator(eventObject, eventQueue, time) {
@@ -69,19 +69,41 @@ function eventValidator(eventObject, eventQueue, time) {
         }
     }
     //common parameter validation
-    commonValidator(eventObject, eventQueue);
+    assert.ok(typeof eventQueue.timestamp !== 'undefined');
+    assert.ok(typeof eventQueue.hour !== 'undefined');
+    assert.ok(typeof eventQueue.dow !== 'undefined');
 }
 /**
  * bunch of tests specifically gathered for other validators
- * @param {Object} originalObject - Original object to test
- * @param {Object} testerObject - Tester object wrt the original 
+ * @param {Object} resultingObject - Resulting object wrt the request 
  */
-function commonValidator(originalObject, testerObject) {
-    assert.ok(typeof testerObject.timestamp !== 'undefined');
-    assert.ok(typeof testerObject.hour !== 'undefined');
-    assert.ok(typeof testerObject.dow !== 'undefined');
+function commonValidator(resultingObject) {
+    assert.equal(Countly.app_key, resultingObject.app_key);
+    assert.equal(Countly.device_id, resultingObject.device_id);
+    assert.ok(typeof resultingObject.sdk_name !== 'undefined');
+    assert.ok(typeof resultingObject.sdk_version !== 'undefined');
+    assert.ok(typeof resultingObject.timestamp !== 'undefined');
+    assert.ok(typeof resultingObject.hour !== 'undefined');
+    assert.ok(typeof resultingObject.dow !== 'undefined');
 }
-
+/**
+ * bunch of tests specifically gathered for testing crashes
+ * @param {Object} validator - Object from cly_queue that corresponds to the tested crash's recording  
+ * @param {Boolean} nonfatal - true if it is not a fatality 
+ */
+function crashValidator(validator, nonfatal) {
+    commonValidator(validator);
+    var crash = JSON.parse(validator.crash);
+    assert.ok(crash._os);
+    assert.ok(crash._os_version);
+    assert.ok(crash._error);
+    assert.ok(crash._app_version);
+    assert.ok(typeof crash._run !== 'undefined');
+    assert.ok(typeof crash._custom !== 'undefined');
+    assert.equal(nonfatal, crash._nonfatal);
+    assert.equal(true, crash._javascript);
+    assert.equal(true, crash._not_os_specific);
+}
 //exports
 module.exports = {
     clearStorage,
@@ -89,5 +111,6 @@ module.exports = {
     mpan,
     readEventQueue,
     readRequestQueue,
-    eventValidator
+    eventValidator,
+    crashValidator
 };
