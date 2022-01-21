@@ -5,11 +5,11 @@ var path = require("path"),
 
 //paths for convenience
 var dir = path.resolve(__dirname, "../../");
-var idDir = (dir + "\\data\\__cly_id.json");
-var eventDir = (dir + "\\data\\__cly_event.json");
-var reqDir = (dir + "\\data\\__cly_queue.json");
+var idDir = (dir + "/data/__cly_id.json");
+var eventDir = (dir + "/data/__cly_event.json");
+var reqDir = (dir + "/data/__cly_queue.json");
 //timeout variables
-var span = 1000;
+var span = 50;
 var mpan = 100;
 //parsing event queue
 function readEventQueue() {
