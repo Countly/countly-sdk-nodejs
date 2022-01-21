@@ -2,7 +2,7 @@
 /* global describe, it, */
 var assert = require("assert"),
     Countly = require("../lib/countly.js"),
-    hp = require("./helpers/helper-functions"),
+    hp = require("./helpers/helper_functions"),
     cc = require("../lib/countly-common");
 
 //standard init for tests
@@ -10,6 +10,7 @@ function initLimitsMain() {
     Countly.init({
         app_key: "YOUR_APP_KEY",
         url: "https://try.count.ly",
+        interval: 10000,
         max_events: -1,
         max_key_length: 8, //set maximum key length here
         max_value_size: 8, //set maximum value length here
