@@ -152,6 +152,27 @@ function userDetailValidator(originalDetails, details) {
         }
     }
 }
+/**
+ * bunch of tests specifically gathered for testing page views
+ * @param {Object} name - page name 
+ * @param {Object} viewObj - Object from cly_event that corresponds to page view recording  
+ * @param {Number} time - Expected duration if any 
+ */
+function pageViewValidator(name, viewObj, time) {
+    assert.equal('[CLY]_view', viewObj.key);
+    assert.equal(1, viewObj.count);
+    assert.ok(typeof viewObj.timestamp !== 'undefined');
+    assert.ok(viewObj.dow > -1 && viewObj.dow < 24);
+    assert.ok(viewObj.dow > 0 && viewObj.dow < 8);
+    assert.equal(name, viewObj.segmentation.name);
+    if (typeof time === 'undefined') {
+        assert.equal(1, viewObj.segmentation.visit);
+    }
+    else {
+        assert.equal(time, viewObj.dur);
+    }
+    assert.ok(viewObj.segmentation.segment);
+}
 //exports
 module.exports = {
     clearStorage,
@@ -162,5 +183,6 @@ module.exports = {
     eventValidator,
     crashValidator,
     sessionValidator,
-    userDetailValidator
+    userDetailValidator,
+    pageViewValidator
 };

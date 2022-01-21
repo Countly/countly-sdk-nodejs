@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 /* global describe, it, */
-var assert = require("assert"),
-    Countly = require("../lib/countly"),
+var Countly = require("../lib/countly"),
     hp = require("./helpers/helper_functions");
 
 //init function
@@ -13,6 +12,8 @@ function initMain() {
         max_events: -1
     });
 }
+var pageNameOne = "test view page name1";
+var pageNameTwo = "test view page name2";
 
 describe("View test", function() {
     it("Record and validate page views", function(done) {
@@ -21,20 +22,58 @@ describe("View test", function() {
         //initialize SDK
         initMain();
         //send track view
-        Countly.track_view("test view page name");
+        Countly.track_view(pageNameOne);
         //read event queue
         setTimeout(() => {
             var event = hp.readEventQueue()[0];
-            assert.equal(event.key, "[CLY]_view");
-            assert.equal(event.count, 1);
-            assert.ok(event.timestamp);
-            assert.ok(event.hour);
-            assert.ok(event.dow);
-            assert.equal(event.segmentation.name, 'test view page name');
-            assert.equal(event.segmentation.visit, 1);
-            assert.ok(event.segmentation.segment);
+            hp.pageViewValidator(pageNameOne, event);
             done();
         }, hp.span);
     });
+    it("Record and validate timed page views with same name", function(done) {
+        //clear previous data
+        hp.clearStorage();
+        //initialize SDK
+        initMain();
+        Countly.track_view(pageNameOne);
+        setTimeout(() => {
+            //send track view
+            Countly.track_view(pageNameOne);
+            //read event queue
+            setTimeout(() => {
+                var event = hp.readEventQueue();
+                //start view
+                hp.pageViewValidator(pageNameOne, event[0]);
+                //end view with recording duration
+                hp.pageViewValidator(pageNameOne, event[1], (hp.mpan / 1000));
+                //start second view
+                hp.pageViewValidator(pageNameOne, event[2]);
+                done();
+            }, hp.span);
+        }, hp.mpan);
+    });
+    it("Record and validate timed page views with same name", function(done) {
+        //clear previous data
+        hp.clearStorage();
+        //initialize SDK
+        initMain();
+        Countly.track_view(pageNameOne);
+        setTimeout(() => {
+            //send track view
+            Countly.track_view(pageNameTwo);
+            //read event queue
+            setTimeout(() => {
+                var event = hp.readEventQueue();
+                //start view
+                hp.pageViewValidator(pageNameOne, event[0]);
+                //end view with recording duration
+                hp.pageViewValidator(pageNameOne, event[1], (hp.mpan / 1000));
+                //start second view
+                hp.pageViewValidator(pageNameTwo, event[2]);
+                done();
+            }, hp.span);
+        }, hp.mpan);
+    });
+
 });
 
