@@ -1,69 +1,66 @@
 /* eslint-disable no-console */
-/* global describe, it, */
-var assert = require("assert"),
-    Countly = require("../lib/countly.js"),
-    hp = require("./helpers/helper_functions"),
-    cc = require("../lib/countly-common");
+var assert = require("assert");
+var Countly = require("../lib/countly");
+var hp = require("./helpers/helper_functions");
+var cc = require("../lib/countly-common");
 
-//standard init for tests
+// standard init for tests
 function initLimitsMain() {
     Countly.init({
         app_key: "YOUR_APP_KEY",
         url: "https://try.count.ly",
         interval: 10000,
         max_events: -1,
-        max_key_length: 8, //set maximum key length here
-        max_value_size: 8, //set maximum value length here
-        max_segmentation_values: 3, //set maximum segmentation number here
-        max_breadcrumb_count: 2, //set maximum number of logs that will be stored before erasing old ones
-        max_stack_trace_lines_per_thread: 3, //set maximum number of lines for stack trace
-        max_stack_trace_line_length: 10 //set maximum length of a line for stack trace
+        max_key_length: 8, // set maximum key length here
+        max_value_size: 8, // set maximum value length here
+        max_segmentation_values: 3, // set maximum segmentation number here
+        max_breadcrumb_count: 2, // set maximum number of logs that will be stored before erasing old ones
+        max_stack_trace_lines_per_thread: 3, // set maximum number of lines for stack trace
+        max_stack_trace_line_length: 10, // set maximum length of a line for stack trace
     });
 }
 
-
-
-//Integration tests with countly initialized
-describe("Testing internal limits", function() {
-    describe("Testing truncation functions", function() {
-        it("truncateSingleValue: Check if the string is truncated", function() {
+// Integration tests with countly initialized
+describe("Testing internal limits", () => {
+    describe("Testing truncation functions", () => {
+        it("truncateSingleValue: Check if the string is truncated", () => {
             var newStr = cc.truncateSingleValue("123456789", 3, "test");
             assert.equal(newStr, "123");
         });
-        it("truncateSingleValue: Check if the number is truncated", function() {
+        it("truncateSingleValue: Check if the number is truncated", () => {
             var newStr = cc.truncateSingleValue(123456789, 3, "test");
             assert.equal(newStr, 123);
         });
-        it("truncateSingleValue: Check if the object is returned unchanged", function() {
-            var object = {"123456789": 5};
+        it("truncateSingleValue: Check if the object is returned unchanged", () => {
+            var object = { 123456789: 5 };
             var obj = cc.truncateSingleValue(object, 3, "test");
             assert.equal(object, obj);
         });
         // Integration tests for truncateObjectValue:
-        it("truncateObject: Check if string key and value is truncated", function() {
-            var newObj = cc.truncateObject({"123456789": "123456789"}, 3, 5, 2, "test");
+        it("truncateObject: Check if string key and value is truncated", () => {
+            var newObj = cc.truncateObject({ 123456789: "123456789" }, 3, 5, 2, "test");
             assert.equal(newObj['123'], '12345');
         });
-        it("truncateObject: Check if number key and value is truncated", function() {
-            var newObj = cc.truncateObject({123456789: 123456789}, 3, 5, 2, "test");
+        it("truncateObject: Check if number key and value is truncated", () => {
+            var newObj = cc.truncateObject({ 123456789: 123456789 }, 3, 5, 2, "test");
             assert.equal(newObj['123'], '12345');
         });
-        it("truncateObject: Check if object value is kept as is", function() {
-            var newObj = cc.truncateObject({123456789: { 'a': 'aa'}}, 3, 5, 2, "test");
+        it("truncateObject: Check if object value is kept as is", () => {
+            var newObj = cc.truncateObject({ 123456789: { a: 'aa' } }, 3, 5, 2, "test");
             assert.equal(newObj['123'].a, 'aa');
         });
-        it("truncateObject: Check if segments are truncated", function() {
-            var newObj = cc.truncateObject({"a": "aa", "b": "bb", "c": "cc" }, 3, 5, 2, "test");
+        it("truncateObject: Check if segments are truncated", () => {
+            var newObj = cc.truncateObject({ a: "aa", b: "bb", c: "cc" }, 3, 5, 2, "test");
             assert.equal(Object.keys(newObj).length, 2);
         });
     });
 
-    it("1. Check custom event truncation", function(done) {
-    //clear storage
+    it("1. Check custom event truncation", (done) => {
+    // clear storage
         hp.clearStorage();
-        //init Countly
+        // init Countly
         initLimitsMain();
-        //send event
+        // send event
         Countly.add_event({
             key: "Enter your key here",
             count: 1,
@@ -76,7 +73,7 @@ describe("Testing internal limits", function() {
             },
         });
         setTimeout(() => {
-            //read event queue
+            // read event queue
             var event = hp.readEventQueue()[0];
             assert.equal(event.key, "Enter yo");
             assert.ok(event.segmentation["key of 3"]);
@@ -89,16 +86,16 @@ describe("Testing internal limits", function() {
         }, hp.sWait);
     });
 
-    it("2. Check countly view event truncation", function(done) {
-        //clear storage
+    it("2. Check countly view event truncation", (done) => {
+        // clear storage
         hp.clearStorage();
-        //init Countly
+        // init Countly
         initLimitsMain();
-        //page view
+        // page view
         Countly.track_pageview("a very long page name");
-        //test
+        // test
         setTimeout(() => {
-            //read event queue
+            // read event queue
             var event = hp.readEventQueue()[0];
             assert.equal(event.key, "[CLY]_vi");
             assert.equal(event.segmentation.name, "a very l");
@@ -110,12 +107,12 @@ describe("Testing internal limits", function() {
             done();
         }, hp.sWait);
     });
-    it("3. Check breadcrumbs and error truncation", function(done) {
-        //clear storage
+    it("3. Check breadcrumbs and error truncation", (done) => {
+        // clear storage
         hp.clearStorage();
-        //init Countly
+        // init Countly
         initLimitsMain();
-        //add log
+        // add log
         Countly.add_log("log1");
         Countly.add_log("log2");
         Countly.add_log("log3");
@@ -123,14 +120,14 @@ describe("Testing internal limits", function() {
         Countly.add_log("log5 too many");
         Countly.add_log("log6");
         Countly.add_log("log7");
-        //and log error to see them all
+        // and log error to see them all
         var error = {
             stack: "Lorem ipsum dolor sit amet,\n consectetur adipiscing elit, sed do eiusmod tempor\n incididunt ut labore et dolore magna\n aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n Duis aute irure dolor in reprehenderit in voluptate\n velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia\n deserunt mollit anim id\n est laborum.",
         };
         Countly.log_error(error);
-        //test
+        // test
         setTimeout(() => {
-            //read event queue
+            // read event queue
             var req = hp.readRequestQueue()[0];
             assert.ok(req.crash);
             assert.ok(req.app_key);
@@ -153,23 +150,23 @@ describe("Testing internal limits", function() {
             done();
         }, hp.sWait);
     });
-    it("4. Check user details truncation", function(done) {
-        //clear storage
+    it("4. Check user details truncation", (done) => {
+        // clear storage
         hp.clearStorage();
-        //init Countly
+        // init Countly
         initLimitsMain();
-        //add user details
+        // add user details
         Countly.user_details({
             name: "Gottlob Frege",
             username: "Grundgesetze",
             email: "test@isatest.com",
             organization: "Bialloblotzsky",
             phone: "+4555999423",
-            //Web URL pointing to user picture
+            // Web URL pointing to user picture
             picture:
             "https://ih0.redbubble.net/image.276305970.7419/flat,550x550,075,f.u3.jpg",
             gender: "M",
-            byear: 1848, //birth year
+            byear: 1848, // birth year
             custom: {
                 "SEGkey 1st one": "SEGVal 1st one",
                 "SEGkey 2st one": "SEGVal 2st one",
@@ -178,9 +175,9 @@ describe("Testing internal limits", function() {
                 "SEGkey 5st one": "SEGVal 5st one",
             },
         });
-        //test
+        // test
         setTimeout(() => {
-            //read event queue
+            // read event queue
             var req = hp.readRequestQueue()[0];
             assert.ok(req.user_details);
             assert.ok(req.app_key);
@@ -207,25 +204,25 @@ describe("Testing internal limits", function() {
             done();
         }, hp.sWait);
     });
-    it("5. Check custom properties truncation", function(done) {
-        //clear storage
+    it("5. Check custom properties truncation", (done) => {
+        // clear storage
         hp.clearStorage();
-        //init Countly
+        // init Countly
         initLimitsMain();
-        //add custom properties
-        Countly.userData.set("name of a character", "Bertrand Arthur William Russell"); //set custom property
-        Countly.userData.set_once("A galaxy far far away", "Called B48FF"); //set custom property only if property does not exist
-        Countly.userData.increment_by("byear", 123456789012345); //increment value in key by provided value
-        Countly.userData.multiply("byear", 2345678901234567); //multiply value in key by provided value
-        Countly.userData.max("byear", 3456789012345678); //save max value between current and provided
-        Countly.userData.min("byear", 4567890123456789); //save min value between current and provided
-        Countly.userData.push("gender", "II Fernando Valdez"); //add value to key as array element
-        Countly.userData.push_unique("gender", "III Fernando Valdez"); //add value to key as array element, but only store unique values in array
-        Countly.userData.pull("gender", "III Fernando Valdez"); //remove value from array under property with key as name
+        // add custom properties
+        Countly.userData.set("name of a character", "Bertrand Arthur William Russell"); // set custom property
+        Countly.userData.set_once("A galaxy far far away", "Called B48FF"); // set custom property only if property does not exist
+        Countly.userData.increment_by("byear", 123456789012345); // increment value in key by provided value
+        Countly.userData.multiply("byear", 2345678901234567); // multiply value in key by provided value
+        Countly.userData.max("byear", 3456789012345678); // save max value between current and provided
+        Countly.userData.min("byear", 4567890123456789); // save min value between current and provided
+        Countly.userData.push("gender", "II Fernando Valdez"); // add value to key as array element
+        Countly.userData.push_unique("gender", "III Fernando Valdez"); // add value to key as array element, but only store unique values in array
+        Countly.userData.pull("gender", "III Fernando Valdez"); // remove value from array under property with key as name
         Countly.userData.save();
-        //test
+        // test
         setTimeout(() => {
-            //read event queue
+            // read event queue
             var req = hp.readRequestQueue()[0];
             assert.ok(req.user_details);
             assert.ok(req.app_key);
@@ -236,28 +233,25 @@ describe("Testing internal limits", function() {
             assert.ok(req.hour);
             assert.ok(req.dow);
             var details = JSON.parse(req.user_details).custom;
-            //set
+            // set
             assert.equal(details['name of '], 'Bertrand');
-            //set_once
+            // set_once
             assert.equal(details['A galaxy'].$setOnce, 'Called B');
-            //increment_by
+            // increment_by
             assert.equal(details.byear.$inc, '12345678');
-            //multiply
+            // multiply
             assert.equal(details.byear.$mul, '23456789');
-            //max
+            // max
             assert.equal(details.byear.$max, '34567890');
-            //min
+            // min
             assert.equal(details.byear.$min, '45678901');
-            //push
+            // push
             assert.equal(details.gender.$push[0], 'II Ferna');
-            //push_unique
+            // push_unique
             assert.equal(details.gender.$addToSet[0], 'III Fern');
-            //pull
+            // pull
             assert.equal(details.gender.$pull[0], 'III Fern');
             done();
         }, hp.sWait);
     });
 });
-
-
-

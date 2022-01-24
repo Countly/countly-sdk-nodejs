@@ -1,34 +1,34 @@
 /* eslint-disable no-unused-vars */
-var path = require("path"),
-    assert = require("assert"),
-    fs = require("fs"),
-    Countly = require("../../lib/countly.js");
+var path = require("path");
+var assert = require("assert");
+var fs = require("fs");
+var Countly = require("../../lib/countly");
 
-//paths for convenience
+// paths for convenience
 var dir = path.resolve(__dirname, "../../");
-var idDir = (dir + "/data/__cly_id.json");
-var eventDir = (dir + "/data/__cly_event.json");
-var reqDir = (dir + "/data/__cly_queue.json");
-//timeout variables
+var idDir = (`${dir}/data/__cly_id.json`);
+var eventDir = (`${dir}/data/__cly_event.json`);
+var reqDir = (`${dir}/data/__cly_queue.json`);
+// timeout variables
 var sWait = 50;
 var mWait = 3000;
 var lWait = 10000;
-//parsing event queue
+// parsing event queue
 function readEventQueue() {
     var a = JSON.parse(fs.readFileSync(eventDir, "utf-8")).cly_event;
     return a;
 }
-//parsing request queue
+// parsing request queue
 function readRequestQueue() {
     var a = JSON.parse(fs.readFileSync(reqDir, "utf-8")).cly_queue;
     return a;
 }
 
-//queue files clearing logic
+// queue files clearing logic
 function clearStorage() {
-    //Resets Countly
+    // Resets Countly
     Countly.halt(true);
-    //clean storages
+    // clean storages
     if (fs.existsSync(idDir)) {
         fs.unlinkSync(idDir);
     }
@@ -46,32 +46,32 @@ function clearStorage() {
  * @param {Number} time - Expected time for timed event duration
  */
 function eventValidator(eventObject, eventQueue, time) {
-    //key key is mandatory
+    // key key is mandatory
     assert.equal(eventObject.key, eventQueue.key);
-    //check if count key exists. If it does add a test
+    // check if count key exists. If it does add a test
     if (typeof eventObject.count !== 'undefined') {
         assert.equal(eventObject.count, eventQueue.count);
     }
-    //check if sum key exists. If it does add a test
+    // check if sum key exists. If it does add a test
     if (typeof eventObject.sum !== 'undefined') {
         assert.equal(eventObject.sum, eventQueue.sum);
     }
-    //check if dur key exists or if it is a timed event. If it is one of those add a test
+    // check if dur key exists or if it is a timed event. If it is one of those add a test
     if (typeof eventObject.dur !== 'undefined' || typeof time !== 'undefined') {
-        //set expected duration
+        // set expected duration
         if (typeof time !== 'undefined') {
             eventObject.dur = time;
         }
         assert.equal(eventObject.dur, eventQueue.dur);
     }
-    //check if segmentation exists. If it is add test(s)
+    // check if segmentation exists. If it is add test(s)
     if (typeof eventObject.segmentation !== 'undefined') {
-        //loop through segmentation keys and create tets
+        // loop through segmentation keys and create tets
         for (var key in eventObject.segmentation) {
             assert.equal(eventObject.segmentation[key], eventQueue.segmentation[key]);
         }
     }
-    //common parameter validation
+    // common parameter validation
     assert.ok(typeof eventQueue.timestamp !== 'undefined');
     assert.ok(typeof eventQueue.hour !== 'undefined');
     assert.ok(typeof eventQueue.dow !== 'undefined');
@@ -120,14 +120,14 @@ function crashRequestValidator(validator, nonfatal) {
  * @param {String} id - Initial ID if changed
  */
 function sessionRequestValidator(beginSs, endSs, time, id) {
-    //begin_session
+    // begin_session
     requestBaseParamValidator(beginSs, id);
     var metrics = JSON.parse(beginSs.metrics);
     assert.ok(metrics._os);
     assert.ok(metrics._os_version);
     assert.ok(metrics._app_version);
     assert.equal(1, beginSs.begin_session);
-    //end_session
+    // end_session
     if (typeof endSs !== 'undefined') {
         requestBaseParamValidator(endSs);
         assert.equal(1, endSs.end_session);
@@ -177,7 +177,7 @@ function viewEventValidator(name, viewObj, time) {
     }
     assert.ok(viewObj.segmentation.segment);
 }
-//exports
+// exports
 module.exports = {
     clearStorage,
     sWait,
@@ -189,5 +189,5 @@ module.exports = {
     crashRequestValidator,
     sessionRequestValidator,
     userDetailRequestValidator,
-    viewEventValidator
+    viewEventValidator,
 };

@@ -37,6 +37,23 @@ module.exports = {
           "error",
           "last"
       ],
+        "func-names": "off",
+        "consistent-return": "off",
+        "prefer-rest-params": "off",
+        "radix": "off",
+        "prefer-spread": "off",
+        "no-plusplus": "off",
+        "camelcase": "off",
+        "no-use-before-define": "off",
+        "no-lonely-if": "off",
+        "no-restricted-syntax": "off",
+        "vars-on-top": "off",
+        "no-param-reassign": "off",
+        "max-len": "off",
+        "guard-for-in": "off",
+        "no-underscore-dangle": "off",
+        "no-bitwise": "off",
+        "no-mixed-operators": "off",
       "computed-property-spacing": [
           "error",
           "never"

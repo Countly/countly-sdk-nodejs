@@ -1,10 +1,9 @@
-/* global describe, it, */
-var assert = require("assert"),
-    fs = require("fs"),
-    hp = require("./helpers/helper_functions"),
-    Countly = require("../lib/countly.js");
+var assert = require("assert");
+var fs = require("fs");
+var hp = require("./helpers/helper_functions");
+var Countly = require("../lib/countly");
 
-//standard init for tests
+// standard init for tests
 function initMain() {
     Countly.init({
         app_key: "YOUR_APP_KEY",
@@ -12,58 +11,58 @@ function initMain() {
         require_consent: true,
         interval: 10000,
         device_id: "György Ligeti",
-        max_events: -1
+        max_events: -1,
     });
 }
-//gathered events to add
+// gathered events to add
 function events() {
     Countly.add_event({
-        "key": "a",
-        "count": 1,
-        "segmentation": {
-            "custom key": "custom value"
-        }
+        key: "a",
+        count: 1,
+        segmentation: {
+            "custom key": "custom value",
+        },
     });
     Countly.add_event({
-        "key": "[CLY]_view",
-        "count": 1,
-        "segmentation": {
-            "custom key": "custom value"
-        }
+        key: "[CLY]_view",
+        count: 1,
+        segmentation: {
+            "custom key": "custom value",
+        },
     });
     Countly.add_event({
-        "key": "[CLY]_nps",
-        "count": 1,
-        "segmentation": {
-            "custom key": "custom value"
-        }
+        key: "[CLY]_nps",
+        count: 1,
+        segmentation: {
+            "custom key": "custom value",
+        },
     });
     Countly.add_event({
-        "key": "[CLY]_survey",
-        "count": 1,
-        "segmentation": {
-            "custom key": "custom value"
-        }
+        key: "[CLY]_survey",
+        count: 1,
+        segmentation: {
+            "custom key": "custom value",
+        },
     });
     Countly.add_event({
-        "key": "[CLY]_star_rating",
-        "count": 1,
-        "segmentation": {
-            "custom key": "custom value"
-        }
+        key: "[CLY]_star_rating",
+        count: 1,
+        segmentation: {
+            "custom key": "custom value",
+        },
     });
     Countly.add_event({
-        "key": "[CLY]_orientation",
-        "count": 1,
-        "segmentation": {
-            "custom key": "custom value"
-        }
+        key: "[CLY]_orientation",
+        count: 1,
+        segmentation: {
+            "custom key": "custom value",
+        },
     });
 }
 
-//tests
-describe("Internal event consent tests", function() {
-    it("Only custom event should be sent to the queue", function(done) {
+// tests
+describe("Internal event consent tests", () => {
+    it("Only custom event should be sent to the queue", (done) => {
         hp.clearStorage();
         initMain();
         Countly.add_consent(["events"]);
@@ -75,7 +74,7 @@ describe("Internal event consent tests", function() {
             done();
         }, hp.sWait);
     });
-    it("All but custom event should be sent to the queue", function(done) {
+    it("All but custom event should be sent to the queue", (done) => {
         hp.clearStorage();
         initMain();
         Countly.add_consent(["sessions", "views", "users", "star-rating", "apm", "feedback"]);
@@ -91,7 +90,7 @@ describe("Internal event consent tests", function() {
             done();
         }, hp.mWait);
     });
-    it("Non-merge ID change should reset all consents", function(done) {
+    it("Non-merge ID change should reset all consents", (done) => {
         hp.clearStorage();
         initMain();
         Countly.add_consent(["sessions", "views", "users", "star-rating", "apm", "feedback"]);
@@ -102,7 +101,7 @@ describe("Internal event consent tests", function() {
             done();
         }, hp.sWait);
     });
-    it("Merge ID change should not reset consents", function(done) {
+    it("Merge ID change should not reset consents", (done) => {
         hp.clearStorage();
         initMain();
         Countly.add_consent(["sessions", "views", "users", "star-rating", "apm", "feedback"]);

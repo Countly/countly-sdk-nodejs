@@ -1,1 +1,1 @@
-module.exports = require("./lib/countly.js");
+module.exports = require("./lib/countly");

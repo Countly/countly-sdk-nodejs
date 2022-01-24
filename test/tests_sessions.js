@@ -1,23 +1,22 @@
 /* eslint-disable no-console */
-/* global describe, it, */
-var Countly = require("../lib/countly"),
-    hp = require("./helpers/helper_functions");
+var Countly = require("../lib/countly");
+var hp = require("./helpers/helper_functions");
 
-//init function
+// init function
 function initMain() {
     Countly.init({
         app_key: "YOUR_APP_KEY",
         url: "https://try.count.ly",
-        max_events: -1
+        max_events: -1,
     });
 }
-describe("Sessions tests", function() {
-    it("Start session and validate the request queue", function(done) {
-        //clear previous data
+describe("Sessions tests", () => {
+    it("Start session and validate the request queue", (done) => {
+        // clear previous data
         hp.clearStorage();
-        //initialize SDK
+        // initialize SDK
         initMain();
-        //send session calls
+        // send session calls
         Countly.begin_session();
         setTimeout(() => {
             var beg = hp.readRequestQueue()[0];
@@ -25,12 +24,12 @@ describe("Sessions tests", function() {
             done();
         }, hp.sWait);
     });
-    it("Start and end session and validate the request queue", function(done) {
-        //clear previous data
+    it("Start and end session and validate the request queue", (done) => {
+        // clear previous data
         hp.clearStorage();
-        //initialize SDK
+        // initialize SDK
         initMain();
-        //send session calls
+        // send session calls
         Countly.begin_session();
         setTimeout(() => {
             Countly.end_session();
@@ -43,4 +42,3 @@ describe("Sessions tests", function() {
         }, hp.mWait);
     });
 });
-
