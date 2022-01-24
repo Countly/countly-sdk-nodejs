@@ -32,7 +32,7 @@ describe("Crash tests", function() {
             var req = hp.readRequestQueue()[0];
             hp.crashRequestValidator(req, true);
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
     //This needs two steps, first creating an error and second checking the logs without erasing, otherwise error would halt the test
     describe("Unhandled Error logic", function() {
@@ -50,7 +50,7 @@ describe("Crash tests", function() {
                 var req = hp.readRequestQueue()[0];
                 hp.crashRequestValidator(req, false);
                 done();
-            }, hp.mpan);
+            }, hp.mWait);
         });
     });
 });

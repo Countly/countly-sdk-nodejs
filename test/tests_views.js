@@ -28,7 +28,7 @@ describe("View test", function() {
             var event = hp.readEventQueue()[0];
             hp.viewEventValidator(pageNameOne, event);
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
     it("Record and validate timed page views with same name", function(done) {
         //clear previous data
@@ -45,12 +45,12 @@ describe("View test", function() {
                 //start view
                 hp.viewEventValidator(pageNameOne, event[0]);
                 //end view with recording duration
-                hp.viewEventValidator(pageNameOne, event[1], (hp.mpan / 1000));
+                hp.viewEventValidator(pageNameOne, event[1], (hp.mWait / 1000));
                 //start second view
                 hp.viewEventValidator(pageNameOne, event[2]);
                 done();
-            }, hp.span);
-        }, hp.mpan);
+            }, hp.sWait);
+        }, hp.mWait);
     });
     it("Record and validate timed page views with same name", function(done) {
         //clear previous data
@@ -64,16 +64,15 @@ describe("View test", function() {
             //read event queue
             setTimeout(() => {
                 var event = hp.readEventQueue();
-                console.log(event);
                 //start view
                 hp.viewEventValidator(pageNameOne, event[0]);
                 //end view with recording duration
-                hp.viewEventValidator(pageNameOne, event[1], (hp.mpan / 1000));
+                hp.viewEventValidator(pageNameOne, event[1], (hp.mWait / 1000));
                 //start second view
                 hp.viewEventValidator(pageNameTwo, event[2]);
                 done();
-            }, hp.span);
-        }, hp.mpan);
+            }, hp.sWait);
+        }, hp.mWait);
     });
 
 });

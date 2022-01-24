@@ -86,7 +86,7 @@ describe("Testing internal limits", function() {
             assert.ok(event.hour);
             assert.ok(event.dow);
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
 
     it("2. Check countly view event truncation", function(done) {
@@ -108,7 +108,7 @@ describe("Testing internal limits", function() {
             assert.ok(event.hour);
             assert.ok(event.dow);
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
     it("3. Check breadcrumbs and error truncation", function(done) {
         //clear storage
@@ -151,7 +151,7 @@ describe("Testing internal limits", function() {
             assert.ok(crash._nonfatal);
             assert.ok(crash._custom);
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
     it("4. Check user details truncation", function(done) {
         //clear storage
@@ -205,7 +205,7 @@ describe("Testing internal limits", function() {
             assert.ok(!details.custom['SEGkey 4']);
             assert.ok(!details.custom['SEGkey 5']);
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
     it("5. Check custom properties truncation", function(done) {
         //clear storage
@@ -255,7 +255,7 @@ describe("Testing internal limits", function() {
             //pull
             assert.equal(details.gender.$pull[0], 'III Fern');
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
 });
 

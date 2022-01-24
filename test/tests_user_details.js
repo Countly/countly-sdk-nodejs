@@ -40,7 +40,7 @@ describe("User details tests", function() {
             var req = hp.readRequestQueue()[0];
             hp.userDetailRequestValidator(userDetailObj, req);
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
 });
 

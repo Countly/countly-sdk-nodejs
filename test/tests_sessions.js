@@ -8,11 +8,23 @@ function initMain() {
     Countly.init({
         app_key: "YOUR_APP_KEY",
         url: "https://try.count.ly",
-        interval: 10000,
         max_events: -1
     });
 }
 describe("Sessions tests", function() {
+    it("Start session and validate the request queue", function(done) {
+        //clear previous data
+        hp.clearStorage();
+        //initialize SDK
+        initMain();
+        //send session calls
+        Countly.begin_session();
+        setTimeout(() => {
+            var beg = hp.readRequestQueue()[0];
+            hp.sessionRequestValidator(beg);
+            done();
+        }, hp.sWait);
+    });
     it("Start and end session and validate the request queue", function(done) {
         //clear previous data
         hp.clearStorage();
@@ -25,10 +37,10 @@ describe("Sessions tests", function() {
             setTimeout(() => {
                 var beg = hp.readRequestQueue()[0];
                 var end = hp.readRequestQueue()[1];
-                hp.sessionRequestValidator(beg, end, (hp.mpan / 1000));
+                hp.sessionRequestValidator(beg, end, (hp.mWait / 1000));
                 done();
-            }, hp.span);
-        }, hp.mpan);
+            }, hp.sWait);
+        }, hp.mWait);
     });
 });
 

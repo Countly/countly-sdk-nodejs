@@ -45,7 +45,7 @@ describe("Events tests", function() {
             var event = hp.readEventQueue()[0];
             hp.eventValidator(eventObj, event);
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
     it("Record and check timed events", function(done) {
         //clear previous data
@@ -59,10 +59,10 @@ describe("Events tests", function() {
             //read event queue
             setTimeout(() => {
                 var event = hp.readEventQueue()[0];
-                hp.eventValidator(timedEventObj, event, (hp.mpan / 1000));
+                hp.eventValidator(timedEventObj, event, (hp.mWait / 1000));
                 done();
-            }, hp.span);
-        }, hp.mpan);
+            }, hp.sWait);
+        }, hp.mWait);
     });
 
 });

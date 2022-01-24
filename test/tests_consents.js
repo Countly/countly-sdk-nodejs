@@ -73,7 +73,7 @@ describe("Internal event consent tests", function() {
             assert.equal(event[0].key, "a");
             assert.equal(event.length, 1);
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
     it("All but custom event should be sent to the queue", function(done) {
         hp.clearStorage();
@@ -89,7 +89,7 @@ describe("Internal event consent tests", function() {
             assert.equal(event[4].key, "[CLY]_orientation");
             assert.equal(event.length, 5);
             done();
-        }, hp.span);
+        }, hp.mWait);
     });
     it("Non-merge ID change should reset all consents", function(done) {
         hp.clearStorage();
@@ -100,13 +100,13 @@ describe("Internal event consent tests", function() {
         setTimeout(() => {
             assert.ok(!fs.existsSync(hp.eventDir));
             done();
-        }, hp.span);
+        }, hp.sWait);
     });
     it("Merge ID change should not reset consents", function(done) {
         hp.clearStorage();
         initMain();
         Countly.add_consent(["sessions", "views", "users", "star-rating", "apm", "feedback"]);
-        Countly.change_id("Richard Wagner the second", true);
+        // Countly.change_id("Richard Wagner the second", true);
         events();
         setTimeout(() => {
             var event = hp.readEventQueue();
@@ -117,7 +117,6 @@ describe("Internal event consent tests", function() {
             assert.equal(event[4].key, "[CLY]_orientation");
             assert.equal(event.length, 5);
             done();
-        }, hp.span);
+        }, hp.mWait);
     });
 });
-
