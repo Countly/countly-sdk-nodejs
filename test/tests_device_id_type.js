@@ -46,14 +46,16 @@ describe("View test", () => {
         // initialize SDK
         initMain(undefined);
         Countly.change_id("changedID");
-        Countly.begin_session();
-        // read request queue
         setTimeout(() => {
-            var rq = hp.readRequestQueue()[0];
-            assert.equal(Countly.get_device_id(), "changedID");
-            assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-            checkRequestsForT(rq, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-            done();
+            Countly.begin_session();
+            // read request queue
+            setTimeout(() => {
+                var rq = hp.readRequestQueue()[0];
+                assert.equal(Countly.get_device_id(), "changedID");
+                assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+                checkRequestsForT(rq, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+                done();
+            }, hp.sWait);
         }, hp.sWait);
     });
     it("Developer supplied device ID", (done) => {
