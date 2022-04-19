@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
-var Countly = require("../lib/countly");
 var assert = require("assert");
+var Countly = require("../lib/countly");
 var cc = require("../lib/countly-common");
 var hp = require("./helpers/helper_functions");
 
@@ -71,5 +71,4 @@ describe("View test", () => {
             done();
         }, hp.sWait);
     });
-
 });
