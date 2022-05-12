@@ -1,6 +1,9 @@
 ## 22.02.0
+- !! Major breaking change !! Device ID provided during the init will be ignored if a device ID was provided previously
+- Added a new init time flag which erases the previously stored device ID. This allows to set new device ID during init
 - Added a call to get the device ID type of the user
 - Added a call to get the device ID of the user 
+- Now it appends the device ID type with each request
 
 ## 21.11.0
 - !! Major breaking change !! Changing device ID without merging will now clear the current consent. Consent has to be given again after performing this action.
