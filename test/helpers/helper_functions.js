@@ -25,18 +25,21 @@ function readRequestQueue() {
 }
 
 // queue files clearing logic
-function clearStorage() {
+function clearStorage(keepID) {
+    keepID = keepID || false;
     // Resets Countly
     Countly.halt(true);
     // clean storages
-    if (fs.existsSync(idDir)) {
-        fs.unlinkSync(idDir);
-    }
     if (fs.existsSync(eventDir)) {
         fs.unlinkSync(eventDir);
     }
     if (fs.existsSync(reqDir)) {
         fs.unlinkSync(reqDir);
+    }
+    if (!keepID) {
+        if (fs.existsSync(idDir)) {
+            fs.unlinkSync(idDir);
+        }
     }
 }
 /**
