@@ -1,6 +1,6 @@
 ## 22.02.0
-- Now you can get the device ID type of the user
-- Now you can get the device ID of the user 
+- Added a call to get the device ID type of the user
+- Added a call to get the device ID of the user 
 
 ## 21.11.0
 - !! Major breaking change !! Changing device ID without merging will now clear the current consent. Consent has to be given again after performing this action.

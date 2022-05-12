@@ -39,7 +39,7 @@ function initMain(deviceId, eraseID) {
         device_id: deviceId,
         max_events: -1,
         debug: true,
-        erase_stored_id: eraseID,
+        clear_stored_device_id: eraseID,
         test_mode: true,
     });
 }
@@ -55,7 +55,7 @@ function checkRequestsForT(queue, expectedInternalType) {
     }
 }
 
-describe("View test", () => {
+describe("Device ID type tests", () => {
     it("1.Generated device ID", (done) => {
         // clear previous data
         hp.clearStorage();
