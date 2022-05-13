@@ -44,7 +44,7 @@ describe("Events tests", () => {
             var event = hp.readEventQueue()[0];
             hp.eventValidator(eventObj, event);
             done();
-        }, hp.sWait);
+        }, hp.mWait);
     });
     it("Record and check timed events", (done) => {
         // clear previous data
