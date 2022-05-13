@@ -38,9 +38,8 @@ function initMain(deviceId, eraseID) {
         url: "https://try.count.ly",
         device_id: deviceId,
         max_events: -1,
-        debug: true,
+        // debug: true,
         clear_stored_device_id: eraseID,
-        test_mode: true,
     });
 }
 function validateSdkGeneratedId(providedDeviceId) {
@@ -98,6 +97,7 @@ describe("Device ID type tests", () => {
             assert.equal(Countly.get_device_id(), "ID");
             assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
             checkRequestsForT(rq, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+            Countly.halt(true);
             initMain(undefined);
             setTimeout(() => {
                 var req = hp.readRequestQueue()[0];
@@ -120,6 +120,7 @@ describe("Device ID type tests", () => {
             assert.equal(Countly.get_device_id(), "ID");
             assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
             checkRequestsForT(rq, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+            Countly.halt(true);
             initMain("ID2");
             setTimeout(() => {
                 var req = hp.readRequestQueue()[0];
@@ -143,6 +144,7 @@ describe("Device ID type tests", () => {
             validateSdkGeneratedId(initialId);
             assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.SDK_GENERATED);
             checkRequestsForT(rq, cc.deviceIdTypeEnums.SDK_GENERATED);
+            Countly.halt(true);
             initMain(undefined);
             setTimeout(() => {
                 var req = hp.readRequestQueue()[0];
@@ -167,6 +169,7 @@ describe("Device ID type tests", () => {
             validateSdkGeneratedId(initialId);
             assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.SDK_GENERATED);
             checkRequestsForT(rq, cc.deviceIdTypeEnums.SDK_GENERATED);
+            Countly.halt(true);
             initMain("ID2");
             setTimeout(() => {
                 var req = hp.readRequestQueue()[0];
@@ -178,7 +181,7 @@ describe("Device ID type tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
-    it("7_1.With stored dev ID and no new ID, flag set", (done) => {
+    it("7.With stored dev ID and no new ID, flag set", (done) => {
         // clear previous data
         hp.clearStorage();
         // initialize SDK
@@ -190,43 +193,92 @@ describe("Device ID type tests", () => {
             assert.equal(Countly.get_device_id(), "ID");
             assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
             checkRequestsForT(rq, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-            done();
+            Countly.halt(true);
+            initMain(undefined, true);
+            setTimeout(() => {
+                var req = hp.readRequestQueue()[0];
+                validateSdkGeneratedId(Countly.get_device_id());
+                assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.SDK_GENERATED);
+                checkRequestsForT(req, cc.deviceIdTypeEnums.SDK_GENERATED);
+                done();
+            }, hp.sWait);
         }, hp.sWait);
     });
-    it("7_2.With stored dev ID and no new ID, flag set", (done) => {
-        hp.clearStorage(true);
-        initMain(undefined);
+
+    it("8.With stored dev ID and with new ID, flag set", (done) => {
+        // clear previous data
+        hp.clearStorage();
+        // initialize SDK
+        initMain("ID");
         Countly.begin_session();
+        // read request queue
         setTimeout(() => {
-            var req = hp.readRequestQueue()[0];
+            var rq = hp.readRequestQueue()[0];
             assert.equal(Countly.get_device_id(), "ID");
             assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-            checkRequestsForT(req, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-            done();
+            checkRequestsForT(rq, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+            Countly.halt(true);
+            initMain("ID2", true);
+            setTimeout(() => {
+                var req = hp.readRequestQueue()[0];
+                assert.equal(Countly.get_device_id(), "ID2");
+                assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+                checkRequestsForT(req, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+                done();
+            }, hp.sWait);
         }, hp.sWait);
     });
-    // it("8.With stored dev ID and with new ID, flag set", (done) => {
-    //     // clear previous data
-    //     hp.clearStorage();
-    //     // initialize SDK
-    //     initMain("ID");
-    //     Countly.begin_session();
-    //     // read request queue
-    //     setTimeout(() => {
-    //         var rq = hp.readRequestQueue()[0];
-    //         assert.equal(Countly.get_device_id(), "ID");
-    //         assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-    //         checkRequestsForT(rq, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-    //         initMain("ID2", true);
-    //         setTimeout(() => {
-    //             var req = hp.readRequestQueue()[0];
-    //             assert.equal(Countly.get_device_id(), "ID2");
-    //             assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-    //             checkRequestsForT(req, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-    //             done();
-    //         }, hp.sWait);
-    //     }, hp.sWait);
-    // });
+    it("9.With stored sdk ID and no new ID, flag set", (done) => {
+        // clear previous data
+        hp.clearStorage();
+        // initialize SDK
+        initMain(undefined);
+        Countly.begin_session();
+        // read request queue
+        setTimeout(() => {
+            var rq = hp.readRequestQueue()[0];
+            var oldId = Countly.get_device_id();
+            validateSdkGeneratedId(Countly.get_device_id());
+            assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.SDK_GENERATED);
+            checkRequestsForT(rq, cc.deviceIdTypeEnums.SDK_GENERATED);
+            Countly.halt(true);
+            initMain(undefined, true);
+            setTimeout(() => {
+                var req = hp.readRequestQueue()[0];
+                validateSdkGeneratedId(Countly.get_device_id());
+                assert.notEqual(Countly.get_device_id(), oldId);
+                assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.SDK_GENERATED);
+                checkRequestsForT(req, cc.deviceIdTypeEnums.SDK_GENERATED);
+                done();
+            }, hp.sWait);
+        }, hp.sWait);
+    });
+
+    it("10.With stored sdk ID and with new ID, flag set", (done) => {
+        // clear previous data
+        hp.clearStorage();
+        // initialize SDK
+        initMain(undefined);
+        Countly.begin_session();
+        // read request queue
+        setTimeout(() => {
+            var rq = hp.readRequestQueue()[0];
+            var oldId = Countly.get_device_id();
+            validateSdkGeneratedId(Countly.get_device_id());
+            assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.SDK_GENERATED);
+            checkRequestsForT(rq, cc.deviceIdTypeEnums.SDK_GENERATED);
+            Countly.halt(true);
+            initMain("ID2", true);
+            setTimeout(() => {
+                var req = hp.readRequestQueue()[0];
+                assert.equal(Countly.get_device_id(), "ID2");
+                assert.notEqual(Countly.get_device_id(), oldId);
+                assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+                checkRequestsForT(req, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+                done();
+            }, hp.sWait);
+        }, hp.sWait);
+    });
     it("11.Change generated device ID", (done) => {
         // clear previous data
         hp.clearStorage();
