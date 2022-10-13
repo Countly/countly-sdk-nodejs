@@ -11,6 +11,7 @@
   "scripts": {
     "lint": "eslint **/*.js",
     "lint:fix": "npm run lint -- --fix",
+    "lintMD": "markdownlint **/*.md --fix",
     "docs": "node_modules/.bin/jsdoc lib/countly.js lib/countly-bulk.js lib/countly-bulk-user.js README.md -c jsdoc_conf.json -d docs",
     "pretest": "eslint --ignore-path .eslintignore .",
     "test": "mocha --timeout 180000 test/tests_*.js --exit --allow-uncaught"
@@ -35,6 +36,7 @@
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.1",
+    "markdownlint": "^0.26.0",
     "mocha": "*",
     "jsdoc": "*",
     "docdash": "*"

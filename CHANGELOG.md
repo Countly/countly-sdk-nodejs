@@ -8,12 +8,12 @@
 ## 21.11.0
 - !! Major breaking change !! Changing device ID without merging will now clear the current consent. Consent has to be given again after performing this action.
 - ! Minor breaking change ! Multiple values now have a default limit adjustable at initialization:
-    - Maximum size of all string keys is now 128 characters by default.
-    - Maximum size of all values in key-value pairs is now 256 characters by default.
-    - Maximum amount of segmentation in one event is mow 30 key-value pairs by default.
-    - Maximum amount of breadcrumbs that can be recorded at once is now 100 by default.
-    - Maximum stack trace lines per thread is now 30 by default.
-    - Maximum stack trace line length is now 200 by default. 
+  - Maximum size of all string keys is now 128 characters by default.
+  - Maximum size of all values in key-value pairs is now 256 characters by default.
+  - Maximum amount of segmentation in one event is mow 30 key-value pairs by default.
+  - Maximum amount of breadcrumbs that can be recorded at once is now 100 by default.
+  - Maximum stack trace lines per thread is now 30 by default.
+  - Maximum stack trace line length is now 200 by default. 
 - ! Minor breaking change ! After initialization, the logging/debugging mode can only be changed with `Countly.setLoggingEnabled` instead of `Countly.debug` now.
 - When recording internal events with 'add_event', the respective feature consent will now be checked instead of just the 'events' consent. 
 - Fixed a bug where the SDK throws a `Bulk user storage exception` due to a missing folder

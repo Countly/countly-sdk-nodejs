@@ -1,7 +1,6 @@
 # Countly NodeJS SDK 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/e68f25fa4a9b4990bdb213554901728b)](https://www.codacy.com/app/ar2rsawseen/countly-sdk-nodejs?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-nodejs&amp;utm_campaign=Badge_Grade) [![npm version](https://badge.fury.io/js/countly-sdk-nodejs.svg)](https://badge.fury.io/js/countly-sdk-nodejs) [![Inline docs](https://inch-ci.org/github/Countly/countly-sdk-nodejs.svg?branch=master)](https://inch-ci.org/github/Countly/countly-sdk-nodejs)
 
-
 ## What's Countly?
 [Countly](https://count.ly) is an innovative, real-time, open source mobile & [web analytics](https://count.ly/web-analytics), [rich push notifications](https://count.ly/push-notifications) and [crash reporting](https://count.ly/crash-reports) platform powering more than 2500 web sites and 14000 mobile applications as of 2017 Q3. It collects data from mobile phones, tablets, Apple Watch and other internet-connected devices, and visualizes this information to analyze application usage and end-user behavior. 
 
@@ -28,6 +27,7 @@ or
     yarn add countly-sdk-nodejs
 
 ## How to use Countly NodeJS SDK?
+
 ```
 var Countly = require('countly-sdk-nodejs');
 
@@ -51,22 +51,23 @@ Countly.add_event({
     }
 });
 ```
+
 More information is available at [https://support.count.ly/hc/en-us/articles/360037442892-NodeJS-SDK](https://support.count.ly/hc/en-us/articles/360037442892-NodeJS-SDK)
 
 ### Other Github resources ###
 
 Check Countly Server source code here: 
 
-- [Countly Server](https://github.com/Countly/countly-server)
+* [Countly Server](https://github.com/Countly/countly-server)
 
 There are also other Countly SDK repositories below:
 
-- [Countly iOS SDK](https://github.com/Countly/countly-sdk-ios)
-- [Countly Android SDK](https://github.com/Countly/countly-sdk-android)
-- [Countly Windows Phone SDK](https://github.com/Countly/countly-sdk-windows-phone)
-- [Countly Web SDK](https://github.com/Countly/countly-sdk-web)
-- [Countly Appcelerator Titanium SDK](https://github.com/euforic/Titanium-Count.ly) (Community supported)
-- [Countly Unity3D SDK](https://github.com/Countly/countly-sdk-unity) (Community supported)
+* [Countly iOS SDK](https://github.com/Countly/countly-sdk-ios)
+* [Countly Android SDK](https://github.com/Countly/countly-sdk-android)
+* [Countly Windows Phone SDK](https://github.com/Countly/countly-sdk-windows-phone)
+* [Countly Web SDK](https://github.com/Countly/countly-sdk-web)
+* [Countly Appcelerator Titanium SDK](https://github.com/euforic/Titanium-Count.ly) (Community supported)
+* [Countly Unity3D SDK](https://github.com/Countly/countly-sdk-unity) (Community supported)
 
 ### How can I help you with your efforts?
 
@@ -85,6 +86,5 @@ If you like Countly, why not use one of our badges and give a link back to us, s
 ### Support
 
 For community support page, see [https://support.count.ly/hc/en-us/community/topics](https://support.count.ly/hc/en-us/community/topics "Countly Support").
-
 
 [![NPM](https://nodei.co/npm/countly-sdk-nodejs.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/countly-sdk-nodejs/)
