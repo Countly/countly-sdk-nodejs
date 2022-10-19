@@ -1,8 +1,12 @@
 # Countly NodeJS SDK 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e68f25fa4a9b4990bdb213554901728b)](https://www.codacy.com/app/ar2rsawseen/countly-sdk-nodejs?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-nodejs&amp;utm_campaign=Badge_Grade) [![npm version](https://badge.fury.io/js/countly-sdk-nodejs.svg)](https://badge.fury.io/js/countly-sdk-nodejs) [![Inline docs](https://inch-ci.org/github/Countly/countly-sdk-nodejs.svg?branch=master)](https://inch-ci.org/github/Countly/countly-sdk-nodejs)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e68f25fa4a9b4990bdb213554901728b)](https://www.codacy.com/app/ar2rsawseen/countly-sdk-nodejs?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-nodejs&amp;utm_campaign=Badge_Grade) 
+[![npm version](https://badge.fury.io/js/countly-sdk-nodejs.svg)](https://badge.fury.io/js/countly-sdk-nodejs) 
+[![Inline docs](https://inch-ci.org/github/Countly/countly-sdk-nodejs.svg?branch=master)](https://inch-ci.org/github/Countly/countly-sdk-nodejs)
 
 ## What's Countly?
-[Countly](https://count.ly) is an innovative, real-time, open source mobile & [web analytics](https://count.ly/web-analytics), [rich push notifications](https://count.ly/push-notifications) and [crash reporting](https://count.ly/crash-reports) platform powering more than 2500 web sites and 14000 mobile applications as of 2017 Q3. It collects data from mobile phones, tablets, Apple Watch and other internet-connected devices, and visualizes this information to analyze application usage and end-user behavior. 
+[Countly](https://count.ly) is an innovative, real-time, open source mobile & [web analytics](https://count.ly/web-analytics), [rich push notifications](https://count.ly/push-notifications) 
+and [crash reporting](https://count.ly/crash-reports) platform powering more than 2500 web sites and 14000 mobile applications as of 2017 Q3. 
+It collects data from mobile phones, tablets, Apple Watch and other internet-connected devices, and visualizes this information to analyze application usage and end-user behavior. 
 
 With the help of [Javascript SDK](https://github.com/countly/countly-sdk-web), Countly is a web analytics platform with features on par with mobile SDKs. For more information about web analytics capabilities, [see this link](https://count.ly/web-analytics).
 
@@ -21,14 +25,19 @@ Need help? See [Countly SDK for NodeJS](https://support.count.ly/hc/en-us/articl
 
 Currently in testing phase
 
-    npm install countly-sdk-nodejs
+```shell
+npm install countly-sdk-nodejs
+```
+
 or
 
-    yarn add countly-sdk-nodejs
+```shell
+yarn add countly-sdk-nodejs
+```
 
 ## How to use Countly NodeJS SDK?
 
-```
+```JS
 var Countly = require('countly-sdk-nodejs');
 
 Countly.init({
@@ -54,7 +63,7 @@ Countly.add_event({
 
 More information is available at [https://support.count.ly/hc/en-us/articles/360037442892-NodeJS-SDK](https://support.count.ly/hc/en-us/articles/360037442892-NodeJS-SDK)
 
-### Other Github resources ###
+### Other Github resources
 
 Check Countly Server source code here: 
 
@@ -77,11 +86,15 @@ If you like Countly, why not use one of our badges and give a link back to us, s
 
 <a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/dark.svg?v2" alt="Countly - Product Analytics" /></a>
 
-    <a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/dark.svg" alt="Countly - Product Analytics" /></a>
+```JS
+<a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/dark.svg" alt="Countly - Product Analytics" /></a>
+```
 
 <a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/light.svg?v2" alt="Countly - Product Analytics" /></a>
 
-    <a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/light.svg" alt="Countly - Product Analytics" /></a>
+```JS
+<a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/light.svg" alt="Countly - Product Analytics" /></a>
+```
 
 ### Support
 
