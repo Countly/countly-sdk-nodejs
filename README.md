@@ -1,88 +1,41 @@
-# Countly NodeJS SDK 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/e68f25fa4a9b4990bdb213554901728b)](https://www.codacy.com/app/ar2rsawseen/countly-sdk-nodejs?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-nodejs&amp;utm_campaign=Badge_Grade) 
 [![npm version](https://badge.fury.io/js/countly-sdk-nodejs.svg)](https://badge.fury.io/js/countly-sdk-nodejs) 
 [![Inline docs](https://inch-ci.org/github/Countly/countly-sdk-nodejs.svg?branch=master)](https://inch-ci.org/github/Countly/countly-sdk-nodejs)
 
-## What's Countly?
-[Countly](https://count.ly) is an innovative, real-time, open source mobile & [web analytics](https://count.ly/web-analytics), [rich push notifications](https://count.ly/push-notifications) 
-and [crash reporting](https://count.ly/crash-reports) platform powering more than 2500 web sites and 14000 mobile applications as of 2017 Q3. 
-It collects data from mobile phones, tablets, Apple Watch and other internet-connected devices, and visualizes this information to analyze application usage and end-user behavior. 
+# Countly NodeJS SDK 
 
-With the help of [Javascript SDK](https://github.com/countly/countly-sdk-web), Countly is a web analytics platform with features on par with mobile SDKs. For more information about web analytics capabilities, [see this link](https://count.ly/web-analytics).
+This repository contains the Countly NodeJS SDK, which can be integrated into NodeJS running device or server. The Countly NodeJS SDK is intended to be used with [Countly Community Edition](https://github.com/Countly/countly-server) or [Countly Enterprise Edition](https://count.ly/product).
+## What is Countly?
+[Countly](https://count.ly) is a product analytics solution and innovation enabler that helps teams track product performance and customer journey and behavior across [mobile](https://count.ly/mobile-analytics), [web](http://count.ly/web-analytics),
+and [desktop](https://count.ly/desktop-analytics) applications. [Ensuring privacy by design](https://count.ly/privacy-by-design), Countly allows you to innovate and enhance your products to provide personalized and customized customer experiences, and meet key business and revenue goals.
 
-There are two parts of Countly: the server that collects and analyzes data, and an SDK (mobile, web or desktop) that sends this data. This repository includes Countly Community Edition (server side). For more information other versions (e.g Enterprise Edition), see [comparison of different Countly editions](https://count.ly/compare)
+Track, measure, and take action - all without leaving Countly.
 
-* **Slack user?** [Join our Slack community](https://slack.count.ly/)
-* **Questions?** [Ask in our Community forum](https://support.count.ly/hc/en-us/community/topics)
+* **Slack user?** [Join our Slack Community](https://slack.count.ly)
+* **Questions or feature requests?** [Post in our Community Forum](https://support.count.ly/hc/en-us/community/topics)
+* **Looking for the Countly Server?** [Countly Community Edition repository](https://github.com/Countly/countly-server)
+* **Looking for other Countly SDKs?** [An overview of all Countly SDKs for mobile, web and desktop](https://support.count.ly/hc/en-us/articles/360037236571-Downloading-and-Installing-SDKs#officially-supported-sdks)
 
-## About
+## Integrating Countly SDK in your projects
 
-This repository includes the Countly NodeJS SDK.
+Link to the script and call helper methods based on what you want to track: sessions, views, clicks, custom events, user data, etc. and for much more [check out our documentation](https://support.count.ly/hc/en-us/articles/360037442892-NodeJS).
 
-Need help? See [Countly SDK for NodeJS](https://support.count.ly/hc/en-us/articles/360037442892-NodeJS-SDK) SDK integration at [Countly Resources](https://support.count.ly/hc/en-us)  or [Countly NodeJS SDK Documentation](https://countly.github.io/countly-sdk-nodejs/)
+For information about how to add the SDK to your project, please check [this section of the documentation](https://support.count.ly/hc/en-us/articles/360037442892-NodeJS#adding-the-sdk-to-the-project).
 
-## How to get Countly NodeJS SDK?
+You can reach minimal integration info for your project from [this section of the documentation](https://support.count.ly/hc/en-us/articles/360037442892-NodeJS#minimal-setup).
 
-Currently in testing phase
+This SDK supports the following features:
+* [Analytics](https://support.count.ly/hc/en-us/articles/4431589003545-Analytics)
+* [User Profiles](https://support.count.ly/hc/en-us/articles/4403281285913-User-Profiles)
+* [Crash Reports](https://support.count.ly/hc/en-us/articles/4404213566105-Crashes-Errors)
+* [A/B Testing](https://support.count.ly/hc/en-us/articles/4416496362393-A-B-Testing-)
+* [Performance Monitoring](https://support.count.ly/hc/en-us/articles/4734457847705-Performance)
 
-```shell
-npm install countly-sdk-nodejs
-```
+## Security
+Security is very important to us. If you discover any issue regarding security, please disclose the information responsibly by sending an email to security@count.ly and **not by creating a GitHub issue**.
 
-or
-
-```shell
-yarn add countly-sdk-nodejs
-```
-
-## How to use Countly NodeJS SDK?
-
-```JS
-var Countly = require('countly-sdk-nodejs');
-
-Countly.init({
-    app_key: "{YOUR-API-KEY}",
-    url: "https://try.count.ly/",
-    debug: true
-});
-
-
-Countly.begin_session();
-
-Countly.add_event({
-    "key": "in_app_purchase",
-    "count": 3,
-    "sum": 2.97,
-    "dur": 1000,
-    "segmentation": {
-        "app_version": "1.0",
-        "country": "Turkey"
-    }
-});
-```
-
-More information is available at [https://support.count.ly/hc/en-us/articles/360037442892-NodeJS-SDK](https://support.count.ly/hc/en-us/articles/360037442892-NodeJS-SDK)
-
-### Other Github resources
-
-Check Countly Server source code here: 
-
-* [Countly Server](https://github.com/Countly/countly-server)
-
-There are also other Countly SDK repositories below:
-
-* [Countly iOS SDK](https://github.com/Countly/countly-sdk-ios)
-* [Countly Android SDK](https://github.com/Countly/countly-sdk-android)
-* [Countly Windows Phone SDK](https://github.com/Countly/countly-sdk-windows-phone)
-* [Countly Web SDK](https://github.com/Countly/countly-sdk-web)
-* [Countly Appcelerator Titanium SDK](https://github.com/euforic/Titanium-Count.ly) (Community supported)
-* [Countly Unity3D SDK](https://github.com/Countly/countly-sdk-unity) (Community supported)
-
-### How can I help you with your efforts?
-
-Glad you asked. We need ideas, feedbacks and constructive comments. All your suggestions will be taken care with upmost importance. We are on [Twitter](https://twitter.com/gocountly) and [Facebook](https://www.facebook.com/Countly) if you would like to keep up with our fast progress!
-
-If you like Countly, why not use one of our badges and give a link back to us, so others know about this wonderful platform? 
+## Badges
+If you like Countly, [why not use one of our badges](https://count.ly/brand-assets) and give a link back to us so others know about this wonderful platform?
 
 <a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/dark.svg?v2" alt="Countly - Product Analytics" /></a>
 
@@ -96,8 +49,7 @@ If you like Countly, why not use one of our badges and give a link back to us, s
 <a href="https://count.ly/f/badge" rel="nofollow"><img style="width:145px;height:60px" src="https://count.ly/badges/light.svg" alt="Countly - Product Analytics" /></a>
 ```
 
-### Support
+## How can I help you with your efforts?
+Glad you asked! We need ideas, feedback and constructive comments. All your suggestions will be taken care of with utmost importance. For feature requests and engaging with the community, join [our Slack Community](https://slack.count.ly) or [Community Forum](https://support.count.ly/hc/en-us/community/topics).
 
-For community support page, see [https://support.count.ly/hc/en-us/community/topics](https://support.count.ly/hc/en-us/community/topics "Countly Support").
-
-[![NPM](https://nodei.co/npm/countly-sdk-nodejs.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/countly-sdk-nodejs/)
+We are on [Twitter](http://twitter.com/gocountly), [Facebook](https://www.facebook.com/Countly) and [LinkedIn](https://www.linkedin.com/company/countly) if you would like to keep up with Countly related updates.
