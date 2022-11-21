@@ -1,6 +1,6 @@
 {
   "name": "countly-sdk-nodejs",
-  "version": "22.02.0",
+  "version": "22.06.0",
   "description": "Countly NodeJS SDK",
   "main": "lib/countly.js",
   "directories": {
