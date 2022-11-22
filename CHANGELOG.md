@@ -1,8 +1,6 @@
 ## 22.06.0
 - Fixed a bug where remote config requests were rejected
 - Fixed a bug where empty storage object did cause some issues
-- Implemented markdown linting rules
-- Improved SDK logging feature
 
 ## 22.02.0
 - !! Major breaking change !! Device ID provided during the init will be ignored if a device ID was provided previously
