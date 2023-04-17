@@ -1,3 +1,6 @@
+## 22.06.1
+- Max segmentation value set to 100 (from 30)
+
 ## 22.06.0
 - Fixed a bug where remote config requests were rejected
 - Fixed a bug where empty storage object did cause some issues
