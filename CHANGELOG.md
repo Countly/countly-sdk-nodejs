@@ -1,5 +1,5 @@
-## 22.06.1
-- Max segmentation value set to 100 (from 30)
+## xx.xx.xx
+* Default max segmentation value count changed from 30 to 100
 
 ## 22.06.0
 - Fixed a bug where remote config requests were rejected
