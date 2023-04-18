@@ -1,3 +1,6 @@
+## xx.xx.xx
+* Default max segmentation value count changed from 30 to 100
+
 ## 22.06.0
 - Fixed a bug where remote config requests were rejected
 - Fixed a bug where empty storage object did cause some issues
