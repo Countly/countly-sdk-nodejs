@@ -1,4 +1,4 @@
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ed5f07ef6f8b4503ac01b2dab190de01)](https://www.codacy.com/gh/Countly/countly-sdk-nodejs/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-nodejs&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ed5f07ef6f8b4503ac01b2dab190de01)](https://app.codacy.com/gh/Countly/countly-sdk-nodejs/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![npm version](https://badge.fury.io/js/countly-sdk-nodejs.svg)](https://badge.fury.io/js/countly-sdk-nodejs) 
 [![Inline docs](https://inch-ci.org/github/Countly/countly-sdk-nodejs.svg?branch=master)](https://inch-ci.org/github/Countly/countly-sdk-nodejs)
 
