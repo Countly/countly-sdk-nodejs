@@ -1,5 +1,6 @@
 const assert = require("assert");
 var Countly = require("../lib/countly");
+var storage = require("../lib/countly-storage");
 var cc = require("../lib/countly-common");
 var hp = require("./helpers/helper_functions");
 
@@ -111,7 +112,6 @@ describe("Storage Tests", () => {
     });
 
     it("3.1- Validate stored user detail", (done) => {
-        initMain();
         var req = hp.readRequestQueue()[0];
         hp.userDetailRequestValidator(userDetailObj, req);
         done();
@@ -141,6 +141,52 @@ describe("Storage Tests", () => {
 
         var event = storedEvents[0];
         hp.eventValidator(eventObj, event);
+        done();
+    });
+
+    // if storage path is not provided it will be default "../data/"
+    it("5- Not provide storage path during init", (done) => {
+        hp.clearStorage();
+        initMain();
+        assert.equal(storage.getStoragePath(), "../data/");
+        done();
+    });
+
+    // if set to undefined it should be set to default path
+    it("6- Set storage path to undefined", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+            storage_path: undefined,
+        });
+        assert.equal(storage.getStoragePath(), "../data/");
+        done();
+    });
+
+    // if set to null it should be set to default path
+    it("7- Set storage path to null", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+            storage_path: null,
+        });
+        assert.equal(storage.getStoragePath(), "../data/");
+        done();
+    });
+
+    // it should be set to the custom directory if provided
+    it("8- Set storage path to custom directory", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+            interval: 10000,
+            max_events: -1,
+            storage_path: "../test/customStorageDirectory/",
+        });
+        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         done();
     });
 });
