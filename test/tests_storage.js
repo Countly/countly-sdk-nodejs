@@ -35,7 +35,7 @@ var userDetailObj = {
 function initMain(device_id) {
     Countly.init({
         app_key: "YOUR_APP_KEY",
-        url: "https://try.count.ly",
+        url: "https://test.url.ly",
         interval: 10000,
         max_events: -1,
         device_id: device_id,
@@ -157,7 +157,7 @@ describe("Storage Tests", () => {
         hp.clearStorage();
         Countly.init({
             app_key: "YOUR_APP_KEY",
-            url: "https://try.count.ly",
+            url: "https://test.url.ly",
             storage_path: undefined,
         });
         assert.equal(storage.getStoragePath(), "../data/");
@@ -169,7 +169,7 @@ describe("Storage Tests", () => {
         hp.clearStorage();
         Countly.init({
             app_key: "YOUR_APP_KEY",
-            url: "https://try.count.ly",
+            url: "https://test.url.ly",
             storage_path: null,
         });
         assert.equal(storage.getStoragePath(), "../data/");
@@ -181,7 +181,7 @@ describe("Storage Tests", () => {
         hp.clearStorage();
         Countly.init({
             app_key: "YOUR_APP_KEY",
-            url: "https://try.count.ly",
+            url: "https://test.url.ly",
             interval: 10000,
             max_events: -1,
             storage_path: "../test/customStorageDirectory/",
