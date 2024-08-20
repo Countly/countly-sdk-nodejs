@@ -64,6 +64,38 @@ function validateDeviceId(deviceId, deviceIdType, expectedDeviceId, expectedDevi
     assert.equal(deviceIdType, expectedDeviceIdType);
     checkRequestsForT(rq, expectedDeviceIdType);
 }
+function recordValuesToStorageAndValidate() {
+    // Set values
+    var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
+    storage.storeSet("cly_id", "SpecialDeviceId");
+    storage.storeSet("cly_id_type", deviceIdType);
+
+    // Set values with different data types
+    storage.storeSet("cly_count", 42);
+    storage.storeSet("cly_object", { key: "value" });
+    storage.storeSet("cly_null", null);
+
+    // Retrieve and assert values
+    assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
+    assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+    assert.equal(storage.storeGet("cly_count"), 42);
+    assert.deepEqual(storage.storeGet("cly_object"), { key: "value" });
+    assert.equal(storage.storeGet("cly_null"), null);
+
+    // Remove specific items by overriding with null or empty array
+    storage.storeSet("cly_id", null);
+    storage.storeSet("cly_object", []);
+    assert.equal(storage.storeGet("cly_id"), null);
+    assert.deepEqual(storage.storeGet("cly_object"), []);
+
+    // Reset storage and check if it's empty again
+    storage.resetStorage();
+    assert.equal(storage.storeGet("cly_id"), undefined);
+    assert.equal(storage.storeGet("cly_id_type"), undefined);
+    assert.equal(storage.storeGet("cly_count"), undefined);
+    assert.equal(storage.storeGet("cly_object"), undefined);
+    assert.equal(storage.storeGet("cly_null"), undefined);
+}
 
 describe("Storage Tests", () => {
     it("1- Store Generated Device ID", (done) => {
@@ -202,18 +234,11 @@ describe("Storage Tests", () => {
 
     it("10- Recording to Storage with Default Storage Path /no-init", (done) => {
         storage.resetStorage();
-        // will set to default storage path
+
+        // Set to default storage path
         storage.setStoragePath();
         assert.equal(storage.getStoragePath(), "../data/");
-
-        // setting values
-        var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
-        storage.storeSet("cly_id", "SpecialDeviceId");
-        storage.storeSet("cly_id_type", deviceIdType);
-
-        // retrieve values
-        assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
-        assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+        recordValuesToStorageAndValidate();
         done();
     });
 
@@ -222,15 +247,7 @@ describe("Storage Tests", () => {
         // will set to default storage path
         storage.setStoragePath("../test/customStorageDirectory/");
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
-
-        // setting values
-        var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
-        storage.storeSet("cly_id", "SpecialDeviceId");
-        storage.storeSet("cly_id_type", deviceIdType);
-
-        // retrieve values
-        assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
-        assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+        recordValuesToStorageAndValidate();
         done();
     });
 
@@ -239,15 +256,7 @@ describe("Storage Tests", () => {
         // will set to default storage path
         storage.setBulkDataPath();
         assert.equal(storage.getStoragePath(), "../bulk_data/");
-
-        // setting values
-        var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
-        storage.storeSet("cly_id", "SpecialDeviceId");
-        storage.storeSet("cly_id_type", deviceIdType);
-
-        // retrieve values
-        assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
-        assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+        recordValuesToStorageAndValidate();
         done();
     });
 
@@ -256,15 +265,7 @@ describe("Storage Tests", () => {
         // will set to default storage path
         storage.setBulkDataPath("../test/customStorageDirectory/");
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
-
-        // setting values
-        var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
-        storage.storeSet("cly_id", "SpecialDeviceId");
-        storage.storeSet("cly_id_type", deviceIdType);
-
-        // retrieve values
-        assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
-        assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+        recordValuesToStorageAndValidate();
         done();
     });
 });
