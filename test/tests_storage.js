@@ -189,4 +189,82 @@ describe("Storage Tests", () => {
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         done();
     });
+
+    it("9- Reset Storage While on Default Path /no-init", (done) => {
+        // will set to default storage path
+        storage.setStoragePath();
+        assert.equal(storage.getStoragePath(), "../data/");
+        // will set to undefined
+        storage.resetStorage();
+        assert.equal(storage.getStoragePath(), undefined);
+        done();
+    });
+
+    it("10- Recording to Storage with Default Storage Path /no-init", (done) => {
+        storage.resetStorage();
+        // will set to default storage path
+        storage.setStoragePath();
+        assert.equal(storage.getStoragePath(), "../data/");
+
+        // setting values
+        var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
+        storage.storeSet("cly_id", "SpecialDeviceId");
+        storage.storeSet("cly_id_type", deviceIdType);
+
+        // retrieve values
+        assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
+        assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+        done();
+    });
+
+    it("11- Recording to Storage with Custom Storage Path /no-init", (done) => {
+        storage.resetStorage();
+        // will set to default storage path
+        storage.setStoragePath("../test/customStorageDirectory/");
+        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+
+        // setting values
+        var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
+        storage.storeSet("cly_id", "SpecialDeviceId");
+        storage.storeSet("cly_id_type", deviceIdType);
+
+        // retrieve values
+        assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
+        assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+        done();
+    });
+
+    it("12- Recording to Bulk Storage with Default Bulk Data Path /no-init", (done) => {
+        storage.resetStorage();
+        // will set to default storage path
+        storage.setBulkDataPath();
+        assert.equal(storage.getStoragePath(), "../bulk_data/");
+
+        // setting values
+        var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
+        storage.storeSet("cly_id", "SpecialDeviceId");
+        storage.storeSet("cly_id_type", deviceIdType);
+
+        // retrieve values
+        assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
+        assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+        done();
+    });
+
+    it("13- Recording to Bulk Storage with Custom Bulk Storage Path /no-init", (done) => {
+        storage.resetStorage();
+        // will set to default storage path
+        storage.setBulkDataPath("../test/customStorageDirectory/");
+        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+
+        // setting values
+        var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
+        storage.storeSet("cly_id", "SpecialDeviceId");
+        storage.storeSet("cly_id_type", deviceIdType);
+
+        // retrieve values
+        assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
+        assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+        done();
+    });
 });
