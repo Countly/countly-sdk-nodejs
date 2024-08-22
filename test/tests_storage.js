@@ -254,7 +254,8 @@ describe("Storage Tests", () => {
     it("12- Recording to Bulk Storage with Default Bulk Data Path /no-init", (done) => {
         storage.resetStorage();
         // will set to default storage path
-        storage.setBulkDataPath();
+        // To set the storage path to the default bulk storage path and persist the queue
+        storage.setStoragePath(null, true, true);
         assert.equal(storage.getStoragePath(), "../bulk_data/");
         recordValuesToStorageAndValidate();
         done();
@@ -263,7 +264,7 @@ describe("Storage Tests", () => {
     it("13- Recording to Bulk Storage with Custom Bulk Storage Path /no-init", (done) => {
         storage.resetStorage();
         // will set to default storage path
-        storage.setBulkDataPath("../test/customStorageDirectory/");
+        storage.setStoragePath("../test/customStorageDirectory/", true);
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         recordValuesToStorageAndValidate();
         done();
