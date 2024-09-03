@@ -9,6 +9,8 @@ var dir = path.resolve(__dirname, "../../");
 var idDir = (`${dir}/data/__cly_id.json`);
 var eventDir = (`${dir}/data/__cly_event.json`);
 var reqDir = (`${dir}/data/__cly_queue.json`);
+var bulkEventDir = (`${dir}/bulk_data/__cly_bulk_event.json`);
+var bulkQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
 // timeout variables
 var sWait = 50;
 var mWait = 3000;
@@ -21,6 +23,14 @@ function readEventQueue() {
 // parsing request queue
 function readRequestQueue() {
     var a = JSON.parse(fs.readFileSync(reqDir, "utf-8")).cly_queue;
+    return a;
+}
+function readBulkEventQueue() {
+    var a = JSON.parse(fs.readFileSync(bulkEventDir, "utf-8")).cly_bulk_event;
+    return a;
+}
+function readBulkReqQueue() {
+    var a = JSON.parse(fs.readFileSync(bulkQueueDir, "utf-8")).cly_req_queue;
     return a;
 }
 
@@ -188,6 +198,8 @@ module.exports = {
     lWait,
     readEventQueue,
     readRequestQueue,
+    readBulkEventQueue,
+    readBulkReqQueue,
     eventValidator,
     crashRequestValidator,
     sessionRequestValidator,
