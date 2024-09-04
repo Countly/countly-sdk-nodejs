@@ -34,6 +34,39 @@ function readBulkReqQueue() {
     return a;
 }
 
+function clearStorageJsonFiles(directory, files) {
+    files.forEach((file) => {
+        const filePath = path.join(directory, file);
+        // Check if the file exists before attempting to clear it
+        fs.access(filePath, fs.constants.F_OK, (err) => {
+            if (!err) {
+                // Write an empty JSON object to the file
+                // logs can be added here
+                fs.writeFile(filePath, JSON.stringify({}), 'utf8', (er) => { });
+            }
+        });
+    });
+}
+
+function clearJsonFiles(isBulk = true, customDir = '') {
+    // Determine the directory and files based on isBulk
+    const directory = customDir || (isBulk ? path.join(__dirname, 'bulk_data') : path.join(__dirname, 'data'));
+    const files = isBulk ? [
+        '__cly_id.json',
+        '__cly_req_queue.json',
+        '__cly_bulk_event.json',
+    ] : [
+        '__cly_event.json',
+        '__cly_id_type.json',
+        '__cly_id.json',
+        '__cly_queue.json',
+        '__cly_remote_configs.json',
+    ];
+
+    // Clear files in the specified directory
+    clearStorageJsonFiles(directory, files);
+}
+
 // queue files clearing logic
 function clearStorage(keepID) {
     keepID = keepID || false;
@@ -77,11 +110,16 @@ function eventValidator(eventObject, eventQueue, time) {
         }
         assert.equal(eventObject.dur, eventQueue.dur);
     }
-    // check if segmentation exists. If it is add test(s)
+    // check if segmentation exists. If it does, add tests
     if (typeof eventObject.segmentation !== 'undefined') {
-        // loop through segmentation keys and create tets
+        // loop through segmentation keys and create tests
         for (var key in eventObject.segmentation) {
-            assert.equal(eventObject.segmentation[key], eventQueue.segmentation[key]);
+            if (Array.isArray(eventObject.segmentation[key]) || typeof eventObject.segmentation[key] === 'object') {
+                assert.deepStrictEqual(eventObject.segmentation[key], eventQueue.segmentation[key]);
+            }
+            else {
+                assert.equal(eventObject.segmentation[key], eventQueue.segmentation[key]);
+            }
         }
     }
     // common parameter validation
@@ -202,6 +240,7 @@ module.exports = {
     readBulkReqQueue,
     eventValidator,
     crashRequestValidator,
+    clearJsonFiles,
     sessionRequestValidator,
     userDetailRequestValidator,
     viewEventValidator,
