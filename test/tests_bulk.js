@@ -1,9 +1,15 @@
 /* eslint-disable no-console */
 /* global runthis */
+var path = require("path");
 const assert = require("assert");
 const CountlyBulk = require("../lib/countly-bulk");
 var hp = require("./helpers/helper_functions");
 var storage = require("../lib/countly-storage");
+
+// default paths
+var dir = path.resolve(__dirname, "../");
+var bulkEventDir = (`${dir}/bulk_data/__cly_bulk_event.json`);
+var bulkQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
 
 function createBulk(storagePath) {
     var bulk = new CountlyBulk({
@@ -116,26 +122,26 @@ var userDetailObj = {
 
 describe("Bulk Tests", () => {
     it("1- Bulk with Default Storage Path", (done) => {
-        hp.clearJsonFiles(true);
+        hp.clearStorage(false, true);
         createBulk();
         assert.equal(storage.getStoragePath(), "../bulk_data/");
         done();
     });
 
     it("2- Bulk with Custom Storage Path", (done) => {
-        hp.clearJsonFiles(true);
+        hp.clearStorage(false, true);
         createBulk("../test/customStorageDirectory/");
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         done();
     });
 
     it("3- Bulk add_user with Record Event", (done) => {
-        hp.clearJsonFiles(true);
+        hp.clearStorage(false, true);
         var bulk = createBulk();
         var user = bulk.add_user({ device_id: "testUser1" });
         user.add_event(eventObj);
         setTimeout(() => {
-            var events = hp.readBulkEventQueue();
+            var events = hp.readEventQueue(bulkEventDir, true);
             var deviceEvents = events.testUser1; // Access the events for the specific device
             var recordedEvent = deviceEvents[0]; // Access the first event
             hp.eventValidator(eventObj, recordedEvent);
@@ -144,14 +150,14 @@ describe("Bulk Tests", () => {
     });
 
     it("4- Bulk add_user with User Details", (done) => {
-        hp.clearJsonFiles(true);
+        hp.clearStorage(false, true);
         var bulk = createBulk();
         var user = bulk.add_user({ device_id: "testUser2" });
         user.user_details(userDetailObj);
 
         // read event queue
         setTimeout(() => {
-            var reqQueue = hp.readBulkReqQueue();
+            var reqQueue = hp.readRequestQueue(bulkQueueDir, true);
             var req = reqQueue[0];
             // Extract the user_details from the actual request
             const actualUserDetails = req.user_details || {};
@@ -163,11 +169,11 @@ describe("Bulk Tests", () => {
     });
 
     it("5- Bulk add_request", (done) => {
-        hp.clearJsonFiles(true);
+        hp.clearStorage(false, true);
         var bulk = createBulk();
         bulk.add_request({ device_id: "TestUser3" });
         setTimeout(() => {
-            var reqQueue = hp.readBulkReqQueue();
+            var reqQueue = hp.readRequestQueue(bulkQueueDir, true);
             var testUser3Request = reqQueue.find((req) => req.device_id === "TestUser3");
             assert.ok(testUser3Request);
             assert.strictEqual(testUser3Request.device_id, "TestUser3");
@@ -178,7 +184,7 @@ describe("Bulk Tests", () => {
     });
 
     it("6- Bulk add_user Report Crash", (done) => {
-        hp.clearJsonFiles(true);
+        hp.clearStorage(false, true);
         var bulk = createBulk();
         var user = bulk.add_user({ device_id: "TestUser4" });
         try {
@@ -199,7 +205,7 @@ describe("Bulk Tests", () => {
         }
         // read event queue
         setTimeout(() => {
-            var reqQueue = hp.readBulkReqQueue();
+            var reqQueue = hp.readRequestQueue(bulkQueueDir, true);
             var testUser4Request = reqQueue.find((req) => req.device_id === "TestUser4");
             validateCrash(testUser4Request, true);
             done();

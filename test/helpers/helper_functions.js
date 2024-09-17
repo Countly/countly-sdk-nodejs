@@ -16,73 +16,47 @@ var sWait = 50;
 var mWait = 3000;
 var lWait = 10000;
 // parsing event queue
-function readEventQueue() {
-    var a = JSON.parse(fs.readFileSync(eventDir, "utf-8")).cly_event;
+function readEventQueue(givenPath = null, isBulk = false) {
+    var destination = eventDir;
+    if (givenPath !== null) {
+        destination = givenPath;
+    }
+    var a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_event;
+    if (isBulk) {
+        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_bulk_event;
+    }
     return a;
 }
 // parsing request queue
-function readRequestQueue() {
-    var a = JSON.parse(fs.readFileSync(reqDir, "utf-8")).cly_queue;
+function readRequestQueue(givenPath = null, isBulk = false) {
+    var destination = reqDir;
+    if (givenPath !== null) {
+        destination = givenPath;
+    }
+    var a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
+    if (isBulk) {
+        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_req_queue;
+    }
     return a;
 }
-function readBulkEventQueue() {
-    var a = JSON.parse(fs.readFileSync(bulkEventDir, "utf-8")).cly_bulk_event;
-    return a;
-}
-function readBulkReqQueue() {
-    var a = JSON.parse(fs.readFileSync(bulkQueueDir, "utf-8")).cly_req_queue;
-    return a;
-}
-
-function clearStorageJsonFiles(directory, files) {
-    files.forEach((file) => {
-        const filePath = path.join(directory, file);
-        // Check if the file exists before attempting to clear it
-        fs.access(filePath, fs.constants.F_OK, (err) => {
-            if (!err) {
-                // Write an empty JSON object to the file
-                // logs can be added here
-                fs.writeFile(filePath, JSON.stringify({}), 'utf8', (er) => { });
-            }
-        });
-    });
-}
-
-function clearJsonFiles(isBulk = true, customDir = '') {
-    // Determine the directory and files based on isBulk
-    const directory = customDir || (isBulk ? path.join(__dirname, 'bulk_data') : path.join(__dirname, 'data'));
-    const files = isBulk ? [
-        '__cly_id.json',
-        '__cly_req_queue.json',
-        '__cly_bulk_event.json',
-    ] : [
-        '__cly_event.json',
-        '__cly_id_type.json',
-        '__cly_id.json',
-        '__cly_queue.json',
-        '__cly_remote_configs.json',
-    ];
-
-    // Clear files in the specified directory
-    clearStorageJsonFiles(directory, files);
-}
-
 // queue files clearing logic
-function clearStorage(keepID) {
-    keepID = keepID || false;
+function clearStorage(keepID = false, isBulk = false, customDir = '') {
     // Resets Countly
     Countly.halt(true);
-    // clean storages
-    if (fs.existsSync(eventDir)) {
-        fs.unlinkSync(eventDir);
+    // Determine the directory based on isBulk or customDir
+    const eventDirectory = customDir || (isBulk ? bulkEventDir : eventDir);
+    const reqDirectory = customDir || (isBulk ? bulkQueueDir : reqDir);
+    // Remove event directory if it exists
+    if (fs.existsSync(eventDirectory)) {
+        fs.rmSync(eventDirectory, { recursive: true, force: true });
     }
-    if (fs.existsSync(reqDir)) {
-        fs.unlinkSync(reqDir);
+    // Remove request directory if it exists
+    if (fs.existsSync(reqDirectory)) {
+        fs.rmSync(reqDirectory, { recursive: true, force: true });
     }
-    if (!keepID) {
-        if (fs.existsSync(idDir)) {
-            fs.unlinkSync(idDir);
-        }
+    // Optionally keep the ID directory
+    if (!keepID && fs.existsSync(idDir)) {
+        fs.rmSync(idDir, { recursive: true, force: true });
     }
 }
 /**
@@ -236,11 +210,8 @@ module.exports = {
     lWait,
     readEventQueue,
     readRequestQueue,
-    readBulkEventQueue,
-    readBulkReqQueue,
     eventValidator,
     crashRequestValidator,
-    clearJsonFiles,
     sessionRequestValidator,
     userDetailRequestValidator,
     viewEventValidator,
