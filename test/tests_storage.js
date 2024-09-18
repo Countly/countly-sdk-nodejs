@@ -64,37 +64,38 @@ function validateDeviceId(deviceId, deviceIdType, expectedDeviceId, expectedDevi
     assert.equal(deviceIdType, expectedDeviceIdType);
     checkRequestsForT(rq, expectedDeviceIdType);
 }
-function recordValuesToStorageAndValidate() {
+function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk = false, persistQueue = false) {
     // Set values
     var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
-    storage.storeSet("cly_id", "SpecialDeviceId");
-    storage.storeSet("cly_id_type", deviceIdType);
+    var storageMethod = storage.setStorage(userPath, memoryOnly, isBulk, persistQueue);
+    storageMethod.storeSet("cly_id", "SpecialDeviceId");
+    storageMethod.storeSet("cly_id_type", deviceIdType);
 
     // Set values with different data types
-    storage.storeSet("cly_count", 42);
-    storage.storeSet("cly_object", { key: "value" });
-    storage.storeSet("cly_null", null);
+    storageMethod.storeSet("cly_count", 42);
+    storageMethod.storeSet("cly_object", { key: "value" });
+    storageMethod.storeSet("cly_null", null);
 
     // Retrieve and assert values
-    assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
-    assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
-    assert.equal(storage.storeGet("cly_count"), 42);
-    assert.deepEqual(storage.storeGet("cly_object"), { key: "value" });
-    assert.equal(storage.storeGet("cly_null"), null);
+    assert.equal(storageMethod.storeGet("cly_id"), "SpecialDeviceId");
+    assert.equal(storageMethod.storeGet("cly_id_type"), deviceIdType);
+    assert.equal(storageMethod.storeGet("cly_count"), 42);
+    assert.deepEqual(storageMethod.storeGet("cly_object"), { key: "value" });
+    assert.equal(storageMethod.storeGet("cly_null"), null);
 
     // Remove specific items by overriding with null or empty array
-    storage.storeSet("cly_id", null);
-    storage.storeSet("cly_object", []);
-    assert.equal(storage.storeGet("cly_id"), null);
-    assert.deepEqual(storage.storeGet("cly_object"), []);
+    storageMethod.storeSet("cly_id", null);
+    storageMethod.storeSet("cly_object", []);
+    assert.equal(storageMethod.storeGet("cly_id"), null);
+    assert.deepEqual(storageMethod.storeGet("cly_object"), []);
 
     // Reset storage and check if it's empty again
     storage.resetStorage();
-    assert.equal(storage.storeGet("cly_id"), undefined);
-    assert.equal(storage.storeGet("cly_id_type"), undefined);
-    assert.equal(storage.storeGet("cly_count"), undefined);
-    assert.equal(storage.storeGet("cly_object"), undefined);
-    assert.equal(storage.storeGet("cly_null"), undefined);
+    assert.equal(storageMethod.storeGet("cly_id"), undefined);
+    assert.equal(storageMethod.storeGet("cly_id_type"), undefined);
+    assert.equal(storageMethod.storeGet("cly_count"), undefined);
+    assert.equal(storageMethod.storeGet("cly_object"), undefined);
+    assert.equal(storageMethod.storeGet("cly_null"), undefined);
 }
 
 describe("Storage Tests", () => {
@@ -247,7 +248,7 @@ describe("Storage Tests", () => {
         // will set to default storage path
         storage.setStoragePath("../test/customStorageDirectory/");
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
-        recordValuesToStorageAndValidate();
+        recordValuesToStorageAndValidate("../test/customStorageDirectory/");
         done();
     });
 
@@ -257,7 +258,7 @@ describe("Storage Tests", () => {
         // To set the storage path to the default bulk storage path and persist the queue
         storage.setStoragePath(null, true, true);
         assert.equal(storage.getStoragePath(), "../bulk_data/");
-        recordValuesToStorageAndValidate();
+        recordValuesToStorageAndValidate(null, false, true, true);
         done();
     });
 
@@ -266,7 +267,7 @@ describe("Storage Tests", () => {
         // will set to default storage path
         storage.setStoragePath("../test/customStorageDirectory/", true);
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
-        recordValuesToStorageAndValidate();
+        recordValuesToStorageAndValidate("../test/customStorageDirectory/", false, true);
         done();
     });
 });
