@@ -9,37 +9,54 @@ var dir = path.resolve(__dirname, "../../");
 var idDir = (`${dir}/data/__cly_id.json`);
 var eventDir = (`${dir}/data/__cly_event.json`);
 var reqDir = (`${dir}/data/__cly_queue.json`);
+var bulkEventDir = (`${dir}/bulk_data/__cly_bulk_event.json`);
+var bulkQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
 // timeout variables
 var sWait = 50;
 var mWait = 3000;
 var lWait = 10000;
 // parsing event queue
-function readEventQueue() {
-    var a = JSON.parse(fs.readFileSync(eventDir, "utf-8")).cly_event;
+function readEventQueue(givenPath = null, isBulk = false) {
+    var destination = eventDir;
+    if (givenPath !== null) {
+        destination = givenPath;
+    }
+    var a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_event;
+    if (isBulk) {
+        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_bulk_event;
+    }
     return a;
 }
 // parsing request queue
-function readRequestQueue() {
-    var a = JSON.parse(fs.readFileSync(reqDir, "utf-8")).cly_queue;
+function readRequestQueue(givenPath = null, isBulk = false) {
+    var destination = reqDir;
+    if (givenPath !== null) {
+        destination = givenPath;
+    }
+    var a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
+    if (isBulk) {
+        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_req_queue;
+    }
     return a;
 }
-
 // queue files clearing logic
-function clearStorage(keepID) {
-    keepID = keepID || false;
+function clearStorage(keepID = false, isBulk = false, customDir = '') {
     // Resets Countly
     Countly.halt(true);
-    // clean storages
-    if (fs.existsSync(eventDir)) {
-        fs.unlinkSync(eventDir);
+    // Determine the directory based on isBulk or customDir
+    const eventDirectory = customDir || (isBulk ? bulkEventDir : eventDir);
+    const reqDirectory = customDir || (isBulk ? bulkQueueDir : reqDir);
+    // Remove event directory if it exists
+    if (fs.existsSync(eventDirectory)) {
+        fs.rmSync(eventDirectory, { recursive: true, force: true });
     }
-    if (fs.existsSync(reqDir)) {
-        fs.unlinkSync(reqDir);
+    // Remove request directory if it exists
+    if (fs.existsSync(reqDirectory)) {
+        fs.rmSync(reqDirectory, { recursive: true, force: true });
     }
-    if (!keepID) {
-        if (fs.existsSync(idDir)) {
-            fs.unlinkSync(idDir);
-        }
+    // Optionally keep the ID directory
+    if (!keepID && fs.existsSync(idDir)) {
+        fs.rmSync(idDir, { recursive: true, force: true });
     }
 }
 /**
@@ -67,11 +84,16 @@ function eventValidator(eventObject, eventQueue, time) {
         }
         assert.equal(eventObject.dur, eventQueue.dur);
     }
-    // check if segmentation exists. If it is add test(s)
+    // check if segmentation exists. If it does, add tests
     if (typeof eventObject.segmentation !== 'undefined') {
-        // loop through segmentation keys and create tets
+        // loop through segmentation keys and create tests
         for (var key in eventObject.segmentation) {
-            assert.equal(eventObject.segmentation[key], eventQueue.segmentation[key]);
+            if (Array.isArray(eventObject.segmentation[key]) || typeof eventObject.segmentation[key] === 'object') {
+                assert.deepStrictEqual(eventObject.segmentation[key], eventQueue.segmentation[key]);
+            }
+            else {
+                assert.equal(eventObject.segmentation[key], eventQueue.segmentation[key]);
+            }
         }
     }
     // common parameter validation
