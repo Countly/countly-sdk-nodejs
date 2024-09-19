@@ -270,4 +270,38 @@ describe("Storage Tests", () => {
         recordValuesToStorageAndValidate("../test/customStorageDirectory/", false, true);
         done();
     });
+
+    it("14- Setting storage path to default path via setStorage /no-init", (done) => {
+        storage.resetStorage();
+        storage.setStorage();
+        assert.equal(storage.getStoragePath(), "../data/");
+        done();
+    });
+
+    it("15- Setting bulk storage path to default path via setStorage /no-init", (done) => {
+        storage.resetStorage();
+        storage.setStorage(null, false, true);
+        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        done();
+    });
+
+    it("16- Setting custom storage path via setStorage /no-init", (done) => {
+        storage.resetStorage();
+        storage.setStorage("../test/customStorageDirectory/");
+        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+        done();
+    });
+
+    it("17- Setting storage method to memory only and checking storage path /no-init", (done) => {
+        storage.resetStorage();
+        storage.setStorage(null, true);
+        assert.equal(storage.getStoragePath(), undefined);
+        done();
+    });
+
+    it("18- Recording to storage with memory only storage /no-init", (done) => {
+        storage.resetStorage();
+        recordValuesToStorageAndValidate(null, true);
+        done();
+    });
 });
