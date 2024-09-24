@@ -67,35 +67,35 @@ function validateDeviceId(deviceId, deviceIdType, expectedDeviceId, expectedDevi
 function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk = false, persistQueue = false) {
     // Set values
     var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
-    var storageMethod = storage.setStorage(userPath, memoryOnly, isBulk, persistQueue);
-    storageMethod.storeSet("cly_id", "SpecialDeviceId");
-    storageMethod.storeSet("cly_id_type", deviceIdType);
+    storage.initStorage(userPath, memoryOnly, isBulk, persistQueue);
+    storage.storeSet("cly_id", "SpecialDeviceId");
+    storage.storeSet("cly_id_type", deviceIdType);
 
     // Set values with different data types
-    storageMethod.storeSet("cly_count", 42);
-    storageMethod.storeSet("cly_object", { key: "value" });
-    storageMethod.storeSet("cly_null", null);
+    storage.storeSet("cly_count", 42);
+    storage.storeSet("cly_object", { key: "value" });
+    storage.storeSet("cly_null", null);
 
     // Retrieve and assert values
-    assert.equal(storageMethod.storeGet("cly_id"), "SpecialDeviceId");
-    assert.equal(storageMethod.storeGet("cly_id_type"), deviceIdType);
-    assert.equal(storageMethod.storeGet("cly_count"), 42);
-    assert.deepEqual(storageMethod.storeGet("cly_object"), { key: "value" });
-    assert.equal(storageMethod.storeGet("cly_null"), null);
+    assert.equal(storage.storeGet("cly_id"), "SpecialDeviceId");
+    assert.equal(storage.storeGet("cly_id_type"), deviceIdType);
+    assert.equal(storage.storeGet("cly_count"), 42);
+    assert.deepEqual(storage.storeGet("cly_object"), { key: "value" });
+    assert.equal(storage.storeGet("cly_null"), null);
 
     // Remove specific items by overriding with null or empty array
-    storageMethod.storeSet("cly_id", null);
-    storageMethod.storeSet("cly_object", []);
-    assert.equal(storageMethod.storeGet("cly_id"), null);
-    assert.deepEqual(storageMethod.storeGet("cly_object"), []);
+    storage.storeSet("cly_id", null);
+    storage.storeSet("cly_object", []);
+    assert.equal(storage.storeGet("cly_id"), null);
+    assert.deepEqual(storage.storeGet("cly_object"), []);
 
     // Reset storage and check if it's empty again
     storage.resetStorage();
-    assert.equal(storageMethod.storeGet("cly_id"), undefined);
-    assert.equal(storageMethod.storeGet("cly_id_type"), undefined);
-    assert.equal(storageMethod.storeGet("cly_count"), undefined);
-    assert.equal(storageMethod.storeGet("cly_object"), undefined);
-    assert.equal(storageMethod.storeGet("cly_null"), undefined);
+    assert.equal(storage.storeGet("cly_id"), undefined);
+    assert.equal(storage.storeGet("cly_id_type"), undefined);
+    assert.equal(storage.storeGet("cly_count"), undefined);
+    assert.equal(storage.storeGet("cly_object"), undefined);
+    assert.equal(storage.storeGet("cly_null"), undefined);
 }
 
 describe("Storage Tests", () => {
@@ -271,37 +271,37 @@ describe("Storage Tests", () => {
         done();
     });
 
-    it("14- Setting storage path to default path via setStorage /no-init", (done) => {
+    it("14- Setting storage path to default path via initStorage /no-init", (done) => {
         storage.resetStorage();
-        storage.setStorage();
+        storage.initStorage();
         assert.equal(storage.getStoragePath(), "../data/");
         done();
     });
 
-    it("15- Setting bulk storage path to default path via setStorage /no-init", (done) => {
+    it("15- Setting bulk storage path to default path via initStorage /no-init", (done) => {
         storage.resetStorage();
-        storage.setStorage(null, false, true);
+        storage.initStorage(null, false, true);
         assert.equal(storage.getStoragePath(), "../bulk_data/");
         done();
     });
 
-    it("16- Setting custom storage path via setStorage /no-init", (done) => {
+    it("16- Setting custom storage path via initStorage /no-init", (done) => {
         storage.resetStorage();
-        storage.setStorage("../test/customStorageDirectory/");
+        storage.initStorage("../test/customStorageDirectory/");
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         done();
     });
 
     it("17- Setting storage method to memory only and checking storage path /no-init", (done) => {
         storage.resetStorage();
-        storage.setStorage(null, true);
+        storage.initStorage(null, cc.storageTypeEnums.MEMORY);
         assert.equal(storage.getStoragePath(), undefined);
         done();
     });
 
     it("18- Recording to storage with memory only storage /no-init", (done) => {
         storage.resetStorage();
-        recordValuesToStorageAndValidate(null, true);
+        recordValuesToStorageAndValidate(null, cc.storageTypeEnums.MEMORY);
         done();
     });
 });
