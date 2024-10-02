@@ -3,10 +3,12 @@ var path = require("path");
 var assert = require("assert");
 var fs = require("fs");
 var Countly = require("../../lib/countly");
+var CountlyStorage = require("../../lib/countly-storage");
 
 // paths for convenience
 var dir = path.resolve(__dirname, "../../");
 var idDir = (`${dir}/data/__cly_id.json`);
+var idTypeDir = (`${dir}/data/__cly_id_type.json`);
 var eventDir = (`${dir}/data/__cly_event.json`);
 var reqDir = (`${dir}/data/__cly_queue.json`);
 var bulkEventDir = (`${dir}/bulk_data/__cly_bulk_event.json`);
@@ -39,24 +41,37 @@ function readRequestQueue(givenPath = null, isBulk = false) {
     }
     return a;
 }
-// queue files clearing logic
+function doesFileStoragePathsExist(callback) {
+    fs.access(idDir, fs.constants.F_OK, (err1) => {
+        fs.access(idTypeDir, fs.constants.F_OK, (err2) => {
+            fs.access(eventDir, fs.constants.F_OK, (err3) => {
+                // If all err variables are null, all files exist
+                const allFilesExist = !err1 && !err2 && !err3;
+                callback(allFilesExist);
+            });
+        });
+    });
+}
 function clearStorage(keepID = false, isBulk = false, customDir = '') {
     // Resets Countly
     Countly.halt(true);
     // Determine the directory based on isBulk or customDir
     const eventDirectory = customDir || (isBulk ? bulkEventDir : eventDir);
     const reqDirectory = customDir || (isBulk ? bulkQueueDir : reqDir);
+    // Helper function to remove directory and files
+    function removeDir(directory) {
+        if (fs.existsSync(directory)) {
+            fs.rmSync(directory, { recursive: true, force: true });
+        }
+    }
     // Remove event directory if it exists
-    if (fs.existsSync(eventDirectory)) {
-        fs.rmSync(eventDirectory, { recursive: true, force: true });
-    }
+    removeDir(eventDirectory);
     // Remove request directory if it exists
-    if (fs.existsSync(reqDirectory)) {
-        fs.rmSync(reqDirectory, { recursive: true, force: true });
-    }
+    removeDir(reqDirectory);
     // Optionally keep the ID directory
-    if (!keepID && fs.existsSync(idDir)) {
-        fs.rmSync(idDir, { recursive: true, force: true });
+    if (!keepID) {
+        removeDir(idDir);
+        removeDir(idTypeDir);
     }
 }
 /**
@@ -215,4 +230,5 @@ module.exports = {
     sessionRequestValidator,
     userDetailRequestValidator,
     viewEventValidator,
+    doesFileStoragePathsExist,
 };

@@ -310,6 +310,9 @@ describe("Storage Tests", () => {
             clear_stored_device_id: true,
             storage_type: StorageTypes.MEMORY,
         });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
         assert.equal(storage.getStoragePath(), undefined);
         assert.equal(storage.storeGet("cly_id", null), "Test-Device-Id");
         assert.equal(storage.storeGet("cly_id_type", null), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
@@ -324,6 +327,9 @@ describe("Storage Tests", () => {
             device_id: "Test-Device-Id",
             clear_stored_device_id: true,
             storage_type: StorageTypes.MEMORY,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
         });
         Countly.add_event(eventObj);
         setTimeout(() => {
@@ -344,6 +350,9 @@ describe("Storage Tests", () => {
             clear_stored_device_id: true,
             storage_type: StorageTypes.MEMORY,
         });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
         Countly.user_details(userDetailObj);
         const storedData = storage.storeGet("cly_queue", null);
         const userDetailsReq = storedData[0];
@@ -358,6 +367,9 @@ describe("Storage Tests", () => {
             url: "https://test.url.ly",
             clear_stored_device_id: true,
             storage_type: StorageTypes.MEMORY,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
         });
         assert.equal(storage.getStoragePath(), undefined);
         assert.equal(storage.storeGet("cly_id", null), Countly.get_device_id());
@@ -379,6 +391,9 @@ describe("Storage Tests", () => {
         });
         assert.equal(storage.getStoragePath(), undefined);
         assert.equal(storage.getStorageType(), StorageTypes.MEMORY);
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
 
         storage.initStorage();
         assert.equal(storage.getStoragePath(), "../data/");
@@ -387,7 +402,7 @@ describe("Storage Tests", () => {
     });
 
     it("23- storeRemove Memory Only /no-init", (done) => {
-        storage.resetStorage();
+        hp.clearStorage();
         storage.initStorage(null, StorageTypes.MEMORY);
         assert.equal(storage.getStoragePath(), undefined);
         assert.equal(storage.getStorageType(), StorageTypes.MEMORY);
@@ -400,7 +415,7 @@ describe("Storage Tests", () => {
     });
 
     it("24- storeRemove File Storage /no-init", (done) => {
-        storage.resetStorage();
+        hp.clearStorage();
         storage.initStorage();
         assert.equal(storage.getStoragePath(), "../data/");
         assert.equal(storage.getStorageType(), StorageTypes.FILE);
