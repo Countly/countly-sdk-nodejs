@@ -1,5 +1,9 @@
 ## xx.xx.xx
-* Default max segmentation value count changed from 30 to 100
+- Default max segmentation value count changed from 30 to 100
+- Mitigated an issue where attempting to read a missing or empty file could result in the creation of an unintended empty file.
+- Added a new init time config option (conf.storage_type) which can make user set among these storage options:
+  - File Storage
+  - Memory Only Storage
 
 ## 22.06.0
 - Fixed a bug where remote config requests were rejected

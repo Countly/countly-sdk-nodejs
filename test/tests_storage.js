@@ -4,6 +4,8 @@ var storage = require("../lib/countly-storage");
 var cc = require("../lib/countly-common");
 var hp = require("./helpers/helper_functions");
 
+const StorageTypes = cc.storageTypeEnums;
+
 // example event object to use 
 var eventObj = {
     key: "storage_check",
@@ -64,9 +66,10 @@ function validateDeviceId(deviceId, deviceIdType, expectedDeviceId, expectedDevi
     assert.equal(deviceIdType, expectedDeviceIdType);
     checkRequestsForT(rq, expectedDeviceIdType);
 }
-function recordValuesToStorageAndValidate() {
+function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk = false, persistQueue = false) {
     // Set values
     var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
+    storage.initStorage(userPath, memoryOnly, isBulk, persistQueue);
     storage.storeSet("cly_id", "SpecialDeviceId");
     storage.storeSet("cly_id_type", deviceIdType);
 
@@ -247,7 +250,7 @@ describe("Storage Tests", () => {
         // will set to default storage path
         storage.setStoragePath("../test/customStorageDirectory/");
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
-        recordValuesToStorageAndValidate();
+        recordValuesToStorageAndValidate("../test/customStorageDirectory/");
         done();
     });
 
@@ -257,7 +260,7 @@ describe("Storage Tests", () => {
         // To set the storage path to the default bulk storage path and persist the queue
         storage.setStoragePath(null, true, true);
         assert.equal(storage.getStoragePath(), "../bulk_data/");
-        recordValuesToStorageAndValidate();
+        recordValuesToStorageAndValidate(null, false, true, true);
         done();
     });
 
@@ -266,7 +269,161 @@ describe("Storage Tests", () => {
         // will set to default storage path
         storage.setStoragePath("../test/customStorageDirectory/", true);
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
-        recordValuesToStorageAndValidate();
+        recordValuesToStorageAndValidate("../test/customStorageDirectory/", false, true);
+        done();
+    });
+
+    it("14- Setting storage path to default path via initStorage /no-init", (done) => {
+        storage.resetStorage();
+        storage.initStorage();
+        assert.equal(storage.getStoragePath(), "../data/");
+        done();
+    });
+
+    it("15- Setting bulk storage path to default path via initStorage /no-init", (done) => {
+        storage.resetStorage();
+        storage.initStorage(null, false, true);
+        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        done();
+    });
+
+    it("16- Setting custom storage path via initStorage /no-init", (done) => {
+        storage.resetStorage();
+        storage.initStorage("../test/customStorageDirectory/");
+        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+        done();
+    });
+
+    it("17- Setting storage method to memory only and checking storage path /no-init", (done) => {
+        storage.resetStorage();
+        storage.initStorage(null, StorageTypes.MEMORY);
+        assert.equal(storage.getStoragePath(), undefined);
+        done();
+    });
+
+    it("18- Memory only storage Device-Id", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            device_id: "Test-Device-Id",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.MEMORY,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
+        assert.equal(storage.getStoragePath(), undefined);
+        assert.equal(storage.storeGet("cly_id", null), "Test-Device-Id");
+        assert.equal(storage.storeGet("cly_id_type", null), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+        done();
+    });
+
+    it("19- Record event in memory only mode and validate the record", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            device_id: "Test-Device-Id",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.MEMORY,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
+        Countly.add_event(eventObj);
+        setTimeout(() => {
+            const storedData = storage.storeGet("cly_queue", null);
+            const eventArray = JSON.parse(storedData[0].events);
+            const eventFromQueue = eventArray[0];
+            hp.eventValidator(eventObj, eventFromQueue);
+            done();
+        }, hp.mWait);
+    });
+
+    it("20- Record and validate user details in memory only mode", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            device_id: "Test-Device-Id",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.MEMORY,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
+        Countly.user_details(userDetailObj);
+        const storedData = storage.storeGet("cly_queue", null);
+        const userDetailsReq = storedData[0];
+        hp.userDetailRequestValidator(userDetailObj, userDetailsReq);
+        done();
+    });
+
+    it("21- Memory only storage, change SDK Generated Device-Id", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.MEMORY,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
+        assert.equal(storage.getStoragePath(), undefined);
+        assert.equal(storage.storeGet("cly_id", null), Countly.get_device_id());
+        assert.equal(storage.storeGet("cly_id_type", null), Countly.get_device_id_type());
+
+        Countly.change_id("Test-Id-2");
+        assert.equal(storage.storeGet("cly_id", null), "Test-Id-2");
+        assert.equal(storage.storeGet("cly_id_type", null), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+        done();
+    });
+
+    it("22- Switch to file storage after init", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.MEMORY,
+        });
+        assert.equal(storage.getStoragePath(), undefined);
+        assert.equal(storage.getStorageType(), StorageTypes.MEMORY);
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
+
+        storage.initStorage();
+        assert.equal(storage.getStoragePath(), "../data/");
+        assert.equal(storage.getStorageType(), StorageTypes.FILE);
+        done();
+    });
+
+    it("23- storeRemove Memory Only /no-init", (done) => {
+        hp.clearStorage();
+        storage.initStorage(null, StorageTypes.MEMORY);
+        assert.equal(storage.getStoragePath(), undefined);
+        assert.equal(storage.getStorageType(), StorageTypes.MEMORY);
+        storage.storeSet("keyToStore", "valueToStore");
+        assert.equal(storage.storeGet("keyToStore", null), "valueToStore");
+
+        storage.storeRemove("keyToStore");
+        assert.equal(storage.storeGet("keyToStore", null), null);
+        done();
+    });
+
+    it("24- storeRemove File Storage /no-init", (done) => {
+        hp.clearStorage();
+        storage.initStorage();
+        assert.equal(storage.getStoragePath(), "../data/");
+        assert.equal(storage.getStorageType(), StorageTypes.FILE);
+        storage.storeSet("keyToStore", "valueToStore");
+        assert.equal(storage.storeGet("keyToStore", null), "valueToStore");
+
+        storage.storeRemove("keyToStore");
+        assert.equal(storage.storeGet("keyToStore", null), null);
         done();
     });
 });
