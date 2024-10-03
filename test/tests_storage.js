@@ -99,6 +99,35 @@ function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk =
     assert.equal(storage.storeGet("cly_object"), undefined);
     assert.equal(storage.storeGet("cly_null"), undefined);
 }
+const nonValidStorageMethods = {
+    _storage: {},
+
+    setInvalid: function(key, value, callback) {
+        if (key) {
+            const existingValue = this._storage[key];
+            if (typeof value === 'string' && typeof existingValue === 'string') {
+                this._storage[key] = existingValue + value;
+            }
+            else {
+                this._storage[key] = value;
+            }
+            if (typeof callback === "function") {
+                callback(null);
+            }
+        }
+    },
+    getInvalid: function(key, def) {
+        const value = this._storage[key];
+        if (typeof value === 'string') {
+            return value.split('').reverse().join('');
+        }
+
+        return value !== undefined ? value : def;
+    },
+    removeInvalid: function(key) {
+        delete this._storage[key];
+    },
+};
 const funkyMemoryStorage = {
     _storage: {},
 
@@ -583,6 +612,24 @@ describe("Storage Tests", () => {
         storage.storeSet("CustomStorageKey", "CustomStorageValue");
         storage.storeSet("CustomStorageKey", "CustomStorageValue2");
         assert.equal("2eulaVegarotSmotsuCeulaVegarotSmotsuC", storage.storeGet("CustomStorageKey", null));
+        done();
+    });
+
+    // tests init time storage config options
+    // choosing Custom storage type and passing invalid custom storage methods
+    // SDK should not use custom methods as storage method, and switch to File Storage
+    it("26- Providing Invalid Custom Storage Method", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            device_id: "Test-Device-Id",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.CUSTOM,
+            custom_storage_method: nonValidStorageMethods,
+        });
+        assert.equal(storage.getStoragePath(), "../data/");
+        assert.equal(storage.getStorageType(), StorageTypes.FILE);
         done();
     });
 });
