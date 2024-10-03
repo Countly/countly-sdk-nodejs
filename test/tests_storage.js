@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 const assert = require("assert");
 var Countly = require("../lib/countly");
 var storage = require("../lib/countly-storage");
@@ -99,6 +102,62 @@ function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk =
     assert.equal(storage.storeGet("cly_object"), undefined);
     assert.equal(storage.storeGet("cly_null"), undefined);
 }
+var __data = {};
+var asyncWriteLock = false;
+var asyncWriteQueue = [];
+// technically same as defualt file storage method
+// adds * before any value set so it can be separated with the default one for testing purposes
+const customFileStorage = {
+    storeSet: function(key, value, callback) {
+        // Add '*' before the value
+        __data[key] = `*${value}`;
+        if (!asyncWriteLock) {
+            asyncWriteLock = true;
+            storage.writeFile(key, value, callback);
+        }
+        else {
+            asyncWriteQueue.push([key, value, callback]);
+        }
+    },
+    storeGet: function(key, def) {
+        cc.log(cc.logLevelEnums.DEBUG, `storeGet, Fetching item from storage with key: [${key}].`);
+        if (typeof __data[key] === "undefined") {
+            var ob = storage.readFile(key);
+            var obLen;
+            try {
+                obLen = Object.keys(ob).length;
+            }
+            catch (error) {
+                obLen = 0;
+            }
+            if (!ob || obLen === 0) {
+                __data[key] = def;
+            }
+            else {
+                __data[key] = ob[key];
+            }
+        }
+        return __data[key];
+    },
+    storeRemove: function(key) {
+        delete __data[key];
+        var filePath = path.resolve(__dirname, `${storage.getStoragePath()}__${key}.json`);
+        fs.access(filePath, fs.constants.F_OK, (accessErr) => {
+            if (accessErr) {
+                cc.log(cc.logLevelEnums.WARNING, `storeRemove, No file found with key: [${key}]. Nothing to remove.`);
+                return;
+            }
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    cc.log(cc.logLevelEnums.ERROR, `storeRemove, Failed to remove file with key: [${key}]. Error: [${err.message}].`);
+                }
+                else {
+                    cc.log(cc.logLevelEnums.INFO, `storeRemove, Successfully removed file with key: [${key}].`);
+                }
+            });
+        });
+    },
+};
 const nonValidStorageMethods = {
     _storage: {},
 
@@ -157,7 +216,6 @@ const funkyMemoryStorage = {
         delete this._storage[key];
     },
 };
-
 const customMemoryStorage = {
     _storage: {},
     storeSet: function(key, value, callback) {
@@ -618,7 +676,7 @@ describe("Storage Tests", () => {
     // tests init time storage config options
     // choosing Custom storage type and passing invalid custom storage methods
     // SDK should not use custom methods as storage method, and switch to File Storage
-    it("26- Providing Invalid Custom Storage Method", (done) => {
+    it("29- Providing Invalid Custom Storage Method", (done) => {
         hp.clearStorage();
         Countly.init({
             app_key: "YOUR_APP_KEY",
@@ -630,6 +688,29 @@ describe("Storage Tests", () => {
         });
         assert.equal(storage.getStoragePath(), "../data/");
         assert.equal(storage.getStorageType(), StorageTypes.FILE);
+        done();
+    });
+
+    // tests init time storage config options
+    // choosing Custom storage type and passing custom file storage methods
+    // SDK should use custom methods as storage methods
+    it("30- Providing Invalid Custom Storage Method", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            device_id: "Test-Device-Id",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.CUSTOM,
+            custom_storage_method: customFileStorage,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
+        storage.storeSet("CustomStorageKey", "CustomStorageValue");
+        assert.equal(storage.storeGet("CustomStorageKey", null), "*CustomStorageValue");
+        storage.storeRemove("CustomStorageKey");
+        assert.equal(storage.storeGet("CustomStorageKey", null), null);
         done();
     });
 });
