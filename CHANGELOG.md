@@ -4,6 +4,8 @@
 - Added a new init time config option (conf.storage_type) which can make user set among these storage options:
   - File Storage
   - Memory Only Storage
+  - Custom Storage Methods
+- Added a new init time config option (conf.custom_storage_method) which enables user to provide custom storage methods.
 
 ## 22.06.0
 - Fixed a bug where remote config requests were rejected

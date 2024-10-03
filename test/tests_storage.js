@@ -99,6 +99,53 @@ function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk =
     assert.equal(storage.storeGet("cly_object"), undefined);
     assert.equal(storage.storeGet("cly_null"), undefined);
 }
+const funkyMemoryStorage = {
+    _storage: {},
+
+    storeSet: function(key, value, callback) {
+        if (key) {
+            const existingValue = this._storage[key];
+            if (typeof value === 'string' && typeof existingValue === 'string') {
+                this._storage[key] = existingValue + value;
+            }
+            else {
+                this._storage[key] = value;
+            }
+            if (typeof callback === "function") {
+                callback(null);
+            }
+        }
+    },
+    storeGet: function(key, def) {
+        const value = this._storage[key];
+        if (typeof value === 'string') {
+            return value.split('').reverse().join('');
+        }
+
+        return value !== undefined ? value : def;
+    },
+    storeRemove: function(key) {
+        delete this._storage[key];
+    },
+};
+
+const customMemoryStorage = {
+    _storage: {},
+    storeSet: function(key, value, callback) {
+        if (key) {
+            this._storage[key] = value;
+            if (typeof callback === "function") {
+                callback(null);
+            }
+        }
+    },
+    storeGet: function(key, def) {
+        return typeof this._storage[key] !== "undefined" ? this._storage[key] : def;
+    },
+    storeRemove: function(key) {
+        delete this._storage[key];
+    },
+};
 
 describe("Storage Tests", () => {
     it("1- Store Generated Device ID", (done) => {
@@ -225,6 +272,8 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // resets the storage path to default and validates that it is set correctly, 
+    // then resets it to undefined and confirms the reset.
     it("9- Reset Storage While on Default Path /no-init", (done) => {
         // will set to default storage path
         storage.setStoragePath();
@@ -235,9 +284,10 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // sets the storage path to default and verifies it, 
+    // then records values to storage and ensures they are stored correctly.
     it("10- Recording to Storage with Default Storage Path /no-init", (done) => {
         storage.resetStorage();
-
         // Set to default storage path
         storage.setStoragePath();
         assert.equal(storage.getStoragePath(), "../data/");
@@ -245,6 +295,8 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // sets a custom storage path and verifies it, 
+    // then records values to storage and ensures correct storage in the custom path.
     it("11- Recording to Storage with Custom Storage Path /no-init", (done) => {
         storage.resetStorage();
         // will set to default storage path
@@ -254,6 +306,8 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // sets the storage path to the default bulk storage path and verifies it,
+    // then records values to bulk storage and validates proper storage in bulk mode.
     it("12- Recording to Bulk Storage with Default Bulk Data Path /no-init", (done) => {
         storage.resetStorage();
         // will set to default storage path
@@ -264,6 +318,8 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // sets a custom bulk storage path and verifies it, 
+    // then records values to bulk storage and ensures proper recording to the custom path.
     it("13- Recording to Bulk Storage with Custom Bulk Storage Path /no-init", (done) => {
         storage.resetStorage();
         // will set to default storage path
@@ -301,6 +357,9 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // recording device-id in memory only mode
+    // initializes the SDK in memory only mode, validates that file storage files does not exist
+    // retrieve the developer supplied device id and id type from storage
     it("18- Memory only storage Device-Id", (done) => {
         hp.clearStorage();
         Countly.init({
@@ -319,6 +378,9 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // recording event in memory only mode
+    // initializes the SDK in memory only mode, validates that file storage files does not exist
+    // records an event and validates the recorded event
     it("19- Record event in memory only mode and validate the record", (done) => {
         hp.clearStorage();
         Countly.init({
@@ -341,6 +403,9 @@ describe("Storage Tests", () => {
         }, hp.mWait);
     });
 
+    // recording user details in memory only mode
+    // initializes the SDK in memory only mode, validates that file storage files does not exist
+    // records user details and validates the recorded details
     it("20- Record and validate user details in memory only mode", (done) => {
         hp.clearStorage();
         Countly.init({
@@ -360,6 +425,9 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // tests device id changes in memory only storage
+    // initialize the SDK in memory only mode, check the device id and switch it
+    // SDK and storage should function properly
     it("21- Memory only storage, change SDK Generated Device-Id", (done) => {
         hp.clearStorage();
         Countly.init({
@@ -381,6 +449,9 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // tests switching between storage types after initializing SDK
+    // passing memory storage type during init and initializing storage afterwards
+    // SDK should switch to file storage
     it("22- Switch to file storage after init", (done) => {
         hp.clearStorage();
         Countly.init({
@@ -401,6 +472,9 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // tests storeRemove function in CountlyStorage
+    // after initializing the memory storage, without initializing SDK, attempts to set, get and remove values
+    // without initializing SDK storage should function properly
     it("23- storeRemove Memory Only /no-init", (done) => {
         hp.clearStorage();
         storage.initStorage(null, StorageTypes.MEMORY);
@@ -414,6 +488,9 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // tests storeRemove function in CountlyStorage
+    // after initializing the file storage, without initializing SDK attempts to set, get and remove values
+    // without initializing SDK storage should function properly
     it("24- storeRemove File Storage /no-init", (done) => {
         hp.clearStorage();
         storage.initStorage();
@@ -424,6 +501,88 @@ describe("Storage Tests", () => {
 
         storage.storeRemove("keyToStore");
         assert.equal(storage.storeGet("keyToStore", null), null);
+        done();
+    });
+
+    // tests init time storage config options
+    // choosing Custom storage type and passing null in storage methods
+    // passing null as storage method ends up with switching to default file storage
+    it("25- Null Custom Storage Method", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            device_id: "Test-Device-Id",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.CUSTOM,
+            custom_storage_method: null,
+        });
+        assert.equal(storage.getStoragePath(), "../data/");
+        assert.equal(storage.getStorageType(), StorageTypes.FILE);
+        done();
+    });
+
+    // tests init time storage config options
+    // choosing Custom storage type and passing custom storage methods
+    // SDK should use custom methods as storage method, no File Storage should exist
+    it("26- Providing Custom Storage Method", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            device_id: "Test-Device-Id",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.CUSTOM,
+            custom_storage_method: customMemoryStorage,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
+        done();
+    });
+
+    // tests init time storage config options
+    // Recording values in Custom Storage Methods
+    // SDK should use custom methods as storage methods and values should be recorded correctly
+    it("27- Record/Remove Values in Custom Storage Method", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            device_id: "Test-Device-Id",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.CUSTOM,
+            custom_storage_method: customMemoryStorage,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
+        storage.storeSet("CustomStorageKey", "CustomStorageValue");
+        assert.equal(storage.storeGet("CustomStorageKey", null), "CustomStorageValue");
+        storage.storeRemove("CustomStorageKey");
+        assert.equal(storage.storeGet("CustomStorageKey", null), null);
+        done();
+    });
+
+    // tests init time storage config options
+    // passes a funky storage method, which does store get as reversing string
+    // SDK should use custom methods as storage method
+    it("28- Record/Remove Values in Custom Storage Method", (done) => {
+        hp.clearStorage();
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://test.url.ly",
+            device_id: "Test-Device-Id",
+            clear_stored_device_id: true,
+            storage_type: StorageTypes.CUSTOM,
+            custom_storage_method: funkyMemoryStorage,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
+        storage.storeSet("CustomStorageKey", "CustomStorageValue");
+        storage.storeSet("CustomStorageKey", "CustomStorageValue2");
+        assert.equal("2eulaVegarotSmotsuCeulaVegarotSmotsuC", storage.storeGet("CustomStorageKey", null));
         done();
     });
 });
