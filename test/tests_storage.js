@@ -654,7 +654,7 @@ describe("Storage Tests", () => {
     // tests init time storage config options
     // passes a funky storage method, which does store get as reversing string
     // SDK should use custom methods as storage method
-    it("28- Record/Remove Values in Custom Storage Method", (done) => {
+    it("28- Record/Remove Values in Other Custom Storage Method", (done) => {
         hp.clearStorage();
         Countly.init({
             app_key: "YOUR_APP_KEY",
@@ -694,19 +694,21 @@ describe("Storage Tests", () => {
     // tests init time storage config options
     // choosing Custom storage type and passing custom file storage methods
     // SDK should use custom methods as storage methods
-    it("30- Providing Invalid Custom Storage Method", (done) => {
+    it("30- Providing File Custom Storage Method", (done) => {
         hp.clearStorage();
         Countly.init({
             app_key: "YOUR_APP_KEY",
             url: "https://test.url.ly",
             device_id: "Test-Device-Id",
             clear_stored_device_id: true,
+            storage_path: "../test/customStorageDirectory/",
             storage_type: StorageTypes.CUSTOM,
             custom_storage_method: customFileStorage,
         });
         hp.doesFileStoragePathsExist((exists) => {
             assert.equal(false, exists);
         });
+        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         storage.storeSet("CustomStorageKey", "CustomStorageValue");
         assert.equal(storage.storeGet("CustomStorageKey", null), "*CustomStorageValue");
         storage.storeRemove("CustomStorageKey");
