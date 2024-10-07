@@ -103,21 +103,11 @@ function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk =
     assert.equal(storage.storeGet("cly_null"), undefined);
 }
 var __data = {};
-var asyncWriteLock = false;
-var asyncWriteQueue = [];
 // technically same as defualt file storage method
-// adds * before any value set so it can be separated with the default one for testing purposes
 const customFileStorage = {
     storeSet: function(key, value, callback) {
-        // Add '*' before the value
-        __data[key] = `*${value}`;
-        if (!asyncWriteLock) {
-            asyncWriteLock = true;
-            storage.writeFile(key, value, callback);
-        }
-        else {
-            asyncWriteQueue.push([key, value, callback]);
-        }
+        __data[key] = value;
+        storage.writeFile(key, value, callback);
     },
     storeGet: function(key, def) {
         cc.log(cc.logLevelEnums.DEBUG, `storeGet, Fetching item from storage with key: [${key}].`);
@@ -695,24 +685,26 @@ describe("Storage Tests", () => {
     // choosing Custom storage type and passing custom file storage methods
     // SDK should use custom methods as storage methods
     it("30- Providing File Custom Storage Method", (done) => {
-        hp.clearStorage();
+        hp.clearStorage(false, false, "../test/customStorageDirectory/");
         Countly.init({
             app_key: "YOUR_APP_KEY",
             url: "https://test.url.ly",
-            device_id: "Test-Device-Id",
-            clear_stored_device_id: true,
             storage_path: "../test/customStorageDirectory/",
             storage_type: StorageTypes.CUSTOM,
             custom_storage_method: customFileStorage,
+            clear_stored_device_id: true,
+            device_id: "ID",
         });
-        hp.doesFileStoragePathsExist((exists) => {
-            assert.equal(false, exists);
-        });
-        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
-        storage.storeSet("CustomStorageKey", "CustomStorageValue");
-        assert.equal(storage.storeGet("CustomStorageKey", null), "*CustomStorageValue");
-        storage.storeRemove("CustomStorageKey");
-        assert.equal(storage.storeGet("CustomStorageKey", null), null);
-        done();
+        Countly.begin_session();
+        setTimeout(() => {
+            assert.equal(Countly.get_device_id(), "ID");
+            assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            storage.storeSet("CustomStorageKey", "CustomStorageValue");
+            assert.equal(storage.storeGet("CustomStorageKey", null), "CustomStorageValue");
+            storage.storeRemove("CustomStorageKey");
+            assert.equal(storage.storeGet("CustomStorageKey", null), null);
+            done();
+        }, hp.sWait);
     });
 });
