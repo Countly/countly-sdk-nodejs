@@ -56,23 +56,30 @@ function clearStorage(keepID = false, isBulk = false, customDir = '') {
     // Resets Countly
     Countly.halt(true);
     // Determine the directory based on isBulk or customDir
-    const eventDirectory = customDir || (isBulk ? bulkEventDir : eventDir);
-    const reqDirectory = customDir || (isBulk ? bulkQueueDir : reqDir);
-    // Helper function to remove directory and files
+    const eventDirectory = isBulk ? bulkEventDir : eventDir;
+    const reqDirectory = isBulk ? bulkQueueDir : reqDir;
     function removeDir(directory) {
-        if (fs.existsSync(directory)) {
-            fs.rmSync(directory, { recursive: true, force: true });
+        // Remove the .json extension from the directory name, since it will be added in path.resolve
+        var filePath = path.resolve(__dirname, `${directory}`);
+        if (fs.existsSync(filePath)) {
+            fs.rmSync(filePath, { recursive: true, force: true });
         }
     }
     // Remove event directory if it exists
     removeDir(eventDirectory);
     // Remove request directory if it exists
     removeDir(reqDirectory);
+    if (customDir) {
+        removeDir(customDir);
+    }
     // Optionally keep the ID directory
     if (!keepID) {
         removeDir(idDir);
         removeDir(idTypeDir);
     }
+    return new Promise((resolve, reject) => {
+        resolve("string");
+    });
 }
 /**
  * bunch of tests specifically gathered for testing events
