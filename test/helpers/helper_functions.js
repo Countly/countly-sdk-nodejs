@@ -52,33 +52,33 @@ function doesFileStoragePathsExist(callback) {
         });
     });
 }
-function clearStorage(keepID = false, isBulk = false, customDir = '') {
-    // Resets Countly
+function clearStorage(keepID = false, isBulk = false, customPath = null) {
     Countly.halt(true);
-    // Determine the directory based on isBulk or customDir
     const eventDirectory = isBulk ? bulkEventDir : eventDir;
     const reqDirectory = isBulk ? bulkQueueDir : reqDir;
     function removeDir(directory) {
-        // Remove the .json extension from the directory name, since it will be added in path.resolve
-        var filePath = path.resolve(__dirname, `${directory}`);
+        const filePath = path.resolve(__dirname, `${directory}`);
         if (fs.existsSync(filePath)) {
             fs.rmSync(filePath, { recursive: true, force: true });
         }
     }
-    // Remove event directory if it exists
     removeDir(eventDirectory);
-    // Remove request directory if it exists
     removeDir(reqDirectory);
-    if (customDir) {
-        removeDir(customDir);
-    }
-    // Optionally keep the ID directory
     if (!keepID) {
         removeDir(idDir);
         removeDir(idTypeDir);
     }
-    return new Promise((resolve, reject) => {
-        resolve("string");
+
+    if (customPath) {
+        if (!keepID) {
+            removeDir(path.join(customPath, '__cly_id.json'));
+            removeDir(path.join(customPath, '__cly_id_type.json'));
+        }
+        removeDir(path.join(customPath, '__cly_event.json'));
+        removeDir(path.join(customPath, '__cly_queue.json'));
+    }
+    return new Promise((resolve) => {
+        resolve("Storage cleared");
     });
 }
 /**
