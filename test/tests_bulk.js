@@ -121,22 +121,23 @@ var userDetailObj = {
 };
 
 describe("Bulk Tests", () => {
+    // Bulk is on memory by default
     it("1- Bulk with Default Storage Path", (done) => {
-        hp.clearStorage(false, true);
+        hp.clearStorage();
         createBulk();
-        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        assert.equal(storage.getStoragePath(), undefined);
         done();
     });
 
     it("2- Bulk with Custom Storage Path", (done) => {
-        hp.clearStorage(false, true);
+        hp.clearStorage();
         createBulk("../test/customStorageDirectory/");
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         done();
     });
 
     it("3- Bulk add_user with Record Event", (done) => {
-        hp.clearStorage(false, true);
+        hp.clearStorage();
         var bulk = createBulk();
         var user = bulk.add_user({ device_id: "testUser1" });
         user.add_event(eventObj);
@@ -150,7 +151,7 @@ describe("Bulk Tests", () => {
     });
 
     it("4- Bulk add_user with User Details", (done) => {
-        hp.clearStorage(false, true);
+        hp.clearStorage();
         var bulk = createBulk();
         var user = bulk.add_user({ device_id: "testUser2" });
         user.user_details(userDetailObj);
@@ -169,7 +170,7 @@ describe("Bulk Tests", () => {
     });
 
     it("5- Bulk add_request", (done) => {
-        hp.clearStorage(false, true);
+        hp.clearStorage();
         var bulk = createBulk();
         bulk.add_request({ device_id: "TestUser3" });
         setTimeout(() => {
@@ -184,7 +185,7 @@ describe("Bulk Tests", () => {
     });
 
     it("6- Bulk add_user Report Crash", (done) => {
-        hp.clearStorage(false, true);
+        hp.clearStorage();
         var bulk = createBulk();
         var user = bulk.add_user({ device_id: "TestUser4" });
         try {

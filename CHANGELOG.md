@@ -1,11 +1,10 @@
-## xx.xx.xx
+## 24.10.0
 - Default max segmentation value count changed from 30 to 100
-- Mitigated an issue where attempting to read a missing or empty file could result in the creation of an unintended empty file.
-- Added a new init time config option (conf.storage_type) which can make user set among these storage options:
+- Mitigated an issue where SDK could create an unintended dump file
+- Added a new init time config option (conf.storage_type) which can make user set the SDK storage option:
   - File Storage
   - Memory Only Storage
-  - Custom Storage Methods
-- Added a new init time config option (conf.custom_storage_method) which enables user to provide custom storage methods.
+- Added a new init time config option (conf.custom_storage_method) which enables user to provide custom storage methods
 
 ## 22.06.0
 - Fixed a bug where remote config requests were rejected

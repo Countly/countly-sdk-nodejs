@@ -3,20 +3,23 @@ var path = require("path");
 var assert = require("assert");
 var fs = require("fs");
 var Countly = require("../../lib/countly");
-var CountlyStorage = require("../../lib/countly-storage");
 
 // paths for convenience
 var dir = path.resolve(__dirname, "../../");
+var defaultStoragePath = (`${dir}/data`);
+var defaultBulkStoragePath = (`${dir}/bulk_data`);
 var idDir = (`${dir}/data/__cly_id.json`);
 var idTypeDir = (`${dir}/data/__cly_id_type.json`);
 var eventDir = (`${dir}/data/__cly_event.json`);
 var reqDir = (`${dir}/data/__cly_queue.json`);
 var bulkEventDir = (`${dir}/bulk_data/__cly_bulk_event.json`);
 var bulkQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
+
 // timeout variables
 var sWait = 50;
 var mWait = 3000;
 var lWait = 10000;
+
 // parsing event queue
 function readEventQueue(givenPath = null, isBulk = false) {
     var destination = eventDir;
@@ -52,35 +55,24 @@ function doesFileStoragePathsExist(callback) {
         });
     });
 }
-function clearStorage(keepID = false, isBulk = false, customPath = null) {
+function clearStorage(customPath = null) {
     Countly.halt(true);
-    const eventDirectory = isBulk ? bulkEventDir : eventDir;
-    const reqDirectory = isBulk ? bulkQueueDir : reqDir;
-    function removeDir(directory) {
-        const filePath = path.resolve(__dirname, `${directory}`);
-        if (fs.existsSync(filePath)) {
-            fs.rmSync(filePath, { recursive: true, force: true });
-        }
+    if (fs.existsSync(defaultStoragePath)) {
+        fs.rmSync(defaultStoragePath, { recursive: true, force: true });
     }
-    removeDir(eventDirectory);
-    removeDir(reqDirectory);
-    if (!keepID) {
-        removeDir(idDir);
-        removeDir(idTypeDir);
+    if (fs.existsSync(defaultBulkStoragePath)) {
+        fs.rmSync(defaultBulkStoragePath, { recursive: true, force: true });
+    }
+    if (customPath !== null && typeof customPath === 'string' && fs.existsSync(customPath)) {
+        fs.rmSync(customPath, { recursive: true, force: true });
     }
 
-    if (customPath) {
-        if (!keepID) {
-            removeDir(path.join(customPath, '__cly_id.json'));
-            removeDir(path.join(customPath, '__cly_id_type.json'));
-        }
-        removeDir(path.join(customPath, '__cly_event.json'));
-        removeDir(path.join(customPath, '__cly_queue.json'));
+    // make sure the directories are removed
+    if (fs.existsSync(defaultStoragePath) || fs.existsSync(defaultBulkStoragePath) || (customPath !== null && fs.existsSync(customPath))) {
+        throw new Error("Failed to clear storage");
     }
-    return new Promise((resolve) => {
-        resolve("Storage cleared");
-    });
 }
+
 /**
  * bunch of tests specifically gathered for testing events
  * @param {Object} eventObject - Original event object to test
