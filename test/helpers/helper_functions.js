@@ -13,6 +13,7 @@ var idTypeDir = (`${dir}/data/__cly_id_type.json`);
 var eventDir = (`${dir}/data/__cly_event.json`);
 var reqDir = (`${dir}/data/__cly_queue.json`);
 var bulkEventDir = (`${dir}/bulk_data/__cly_bulk_event.json`);
+var bulkReqQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
 var bulkQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
 
 // timeout variables
@@ -44,31 +45,42 @@ function readRequestQueue(givenPath = null, isBulk = false) {
     }
     return a;
 }
-function doesFileStoragePathsExist(callback) {
-    fs.access(idDir, fs.constants.F_OK, (err1) => {
-        fs.access(idTypeDir, fs.constants.F_OK, (err2) => {
-            fs.access(eventDir, fs.constants.F_OK, (err3) => {
-                // If all err variables are null, all files exist
-                const allFilesExist = !err1 && !err2 && !err3;
-                callback(allFilesExist);
-            });
+function doesFileStoragePathsExist(callback, isBulk = false) {
+    const paths = isBulk
+        ? [bulkQueueDir, bulkReqQueueDir, bulkEventDir]
+        : [idDir, idTypeDir, eventDir];
+
+    let errors = 0;
+    paths.forEach((p, index) => {
+        fs.access(p, fs.constants.F_OK, (err) => {
+            if (err) {
+                errors++;
+            }
+            if (index === p.length - 1) {
+                callback(errors === 0);
+            }
         });
     });
 }
 function clearStorage(customPath = null) {
     Countly.halt(true);
+    // Construct the relative path to the target folder
+    const relativePath = `../${customPath}`;
+    // Use path.resolve to create the absolute path
+    const resolvedCustomPath = path.resolve(__dirname, relativePath);
+
     if (fs.existsSync(defaultStoragePath)) {
         fs.rmSync(defaultStoragePath, { recursive: true, force: true });
     }
     if (fs.existsSync(defaultBulkStoragePath)) {
         fs.rmSync(defaultBulkStoragePath, { recursive: true, force: true });
     }
-    if (customPath !== null && typeof customPath === 'string' && fs.existsSync(customPath)) {
-        fs.rmSync(customPath, { recursive: true, force: true });
+    if (resolvedCustomPath !== null && typeof resolvedCustomPath === 'string' && fs.existsSync(resolvedCustomPath)) {
+        fs.rmSync(resolvedCustomPath, { recursive: true, force: true });
     }
 
     // make sure the directories are removed
-    if (fs.existsSync(defaultStoragePath) || fs.existsSync(defaultBulkStoragePath) || (customPath !== null && fs.existsSync(customPath))) {
+    if (fs.existsSync(defaultStoragePath) || fs.existsSync(defaultBulkStoragePath) || (resolvedCustomPath !== null && fs.existsSync(resolvedCustomPath))) {
         throw new Error("Failed to clear storage");
     }
 }

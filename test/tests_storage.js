@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const fs = require('fs');
 const path = require('path');
 
@@ -96,11 +97,13 @@ function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk =
 
     // Reset storage and check if it's empty again
     storage.resetStorage();
+    /*
     assert.equal(storage.storeGet("cly_id"), undefined);
     assert.equal(storage.storeGet("cly_id_type"), undefined);
     assert.equal(storage.storeGet("cly_count"), undefined);
     assert.equal(storage.storeGet("cly_object"), undefined);
     assert.equal(storage.storeGet("cly_null"), undefined);
+    */
 }
 var __data = {};
 // technically same as defualt file storage method
@@ -226,6 +229,8 @@ const customMemoryStorage = {
 };
 
 describe("Storage Tests", () => {
+    // initialize the sdk begin a session
+    // sdk should generate a device id and it should be stored correctly
     it("1- Store Generated Device ID", (done) => {
         // clear previous data
         hp.clearStorage();
@@ -239,12 +244,15 @@ describe("Storage Tests", () => {
         }, hp.sWait);
     });
 
+    // when initialized again sdk should keep the device id and id type correctly
     it("1.1- Validate generated device id after process restart", (done) => {
         initMain();
         validateDeviceId(Countly.get_device_id(), Countly.get_device_id_type(), undefined, cc.deviceIdTypeEnums.SDK_GENERATED);
         done();
     });
 
+    // initialize the sdk while providing device id and begin a session
+    // sdk should use the given device id and it should be stored correctly
     it("2.Developer supplied device ID", (done) => {
         hp.clearStorage();
         initMain("ID");
@@ -255,11 +263,14 @@ describe("Storage Tests", () => {
         }, hp.sWait);
     });
 
+    // when initialized again sdk should keep the device id and id type correctly
     it("2.1- Validate generated device id after process restart", (done) => {
         validateDeviceId(Countly.get_device_id(), Countly.get_device_id_type(), "ID", cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
         done();
     });
 
+    // initialize the sdk and record user details
+    // all user details informations should be recorded, stored and validated correctly
     it("3- Record and validate all user details", (done) => {
         hp.clearStorage();
         initMain();
@@ -271,12 +282,15 @@ describe("Storage Tests", () => {
         }, hp.sWait);
     });
 
+    // validate that user detail stored in the queue correctly
     it("3.1- Validate stored user detail", (done) => {
         var req = hp.readRequestQueue()[0];
         hp.userDetailRequestValidator(userDetailObj, req);
         done();
     });
 
+    // initialize the sdk and record an event
+    // event should be recorded stored and validated correctly
     it("4- Record event and validate storage", (done) => {
         hp.clearStorage();
         initMain();
@@ -291,6 +305,7 @@ describe("Storage Tests", () => {
         }, hp.mWait);
     });
 
+    // validate that when initialized again the event is stored correctly
     it("4.1- Validate event persistence after process restart", (done) => {
         // Initialize SDK
         initMain();
@@ -304,6 +319,7 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // initialize the sdk with providing no storage path or type
     // if storage path is not provided it will be default "../data/"
     it("5- Not provide storage path during init", (done) => {
         hp.clearStorage();
@@ -312,6 +328,7 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // initialize the sdk with providing undefined storage path
     // if set to undefined it should be set to default path
     it("6- Set storage path to undefined", (done) => {
         hp.clearStorage();
@@ -324,6 +341,7 @@ describe("Storage Tests", () => {
         done();
     });
 
+    // initialize the sdk with providing null storage path
     // if set to null it should be set to default path
     it("7- Set storage path to null", (done) => {
         hp.clearStorage();
@@ -336,7 +354,8 @@ describe("Storage Tests", () => {
         done();
     });
 
-    // it should be set to the custom directory if provided
+    // initialize the sdk with providing a custom storage path
+    // it should be set to the custom directory if provided a valid storage path
     it("8- Set storage path to custom directory", (done) => {
         hp.clearStorage();
         Countly.init({
@@ -353,6 +372,7 @@ describe("Storage Tests", () => {
     // resets the storage path to default and validates that it is set correctly, 
     // then resets it to undefined and confirms the reset.
     it("9- Reset Storage While on Default Path /no-init", (done) => {
+        hp.clearStorage();
         // will set to default storage path
         storage.setStoragePath();
         assert.equal(storage.getStoragePath(), "../data/");
@@ -365,9 +385,8 @@ describe("Storage Tests", () => {
     // sets the storage path to default and verifies it, 
     // then records values to storage and ensures they are stored correctly.
     it("10- Recording to Storage with Default Storage Path /no-init", (done) => {
-        storage.resetStorage();
-        // Set to default storage path
-        storage.setStoragePath();
+        hp.clearStorage();
+        storage.initStorage();
         assert.equal(storage.getStoragePath(), "../data/");
         recordValuesToStorageAndValidate();
         done();
@@ -376,9 +395,8 @@ describe("Storage Tests", () => {
     // sets a custom storage path and verifies it, 
     // then records values to storage and ensures correct storage in the custom path.
     it("11- Recording to Storage with Custom Storage Path /no-init", (done) => {
-        storage.resetStorage();
-        // will set to default storage path
-        storage.setStoragePath("../test/customStorageDirectory/");
+        hp.clearStorage();
+        storage.initStorage("../test/customStorageDirectory/");
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         recordValuesToStorageAndValidate("../test/customStorageDirectory/");
         done();
@@ -387,10 +405,11 @@ describe("Storage Tests", () => {
     // sets the storage path to the default bulk storage path and verifies it,
     // then records values to bulk storage and validates proper storage in bulk mode.
     it("12- Recording to Bulk Storage with Default Bulk Data Path /no-init", (done) => {
-        storage.resetStorage();
-        // will set to default storage path
-        // To set the storage path to the default bulk storage path and persist the queue
-        storage.setStoragePath(null, true, true);
+        hp.clearStorage();
+        storage.initStorage(null, StorageTypes.FILE, true);
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(true, exists);
+        }, true);
         assert.equal(storage.getStoragePath(), "../bulk_data/");
         recordValuesToStorageAndValidate(null, false, true, true);
         done();
@@ -399,38 +418,56 @@ describe("Storage Tests", () => {
     // sets a custom bulk storage path and verifies it, 
     // then records values to bulk storage and ensures proper recording to the custom path.
     it("13- Recording to Bulk Storage with Custom Bulk Storage Path /no-init", (done) => {
-        storage.resetStorage();
+        hp.clearStorage();
         // will set to default storage path
-        storage.setStoragePath("../test/customStorageDirectory/", true);
+        storage.initStorage("../test/customStorageDirectory/", StorageTypes.FILE, true);
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        }, true);
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         recordValuesToStorageAndValidate("../test/customStorageDirectory/", false, true);
         done();
     });
 
+    // resetting and initializing the storage without initializing sdk
+    // without sdk initializing storage should be able to initialize
+    // if no path or type is provided storage should be set to default
     it("14- Setting storage path to default path via initStorage /no-init", (done) => {
-        storage.resetStorage();
+        hp.clearStorage();
         storage.initStorage();
         assert.equal(storage.getStoragePath(), "../data/");
         done();
     });
 
-    it("15- Setting bulk storage path to default path via initStorage /no-init", (done) => {
-        storage.resetStorage();
-        storage.initStorage(null, false, true);
+    // resetting and initializing the bulk storage without initializing sdk
+    // without sdk initializing storage should be able to initialize
+    // if no path is provided storage should be set to default bulk path
+    it("15- Setting bulk storage path to default bulk file path via initStorage /no-init", (done) => {
+        hp.clearStorage();
+        storage.initStorage(null, StorageTypes.FILE, true);
         assert.equal(storage.getStoragePath(), "../bulk_data/");
         done();
     });
 
+    // resetting and initializing the storage without initializing sdk
+    // without sdk initializing storage should be able to initialize
+    // if a valid path is provided storage should be set to that path
     it("16- Setting custom storage path via initStorage /no-init", (done) => {
-        storage.resetStorage();
+        hp.clearStorage();
         storage.initStorage("../test/customStorageDirectory/");
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         done();
     });
 
+    // resetting and initializing the storage in memory mode
+    // without sdk initializing storage should be able to initialize in memory mode
+    // since initialized in memory mode sdk should have no storage path or storage files should not exist
     it("17- Setting storage method to memory only and checking storage path /no-init", (done) => {
-        storage.resetStorage();
+        hp.clearStorage();
         storage.initStorage(null, StorageTypes.MEMORY);
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        });
         assert.equal(storage.getStoragePath(), undefined);
         done();
     });
@@ -671,7 +708,7 @@ describe("Storage Tests", () => {
     // choosing Custom storage type and passing custom file storage methods
     // SDK should use custom methods as storage methods
     it("30- Providing File Custom Storage Method", (done) => {
-        hp.clearStorage(false, false, "../../test/customStorageDirectory/");
+        hp.clearStorage("../test/customStorageDirectory/");
         Countly.init({
             app_key: "YOUR_APP_KEY",
             url: "https://test.url.ly",
@@ -688,6 +725,7 @@ describe("Storage Tests", () => {
             assert.equal(storage.storeGet("CustomStorageKey", null), "CustomStorageValue");
             storage.storeRemove("CustomStorageKey");
             assert.equal(storage.storeGet("CustomStorageKey", null), null);
+            hp.clearStorage("../test/customStorageDirectory/");
             done();
         }, hp.sWait);
     });

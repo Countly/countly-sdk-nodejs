@@ -5,20 +5,9 @@ const assert = require("assert");
 const CountlyBulk = require("../lib/countly-bulk");
 var hp = require("./helpers/helper_functions");
 var storage = require("../lib/countly-storage");
+var cc = require("../lib/countly-common");
 
-// default paths
-var dir = path.resolve(__dirname, "../");
-var bulkEventDir = (`${dir}/bulk_data/__cly_bulk_event.json`);
-var bulkQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
-
-function createBulk(storagePath) {
-    var bulk = new CountlyBulk({
-        app_key: "YOUR_APP_KEY",
-        url: "https://try.count.ly",
-        storage_path: storagePath,
-    });
-    return bulk;
-}
+const StorageTypes = cc.storageTypeEnums;
 
 function validateCrash(validator, nonfatal) {
     assert.ok(validator.crash._os);
@@ -122,27 +111,53 @@ var userDetailObj = {
 
 describe("Bulk Tests", () => {
     // Bulk is on memory by default
-    it("1- Bulk with Default Storage Path", (done) => {
+    // If no storage path and storage type provided during init Bulk should use memory storage
+    it("1- Bulk with No Storage Path and Storage Type", (done) => {
         hp.clearStorage();
-        createBulk();
+        var bulk = new CountlyBulk({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+        });
         assert.equal(storage.getStoragePath(), undefined);
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        }, true);
         done();
     });
 
+    // Providing storage path and storage type to Bulk
+    // Storage path should be the provided custom path and default bulk file paths should not exist
     it("2- Bulk with Custom Storage Path", (done) => {
         hp.clearStorage();
-        createBulk("../test/customStorageDirectory/");
+        var bulk = new CountlyBulk({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+            storage_path: "../test/customStorageDirectory/",
+            storage_type: StorageTypes.FILE,
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        }, true);
         assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
         done();
     });
 
+    // Initialize CountlyBulk and record an event
+    // Bulk should initialize correctly, default bulk file paths should not exist
+    // Event should be recorded and validated in event queue
     it("3- Bulk add_user with Record Event", (done) => {
         hp.clearStorage();
-        var bulk = createBulk();
+        var bulk = new CountlyBulk({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        }, true);
         var user = bulk.add_user({ device_id: "testUser1" });
         user.add_event(eventObj);
         setTimeout(() => {
-            var events = hp.readEventQueue(bulkEventDir, true);
+            var events = bulk.getBulkEventQueue();
             var deviceEvents = events.testUser1; // Access the events for the specific device
             var recordedEvent = deviceEvents[0]; // Access the first event
             hp.eventValidator(eventObj, recordedEvent);
@@ -150,15 +165,23 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // Initialize CountlyBulk and record user details
+    // Bulk should initialize correctly, default bulk file paths should not exist
+    // User details should be recorded and validated in request queue
     it("4- Bulk add_user with User Details", (done) => {
         hp.clearStorage();
-        var bulk = createBulk();
+        var bulk = new CountlyBulk({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        }, true);
         var user = bulk.add_user({ device_id: "testUser2" });
         user.user_details(userDetailObj);
-
         // read event queue
         setTimeout(() => {
-            var reqQueue = hp.readRequestQueue(bulkQueueDir, true);
+            var reqQueue = bulk.getBulkRequestQueue();
             var req = reqQueue[0];
             // Extract the user_details from the actual request
             const actualUserDetails = req.user_details || {};
@@ -169,12 +192,21 @@ describe("Bulk Tests", () => {
         }, hp.sWait);
     });
 
+    // Initialize CountlyBulk and call add_request
+    // Bulk should initialize correctly, default bulk file paths should not exist
+    // Request should be added correctly and validated
     it("5- Bulk add_request", (done) => {
         hp.clearStorage();
-        var bulk = createBulk();
+        var bulk = new CountlyBulk({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        }, true);
         bulk.add_request({ device_id: "TestUser3" });
         setTimeout(() => {
-            var reqQueue = hp.readRequestQueue(bulkQueueDir, true);
+            var reqQueue = bulk.getBulkRequestQueue();
             var testUser3Request = reqQueue.find((req) => req.device_id === "TestUser3");
             assert.ok(testUser3Request);
             assert.strictEqual(testUser3Request.device_id, "TestUser3");
@@ -184,9 +216,18 @@ describe("Bulk Tests", () => {
         }, hp.sWait);
     });
 
+    // Initialize CountlyBulk and report crash
+    // Bulk should initialize correctly, default bulk file paths should not exist
+    // Crash should be recorded correctly and validated
     it("6- Bulk add_user Report Crash", (done) => {
         hp.clearStorage();
-        var bulk = createBulk();
+        var bulk = new CountlyBulk({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+        });
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(false, exists);
+        }, true);
         var user = bulk.add_user({ device_id: "TestUser4" });
         try {
             runthis();
@@ -206,10 +247,35 @@ describe("Bulk Tests", () => {
         }
         // read event queue
         setTimeout(() => {
-            var reqQueue = hp.readRequestQueue(bulkQueueDir, true);
+            var reqQueue = bulk.getBulkRequestQueue();
             var testUser4Request = reqQueue.find((req) => req.device_id === "TestUser4");
             validateCrash(testUser4Request, true);
             done();
         }, hp.sWait);
+    });
+
+    // Initialize CountlyBulk in File Storage and record an event
+    // Bulk should initialize correctly, default bulk file paths should exist
+    // Event should be recorded and validated in event queue
+    it("7- Bulk File Storage add_user with Record Event", (done) => {
+        hp.clearStorage();
+        var bulk = new CountlyBulk({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+            storage_type: StorageTypes.FILE,
+        });
+        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        hp.doesFileStoragePathsExist((exists) => {
+            assert.equal(true, exists);
+        }, true);
+        var user = bulk.add_user({ device_id: "testUser1" });
+        user.add_event(eventObj);
+        setTimeout(() => {
+            var events = bulk.getBulkEventQueue();
+            var deviceEvents = events.testUser1; // Access the events for the specific device
+            var recordedEvent = deviceEvents[0]; // Access the first event
+            hp.eventValidator(eventObj, recordedEvent);
+            done();
+        }, hp.mWait);
     });
 });
