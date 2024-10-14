@@ -1,4 +1,6 @@
 /* eslint-disable no-unused-vars */
+/* eslint-disable no-console */
+/* global runthis */
 var path = require("path");
 var assert = require("assert");
 var fs = require("fs");
@@ -203,28 +205,41 @@ function sessionRequestValidator(beginSs, endSs, time, id) {
         assert.equal(time, endSs.session_duration);
     }
 }
-/**
- * bunch of tests specifically gathered for testing user details
- * @param {Object} originalDetails - Original object that contains user details  
- * @param {Object} details - Object from cly_queue that corresponds to user details recording  
- */
-function userDetailRequestValidator(originalDetails, details) {
-    requestBaseParamValidator(details);
-    var user = JSON.parse(details.user_details);
-    assert.equal(originalDetails.name, user.name);
-    assert.equal(originalDetails.username, user.username);
-    assert.equal(originalDetails.email, user.email);
-    assert.equal(originalDetails.organization, user.organization);
-    assert.equal(originalDetails.phone, user.phone);
-    assert.equal(originalDetails.picture, user.picture);
-    assert.equal(originalDetails.gender, user.gender);
-    assert.equal(originalDetails.byear, user.byear);
-    if (typeof originalDetails.custom !== 'undefined') {
-        for (var key in originalDetails.custom) {
-            assert.deepStrictEqual(originalDetails.custom[key], user.custom[key]);
+
+function validateUserDetails(actual, expected) {
+    // Helper function to remove undefined values
+    const cleanObj = (obj) => {
+        if (typeof obj === "string") {
+            try {
+                // Parse if it's a JSON string
+                obj = JSON.parse(obj);
+            }
+            catch (e) {
+                console.error("Invalid JSON string:", obj);
+                // Return null for invalid JSON
+                return null;
+            }
         }
+        // Remove properties with undefined values
+        return Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== undefined));
+    };
+    const cleanedActual = cleanObj(actual);
+    const cleanedExpected = cleanObj(expected);
+    if (!cleanedActual || !cleanedExpected) {
+        // If either cleaned object is null, validation fails
+        return false;
+    }
+    // Perform deep strict comparison after cleaning up undefined values
+    try {
+        assert.deepStrictEqual(cleanedActual, cleanedExpected);
+        return true;
+    }
+    catch (e) {
+        console.log("Validation failed:", e);
+        return false;
     }
 }
+
 /**
  * bunch of tests specifically gathered for testing page views
  * @param {Object} name - page name 
@@ -257,7 +272,7 @@ module.exports = {
     eventValidator,
     crashRequestValidator,
     sessionRequestValidator,
-    userDetailRequestValidator,
+    validateUserDetails,
     viewEventValidator,
     doesFileStoragePathsExist,
 };

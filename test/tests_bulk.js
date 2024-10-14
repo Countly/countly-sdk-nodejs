@@ -8,6 +8,9 @@ var testUtils = require("./helpers/test_utils");
 
 const { StorageTypes } = CountlyBulk;
 
+var appKey = "YOUR_APP_KEY";
+var serverUrl = "https://tests.url.cly";
+
 function validateCrash(validator, nonfatal) {
     assert.ok(validator.crash._os);
     assert.ok(validator.crash._os_version);
@@ -18,58 +21,6 @@ function validateCrash(validator, nonfatal) {
     assert.equal(nonfatal, validator.crash._nonfatal);
     assert.equal(true, validator.crash._javascript);
     assert.equal(true, validator.crash._not_os_specific);
-}
-
-// note: this can replace the current one in the helper functions
-function validateUserDetails(actual, expected) {
-    const keys = ['name', 'username', 'email', 'organization', 'phone', 'picture', 'gender', 'byear', 'custom'];
-    let isValid = true;
-
-    keys.forEach((key) => {
-        if (typeof actual[key] === 'object' && actual[key] !== null) {
-            if (Array.isArray(actual[key])) {
-                if (!Array.isArray(expected[key]) || JSON.stringify(actual[key]) !== JSON.stringify(expected[key])) {
-                    console.error(`Mismatch for key "${key}": expected "${JSON.stringify(expected[key])}", but got "${JSON.stringify(actual[key])}"`);
-                    isValid = false;
-                }
-            }
-            else {
-                if (JSON.stringify(actual[key]) !== JSON.stringify(expected[key])) {
-                    console.error(`Mismatch for key "${key}": expected "${JSON.stringify(expected[key])}", but got "${JSON.stringify(actual[key])}"`);
-                    isValid = false;
-                }
-            }
-        }
-        else if (actual[key] !== expected[key]) {
-            console.error(`Mismatch for key "${key}": expected "${expected[key]}", but got "${actual[key]}"`);
-            isValid = false;
-        }
-    });
-    // Validate nested custom object separately
-    if (expected.custom && actual.custom) {
-        const customKeys = Object.keys(expected.custom);
-        customKeys.forEach((key) => {
-            if (typeof actual.custom[key] === 'object' && actual.custom[key] !== null) {
-                if (Array.isArray(actual.custom[key])) {
-                    if (!Array.isArray(expected.custom[key]) || JSON.stringify(actual.custom[key]) !== JSON.stringify(expected.custom[key])) {
-                        console.error(`Mismatch in custom object for key "${key}": expected "${JSON.stringify(expected.custom[key])}", but got "${JSON.stringify(actual.custom[key])}"`);
-                        isValid = false;
-                    }
-                }
-                else {
-                    if (JSON.stringify(actual.custom[key]) !== JSON.stringify(expected.custom[key])) {
-                        console.error(`Mismatch in custom object for key "${key}": expected "${JSON.stringify(expected.custom[key])}", but got "${JSON.stringify(actual.custom[key])}"`);
-                        isValid = false;
-                    }
-                }
-            }
-            else if (actual.custom[key] !== expected.custom[key]) {
-                console.error(`Mismatch in custom object for key "${key}": expected "${expected.custom[key]}", but got "${actual.custom[key]}"`);
-                isValid = false;
-            }
-        });
-    }
-    return isValid;
 }
 
 // Create bulk data
@@ -121,7 +72,7 @@ function validateCreatedBulkData(bulk) {
 
     var req = reqQueue[0]; // read user details queue
     const actualUserDetails = req.user_details; // Extract the user_details from the actual request
-    const isValid = validateUserDetails(actualUserDetails, testUtils.getUserDetailsObj());
+    const isValid = hp.validateUserDetails(actualUserDetails, testUtils.getUserDetailsObj());
     assert.equal(true, isValid);
 
     var testUser3Request = reqQueue.find((request) => request.device_id === "TestUser3");
@@ -147,8 +98,8 @@ describe("Bulk Tests", () => {
 
     it("1- CNR", (done) => {
         var bulk = new CountlyBulk({
-            app_key: "YOUR_APP_KEY",
-            url: "https://try.count.ly",
+            app_key: appKey,
+            url: serverUrl,
         });
         assert.equal(storage.getStoragePath(), undefined);
         shouldFilesExist(false);
@@ -163,8 +114,8 @@ describe("Bulk Tests", () => {
 
     it("2- CNR_cPath_file", (done) => {
         var bulk = new CountlyBulk({
-            app_key: "YOUR_APP_KEY",
-            url: "https://try.count.ly",
+            app_key: appKey,
+            url: serverUrl,
             storage_path: "../test/customStorageDirectory/",
             storage_type: StorageTypes.FILE,
         });
@@ -182,8 +133,8 @@ describe("Bulk Tests", () => {
 
     it("3- CNR_file", (done) => {
         var bulk = new CountlyBulk({
-            app_key: "YOUR_APP_KEY",
-            url: "https://try.count.ly",
+            app_key: appKey,
+            url: serverUrl,
             storage_type: StorageTypes.FILE,
         });
         assert.equal(storage.getStoragePath(), "../bulk_data/");
@@ -197,9 +148,27 @@ describe("Bulk Tests", () => {
             done();
         }, hp.mWait);
     });
+
+    it("4- CNR_memory", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            storage_type: StorageTypes.MEMORY,
+        });
+        assert.equal(storage.getStoragePath(), undefined);
+        shouldFilesExist(true);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(true);
+            assert.equal(storage.getStoragePath(), undefined);
+            done();
+        }, hp.mWait);
+    });
 });
 
 // Currently tested: CNR, CNR_cPath_file, CNR_file
 // TODO: Add tests for the following:
-// - CNR: memory, cPath_memory, persistTrue, persistFalse, cPath_persistTrue, cPath_persistFalse, persistTrue_file, persistFalse_file, cPath_persistTrue_file, cPath_persistFalse_file
+// - CNR: cPath_memory, persistTrue, persistFalse, cPath_persistTrue, cPath_persistFalse, persistTrue_file, persistFalse_file, cPath_persistTrue_file, cPath_persistFalse_file
 // - CR_CG for all of the above

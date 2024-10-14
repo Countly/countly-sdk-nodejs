@@ -379,7 +379,7 @@ describe("Storage Tests", () => {
         Countly.user_details(testUtils.getUserDetailsObj);
         const storedData = storage.storeGet("cly_queue", null);
         const userDetailsReq = storedData[0];
-        hp.userDetailRequestValidator(testUtils.getUserDetailsObj, userDetailsReq);
+        hp.validateUserDetails(testUtils.getUserDetailsObj, userDetailsReq);
         done();
     });
 

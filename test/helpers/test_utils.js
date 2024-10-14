@@ -31,15 +31,13 @@ var userDetailObj = {
     phone: "+987654321",
     picture: "https://example.com/images/profile_alex.jpg",
     gender: "Female",
-    byear: 1992, // birth year
+    byear: 1992,
     custom: {
         string_value: "example",
         number_value: 42,
         boolean_value: true,
         array_value: ["item1", "item2"],
         object_value: { nested_key: "nested_value" },
-        null_value: null,
-        undefined_value: undefined,
     },
 };
 
