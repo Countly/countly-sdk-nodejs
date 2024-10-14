@@ -156,12 +156,12 @@ describe("Bulk Tests", () => {
             storage_type: StorageTypes.MEMORY,
         });
         assert.equal(storage.getStoragePath(), undefined);
-        shouldFilesExist(true);
+        shouldFilesExist(false);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
-            shouldFilesExist(true);
+            shouldFilesExist(false);
             assert.equal(storage.getStoragePath(), undefined);
             done();
         }, hp.mWait);
