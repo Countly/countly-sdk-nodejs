@@ -8,7 +8,7 @@ var storage = require("../lib/countly-storage");
 var cc = require("../lib/countly-common");
 var hp = require("./helpers/helper_functions");
 
-const StorageTypes = cc.storageTypeEnums;
+const { StorageTypes } = Countly;
 
 // example event object to use 
 var eventObj = {

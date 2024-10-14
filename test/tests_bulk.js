@@ -1,13 +1,11 @@
 /* eslint-disable no-console */
 /* global runthis */
-var path = require("path");
 const assert = require("assert");
 const CountlyBulk = require("../lib/countly-bulk");
 var hp = require("./helpers/helper_functions");
 var storage = require("../lib/countly-storage");
-var cc = require("../lib/countly-common");
 
-const StorageTypes = cc.storageTypeEnums;
+const { StorageTypes } = CountlyBulk;
 
 function validateCrash(validator, nonfatal) {
     assert.ok(validator.crash._os);
