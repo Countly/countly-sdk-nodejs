@@ -32,9 +32,10 @@ var timedEventObj = {
     },
 };
 describe("Events tests", () => {
+    beforeEach(async() => {
+        await hp.clearStorage();
+    });
     it("Record and check custom event", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         // send custom event
@@ -47,8 +48,6 @@ describe("Events tests", () => {
         }, hp.mWait);
     });
     it("Record and check timed events", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         // send timed event

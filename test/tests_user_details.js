@@ -27,9 +27,10 @@ function initMain() {
 }
 
 describe("User details tests", () => {
+    beforeEach(async() => {
+        await hp.clearStorage();
+    });
     it("Record and validate all user details", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         // send user details

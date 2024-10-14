@@ -14,9 +14,10 @@ function initMain() {
 }
 
 describe("Crash tests", () => {
+    before(async() => {
+        await hp.clearStorage();
+    });
     it("Validate handled error logic", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         // error logic
@@ -34,23 +35,27 @@ describe("Crash tests", () => {
             done();
         }, hp.sWait);
     });
-    // This needs two steps, first creating an error and second checking the logs without erasing, otherwise error would halt the test
-    describe("Unhandled Error logic", () => {
-        it("Create unhandled rejection", () => {
-            // clear previous data
-            hp.clearStorage();
-            // initialize SDK
-            initMain();
-            // send emitter
-            Countly.track_errors();
-            process.emit('unhandledRejection');
-        });
-        it("Validate unhandled rejection recording", (done) => {
-            setTimeout(() => {
-                var req = hp.readRequestQueue()[0];
-                hp.crashRequestValidator(req, false);
-                done();
-            }, hp.mWait);
-        });
+});
+// This needs two steps, first creating an error and second checking the logs without erasing, otherwise error would halt the test
+describe("Unhandled Error logic", () => {
+    before(async() => {
+        await hp.clearStorage();
+    });
+    it("Create unhandled rejection", (done) => {
+        // clear previous data
+        hp.clearStorage();
+        // initialize SDK
+        initMain();
+        // send emitter
+        Countly.track_errors();
+        process.emit('unhandledRejection');
+        done();
+    });
+    it("Validate unhandled rejection recording", (done) => {
+        setTimeout(() => {
+            var req = hp.readRequestQueue()[0];
+            hp.crashRequestValidator(req, false);
+            done();
+        }, hp.mWait);
     });
 });

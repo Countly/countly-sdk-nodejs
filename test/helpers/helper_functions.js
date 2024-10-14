@@ -2,28 +2,40 @@
 var path = require("path");
 var assert = require("assert");
 var fs = require("fs");
+var fsp = require("fs/promises");
 var Countly = require("../../lib/countly");
 
 // paths for convenience
 var dir = path.resolve(__dirname, "../../");
-var defaultStoragePath = (`${dir}/data`);
-var defaultBulkStoragePath = (`${dir}/bulk_data`);
-var idDir = (`${dir}/data/__cly_id.json`);
-var idTypeDir = (`${dir}/data/__cly_id_type.json`);
-var eventDir = (`${dir}/data/__cly_event.json`);
-var reqDir = (`${dir}/data/__cly_queue.json`);
-var bulkEventDir = (`${dir}/bulk_data/__cly_bulk_event.json`);
-var bulkReqQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
-var bulkQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
+var dir_test = path.resolve(__dirname, "../");
+
+// paths for convenience
+const DIR_CLY = (`${dir}/data`);
+const DIR_CLY_ID = (`${dir}/data/__cly_id.json`);
+const DIR_CLY_ID_type = (`${dir}/data/__cly_id_type.json`);
+const DIR_CLY_event = (`${dir}/data/__cly_event.json`);
+const DIR_CLY_request = (`${dir}/data/__cly_queue.json`);
+
+// Bulk paths for convenience
+const DIR_Bulk = (`${dir}/bulk_data`);
+const DIR_Bulk_bulk = (`${dir}/bulk_data/__cly_bulk_queue.json`);
+const DIR_Bulk_event = (`${dir}/bulk_data/__cly_bulk_event.json`);
+const DIR_Bulk_request = (`${dir}/bulk_data/__cly_req_queue.json`);
+
+// Custom
+const DIR_Test = (`${dir_test}/customStorageDirectory`);
+const DIR_Test_bulk = (`${dir_test}/customStorageDirectory/__cly_bulk_queue.json`);
+const DIR_Test_event = (`${dir_test}/customStorageDirectory/ __cly_bulk_event.json`);
+const DIR_Test_request = (`${dir_test}/customStorageDirectory/__cly_req_queue.json`);
 
 // timeout variables
-var sWait = 50;
-var mWait = 3000;
-var lWait = 10000;
+const sWait = 50;
+const mWait = 3000;
+const lWait = 10000;
 
 // parsing event queue
 function readEventQueue(givenPath = null, isBulk = false) {
-    var destination = eventDir;
+    var destination = DIR_CLY_event;
     if (givenPath !== null) {
         destination = givenPath;
     }
@@ -35,7 +47,7 @@ function readEventQueue(givenPath = null, isBulk = false) {
 }
 // parsing request queue
 function readRequestQueue(givenPath = null, isBulk = false) {
-    var destination = reqDir;
+    var destination = DIR_CLY_request;
     if (givenPath !== null) {
         destination = givenPath;
     }
@@ -45,10 +57,15 @@ function readRequestQueue(givenPath = null, isBulk = false) {
     }
     return a;
 }
-function doesFileStoragePathsExist(callback, isBulk = false) {
-    const paths = isBulk
-        ? [bulkQueueDir, bulkReqQueueDir, bulkEventDir]
-        : [idDir, idTypeDir, eventDir];
+function doesFileStoragePathsExist(callback, isBulk = false, testPath = false) {
+    var paths = [DIR_CLY_ID, DIR_CLY_ID_type, DIR_CLY_event, DIR_CLY_request];
+
+    if (isBulk) {
+        paths = [DIR_Bulk_request, DIR_Bulk_event, DIR_Bulk_bulk];
+    }
+    else if (testPath) {
+        paths = [DIR_Test_bulk, DIR_Test_event, DIR_Test_request];
+    }
 
     let errors = 0;
     paths.forEach((p, index) => {
@@ -62,25 +79,26 @@ function doesFileStoragePathsExist(callback, isBulk = false) {
         });
     });
 }
-function clearStorage(customPath = null) {
+async function clearStorage(customPath = null) {
     Countly.halt(true);
-    // Construct the relative path to the target folder
+
     const relativePath = `../${customPath}`;
-    // Use path.resolve to create the absolute path
     const resolvedCustomPath = path.resolve(__dirname, relativePath);
 
-    if (fs.existsSync(defaultStoragePath)) {
-        fs.rmSync(defaultStoragePath, { recursive: true, force: true });
-    }
-    if (fs.existsSync(defaultBulkStoragePath)) {
-        fs.rmSync(defaultBulkStoragePath, { recursive: true, force: true });
-    }
-    if (resolvedCustomPath !== null && typeof resolvedCustomPath === 'string' && fs.existsSync(resolvedCustomPath)) {
-        fs.rmSync(resolvedCustomPath, { recursive: true, force: true });
+    await fsp.rm(DIR_CLY, { recursive: true, force: true }).catch(() => { });
+    await fsp.rm(DIR_Bulk, { recursive: true, force: true }).catch(() => { });
+    await fsp.rm(DIR_Test, { recursive: true, force: true }).catch(() => { });
+
+    if (resolvedCustomPath !== null && typeof resolvedCustomPath === 'string') {
+        await fsp.rm(resolvedCustomPath, { recursive: true, force: true }).catch(() => { });
     }
 
-    // make sure the directories are removed
-    if (fs.existsSync(defaultStoragePath) || fs.existsSync(defaultBulkStoragePath) || (resolvedCustomPath !== null && fs.existsSync(resolvedCustomPath))) {
+    const storageExists = await fsp.access(DIR_CLY).then(() => true).catch(() => false);
+    const bulkStorageExists = await fsp.access(DIR_Bulk).then(() => true).catch(() => false);
+    const customTestStorage = await fsp.access(DIR_Test).then(() => true).catch(() => false);
+    const customStorageExists = resolvedCustomPath !== null ? await fsp.access(resolvedCustomPath).then(() => true).catch(() => false) : false;
+
+    if (storageExists || bulkStorageExists || customTestStorage || customStorageExists) {
         throw new Error("Failed to clear storage");
     }
 }
@@ -143,7 +161,7 @@ function requestBaseParamValidator(resultingObject, id) {
     assert.ok(typeof resultingObject.sdk_version !== 'undefined');
     assert.ok(typeof resultingObject.timestamp !== 'undefined');
     assert.ok(resultingObject.dow > -1 && resultingObject.dow < 24);
-    assert.ok(resultingObject.dow > 0 && resultingObject.dow < 8);
+    assert.ok(resultingObject.dow >= 0 && resultingObject.dow < 8);
 }
 /**
  * bunch of tests specifically gathered for testing crashes

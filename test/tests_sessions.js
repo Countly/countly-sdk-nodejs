@@ -11,9 +11,10 @@ function initMain() {
     });
 }
 describe("Sessions tests", () => {
+    beforeEach(async() => {
+        await hp.clearStorage();
+    });
     it("Start session and validate the request queue", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         // send session calls
@@ -25,8 +26,6 @@ describe("Sessions tests", () => {
         }, hp.sWait);
     });
     it("Start and end session and validate the request queue", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         // send session calls
