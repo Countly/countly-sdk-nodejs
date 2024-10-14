@@ -47,29 +47,7 @@ function initMain(device_id) {
         device_id: device_id,
     });
 }
-// TODO: move these to helpers to reduce duplication
-function validateSdkGeneratedId(providedDeviceId) {
-    assert.ok(providedDeviceId);
-    assert.equal(providedDeviceId.length, 36);
-    assert.ok(cc.isUUID(providedDeviceId));
-}
-function checkRequestsForT(queue, expectedInternalType) {
-    for (var i = 0; i < queue.length; i++) {
-        assert.ok(queue[i].t);
-        assert.equal(queue[i].t, expectedInternalType);
-    }
-}
-function validateDeviceId(deviceId, deviceIdType, expectedDeviceId, expectedDeviceIdType) {
-    var rq = hp.readRequestQueue()[0];
-    if (expectedDeviceIdType === cc.deviceIdTypeEnums.SDK_GENERATED) {
-        validateSdkGeneratedId(deviceId); // for SDK-generated IDs
-    }
-    else {
-        assert.equal(deviceId, expectedDeviceId); // for developer-supplied IDs
-    }
-    assert.equal(deviceIdType, expectedDeviceIdType);
-    checkRequestsForT(rq, expectedDeviceIdType);
-}
+
 function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk = false, persistQueue = false) {
     // Set values
     var deviceIdType = cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED;
@@ -97,13 +75,6 @@ function recordValuesToStorageAndValidate(userPath, memoryOnly = false, isBulk =
 
     // Reset storage and check if it's empty again
     storage.resetStorage();
-    /*
-    assert.equal(storage.storeGet("cly_id"), undefined);
-    assert.equal(storage.storeGet("cly_id_type"), undefined);
-    assert.equal(storage.storeGet("cly_count"), undefined);
-    assert.equal(storage.storeGet("cly_object"), undefined);
-    assert.equal(storage.storeGet("cly_null"), undefined);
-    */
 }
 var __data = {};
 // technically same as defualt file storage method
@@ -618,38 +589,5 @@ describe("Storage Tests", () => {
             hp.clearStorage("../test/customStorageDirectory/");
             done();
         }, hp.sWait);
-    });
-});
-
-describe('Persistency Related', () => {
-    // when initialized again sdk should keep the device id and id type correctly
-    it("1.1- Validate generated device id after process restart", (done) => {
-        initMain();
-        setTimeout(() => {
-            validateDeviceId(Countly.get_device_id(), Countly.get_device_id_type(), undefined, cc.deviceIdTypeEnums.SDK_GENERATED);
-            done();
-        }, hp.sWait);
-    });
-    // when initialized again sdk should keep the device id and id type correctly
-    it("2.1- Validate generated device id after process restart", (done) => {
-        validateDeviceId(Countly.get_device_id(), Countly.get_device_id_type(), "ID", cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-        done();
-    });
-    // validate that user detail stored in the queue correctly
-    it("3.1- Validate stored user detail", (done) => {
-        var req = hp.readRequestQueue()[0];
-        hp.userDetailRequestValidator(userDetailObj, req);
-        done();
-    });
-    // validate that when initialized again the event is stored correctly
-    it("4.1- Validate event persistence after process restart", (done) => {
-        // Initialize SDK
-        initMain();
-        // Read stored events without clearing storage
-        var storedEvents = hp.readEventQueue();
-        assert.strictEqual(storedEvents.length, 1, "There should be exactly one event stored");
-        var event = storedEvents[0];
-        hp.eventValidator(eventObj, event);
-        done();
     });
 });

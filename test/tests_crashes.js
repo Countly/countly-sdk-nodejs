@@ -42,8 +42,6 @@ describe("Unhandled Error logic", () => {
         await hp.clearStorage();
     });
     it("Create unhandled rejection", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         // send emitter
