@@ -4,6 +4,7 @@ const assert = require("assert");
 const CountlyBulk = require("../lib/countly-bulk");
 var hp = require("./helpers/helper_functions");
 var storage = require("../lib/countly-storage");
+var testUtils = require("./helpers/test_utils");
 
 const { StorageTypes } = CountlyBulk;
 
@@ -71,51 +72,15 @@ function validateUserDetails(actual, expected) {
     return isValid;
 }
 
-var eventObj = {
-    key: "bulk_check",
-    count: 55,
-    sum: 3.14,
-    dur: 2000,
-    segmentation: {
-        string_value: "example",
-        number_value: 42,
-        boolean_value: true,
-        array_value: ["item1", "item2"],
-        object_value: { nested_key: "nested_value" },
-        null_value: null,
-        undefined_value: undefined,
-    },
-};
-
-var userDetailObj = {
-    name: "Alexandrina Jovovich",
-    username: "alex_jov",
-    email: "alex.jov@example.com",
-    organization: "TechNova",
-    phone: "+987654321",
-    picture: "https://example.com/images/profile_alex.jpg",
-    gender: "Female",
-    byear: 1992, // birth year
-    custom: {
-        string_value: "example",
-        number_value: 42,
-        boolean_value: true,
-        array_value: ["item1", "item2"],
-        object_value: { nested_key: "nested_value" },
-        null_value: null,
-        undefined_value: undefined,
-    },
-};
-
 // Create bulk data
 function createBulkData(bulk) {
     // Add an event
     var user = bulk.add_user({ device_id: "testUser1" });
-    user.add_event(eventObj);
+    user.add_event(testUtils.getEventObj());
 
     // add user details
     var user2 = bulk.add_user({ device_id: "testUser2" });
-    user2.user_details(userDetailObj);
+    user2.user_details(testUtils.getUserDetailsObj());
 
     // add request
     bulk.add_request({ device_id: "TestUser3" });
@@ -152,11 +117,11 @@ function validateCreatedBulkData(bulk) {
 
     var deviceEvents = events.testUser1; // Access the events for the specific device
     var recordedEvent = deviceEvents[0]; // Access the first event
-    hp.eventValidator(eventObj, recordedEvent);
+    hp.eventValidator(testUtils.getEventObj(), recordedEvent);
 
     var req = reqQueue[0]; // read user details queue
     const actualUserDetails = req.user_details; // Extract the user_details from the actual request
-    const isValid = validateUserDetails(actualUserDetails, userDetailObj);
+    const isValid = validateUserDetails(actualUserDetails, testUtils.getUserDetailsObj());
     assert.equal(true, isValid);
 
     var testUser3Request = reqQueue.find((request) => request.device_id === "TestUser3");

@@ -7,35 +7,9 @@ var Countly = require("../lib/countly");
 var storage = require("../lib/countly-storage");
 var cc = require("../lib/countly-common");
 var hp = require("./helpers/helper_functions");
+var testUtils = require("./helpers/test_utils");
 
 const { StorageTypes } = Countly;
-
-// example event object to use 
-var eventObj = {
-    key: "storage_check",
-    count: 5,
-    sum: 3.14,
-    dur: 2000,
-    segmentation: {
-        app_version: "1.0",
-        country: "Zambia",
-    },
-};
-
-var userDetailObj = {
-    name: "Akira Kurosawa",
-    username: "a_kurosawa",
-    email: "akira.kurosawa@filmlegacy.com",
-    organization: "Toho Studios",
-    phone: "+81312345678",
-    picture: "https://example.com/profile_images/akira_kurosawa.jpg",
-    gender: "Male",
-    byear: 1910,
-    custom: {
-        "known for": "Film Director",
-        "notable works": "Seven Samurai, Rashomon, Ran",
-    },
-};
 
 // init function
 function initMain(device_id) {
@@ -196,13 +170,13 @@ describe("Storage Tests", () => {
     // event should be recorded stored and validated correctly
     it("4- Record event and validate storage", (done) => {
         initMain();
-        Countly.add_event(eventObj);
+        Countly.add_event(testUtils.getEventObj());
         setTimeout(() => {
             var storedEvents = hp.readEventQueue();
             assert.equal(storedEvents.length, 1);
 
             var event = storedEvents[0];
-            hp.eventValidator(eventObj, event);
+            hp.eventValidator(testUtils.getEventObj(), event);
             done();
         }, hp.mWait);
     });
@@ -379,12 +353,12 @@ describe("Storage Tests", () => {
         hp.doesFileStoragePathsExist((exists) => {
             assert.equal(false, exists);
         });
-        Countly.add_event(eventObj);
+        Countly.add_event(testUtils.getEventObj());
         setTimeout(() => {
             const storedData = storage.storeGet("cly_queue", null);
             const eventArray = JSON.parse(storedData[0].events);
             const eventFromQueue = eventArray[0];
-            hp.eventValidator(eventObj, eventFromQueue);
+            hp.eventValidator(testUtils.getEventObj(), eventFromQueue);
             done();
         }, hp.mWait);
     });
@@ -402,10 +376,10 @@ describe("Storage Tests", () => {
         hp.doesFileStoragePathsExist((exists) => {
             assert.equal(false, exists);
         });
-        Countly.user_details(userDetailObj);
+        Countly.user_details(testUtils.getUserDetailsObj);
         const storedData = storage.storeGet("cly_queue", null);
         const userDetailsReq = storedData[0];
-        hp.userDetailRequestValidator(userDetailObj, userDetailsReq);
+        hp.userDetailRequestValidator(testUtils.getUserDetailsObj, userDetailsReq);
         done();
     });
 

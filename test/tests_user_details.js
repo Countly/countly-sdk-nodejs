@@ -1,21 +1,8 @@
 /* eslint-disable no-console */
 var Countly = require("../lib/countly");
 var hp = require("./helpers/helper_functions");
+var testUtils = require("./helpers/test_utils");
 
-var userDetailObj = {
-    name: "Barturiana Sosinsiava",
-    username: "bar2rawwen",
-    email: "test@test.com",
-    organization: "Dukely",
-    phone: "+123456789",
-    picture: "https://ps.timg.com/profile_images/52237/011_n_400x400.jpg",
-    gender: "Non-binary",
-    byear: 1987, // birth year
-    custom: {
-        "key1 segment": "value1 segment",
-        "key2 segment": "value2 segment",
-    },
-};
 // init function
 function initMain() {
     Countly.init({
@@ -34,11 +21,11 @@ describe("User details tests", () => {
         // initialize SDK
         initMain();
         // send user details
-        Countly.user_details(userDetailObj);
+        Countly.user_details(testUtils.getUserDetailsObj());
         // read event queue
         setTimeout(() => {
             var req = hp.readRequestQueue()[0];
-            hp.userDetailRequestValidator(userDetailObj, req);
+            hp.userDetailRequestValidator(testUtils.getUserDetailsObj(), req);
             done();
         }, hp.sWait);
     });

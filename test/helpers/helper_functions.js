@@ -221,7 +221,7 @@ function userDetailRequestValidator(originalDetails, details) {
     assert.equal(originalDetails.byear, user.byear);
     if (typeof originalDetails.custom !== 'undefined') {
         for (var key in originalDetails.custom) {
-            assert.equal(originalDetails.custom[key], user.custom[key]);
+            assert.deepStrictEqual(originalDetails.custom[key], user.custom[key]);
         }
     }
 }

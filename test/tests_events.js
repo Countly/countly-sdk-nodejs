@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 var Countly = require("../lib/countly");
 var hp = require("./helpers/helper_functions");
+var testUtils = require("./helpers/test_utils");
 
 // init function
 function initMain() {
@@ -11,26 +12,7 @@ function initMain() {
         max_events: -1,
     });
 }
-// an event object to use 
-var eventObj = {
-    key: "in_app_purchase",
-    count: 3,
-    sum: 2.97,
-    dur: 1000,
-    segmentation: {
-        app_version: "1.0",
-        country: "Turkey",
-    },
-};
-// a timed event object
-var timedEventObj = {
-    key: "timed",
-    count: 1,
-    segmentation: {
-        app_version: "1.0",
-        country: "Turkey",
-    },
-};
+
 describe("Events tests", () => {
     beforeEach(async() => {
         await hp.clearStorage();
@@ -39,11 +21,11 @@ describe("Events tests", () => {
         // initialize SDK
         initMain();
         // send custom event
-        Countly.add_event(eventObj);
+        Countly.add_event(testUtils.getEventObj());
         // read event queue
         setTimeout(() => {
             var event = hp.readEventQueue()[0];
-            hp.eventValidator(eventObj, event);
+            hp.eventValidator(testUtils.getEventObj(), event);
             done();
         }, hp.mWait);
     });
@@ -53,11 +35,11 @@ describe("Events tests", () => {
         // send timed event
         Countly.start_event("timed");
         setTimeout(() => {
-            Countly.end_event(timedEventObj);
+            Countly.end_event(testUtils.getTimedEventObj());
             // read event queue
             setTimeout(() => {
                 var event = hp.readEventQueue()[0];
-                hp.eventValidator(timedEventObj, event, (hp.mWait / 1000));
+                hp.eventValidator(testUtils.getTimedEventObj(), event, (hp.mWait / 1000));
                 done();
             }, hp.sWait);
         }, hp.mWait);
