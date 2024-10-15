@@ -166,9 +166,140 @@ describe("Bulk Tests", () => {
             done();
         }, hp.mWait);
     });
+
+    it("5- CNR_cPath_memory", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            storage_path: "../test/customStorageDirectory/",
+            storage_type: StorageTypes.MEMORY,
+        });
+        assert.equal(storage.getStoragePath(), undefined);
+        shouldFilesExist(false);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(false);
+            assert.equal(storage.getStoragePath(), undefined);
+            done();
+        }, hp.mWait);
+    });
+
+    it("6- CNR_persistTrue", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            persist_queue: true,
+        });
+        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        shouldFilesExist(true);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(true);
+            assert.equal(storage.getStoragePath(), "../bulk_data/");
+            done();
+        }, hp.mWait);
+    });
+
+    it("7- CNR_persistFalse", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            persist_queue: false,
+        });
+        assert.equal(storage.getStoragePath(), undefined);
+        shouldFilesExist(false);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(false);
+            assert.equal(storage.getStoragePath(), undefined);
+            done();
+        }, hp.mWait);
+    });
+
+    it("8- CNR_cPath_persistTrue", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            storage_path: "../test/customStorageDirectory/",
+            persist_queue: true,
+        });
+        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+        shouldFilesExist(true);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(true);
+            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            done();
+        }, hp.mWait);
+    });
+
+    it("9- CNR_cPath_persistFalse", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            storage_path: "../test/customStorageDirectory/",
+            persist_queue: false,
+        });
+        assert.equal(storage.getStoragePath(), undefined);
+        shouldFilesExist(false);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(false);
+            assert.equal(storage.getStoragePath(), undefined);
+            done();
+        }, hp.mWait);
+    });
+
+    it("10- CNR_persistTrue_file", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            storage_type: StorageTypes.FILE,
+            persist_queue: true,
+        });
+        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        shouldFilesExist(true);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(true);
+            assert.equal(storage.getStoragePath(), "../bulk_data/");
+            done();
+        }, hp.mWait);
+    });
+
+    it("11- CNR_persistFalse_file", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            storage_type: StorageTypes.FILE,
+            persist_queue: true,
+        });
+        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        shouldFilesExist(true);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(true);
+            assert.equal(storage.getStoragePath(), "../bulk_data/");
+            done();
+        }, hp.mWait);
+    });
 });
 
 // Currently tested: CNR, CNR_cPath_file, CNR_file
 // TODO: Add tests for the following:
-// - CNR: cPath_memory, persistTrue, persistFalse, cPath_persistTrue, cPath_persistFalse, persistTrue_file, persistFalse_file, cPath_persistTrue_file, cPath_persistFalse_file
+// - CNR: cPath_persistTrue_file, cPath_persistFalse_file
 // - CR_CG for all of the above
