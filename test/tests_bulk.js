@@ -297,9 +297,48 @@ describe("Bulk Tests", () => {
             done();
         }, hp.mWait);
     });
+
+    it("12- CNR_cPath_persistTrue_file", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            storage_type: StorageTypes.FILE,
+            storage_path: "../test/customStorageDirectory/",
+            persist_queue: true,
+        });
+        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+        shouldFilesExist(true);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(true);
+            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            done();
+        }, hp.mWait);
+    });
+
+    it("13- CNR_cPath_persistFalse_file", (done) => {
+        var bulk = new CountlyBulk({
+            app_key: appKey,
+            url: serverUrl,
+            storage_type: StorageTypes.FILE,
+            storage_path: "../test/customStorageDirectory/",
+            persist_queue: false,
+        });
+        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+        shouldFilesExist(true);
+        createBulkData(bulk);
+
+        setTimeout(() => {
+            validateCreatedBulkData(bulk);
+            shouldFilesExist(true);
+            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            done();
+        }, hp.mWait);
+    });
 });
 
 // Currently tested: CNR, CNR_cPath_file, CNR_file
 // TODO: Add tests for the following:
-// - CNR: cPath_persistTrue_file, cPath_persistFalse_file
 // - CR_CG for all of the above
