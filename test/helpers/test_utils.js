@@ -41,6 +41,42 @@ var userDetailObj = {
     },
 };
 
+const invalidStorageMethods = {
+    _storage: {},
+    setInvalid: function() {
+    },
+    getInvalid: function() {
+    },
+    removeInvalid: function() {
+    },
+};
+
+const customStorage = {
+    _storage: {},
+    storeSet: function(key, value, callback) {
+        if (key) {
+            this._storage[key] = value;
+            if (typeof callback === "function") {
+                callback(null);
+            }
+        }
+    },
+    storeGet: function(key, def) {
+        return typeof this._storage[key] !== "undefined" ? this._storage[key] : def;
+    },
+    storeRemove: function(key) {
+        delete this._storage[key];
+    },
+};
+
+function getInvalidStorage() {
+    return invalidStorageMethods;
+}
+
+function getCustomStorage() {
+    return customStorage;
+}
+
 var getUserDetailsObj = function() {
     return userDetailObj;
 };
@@ -57,4 +93,6 @@ module.exports = {
     getEventObj,
     getUserDetailsObj,
     getTimedEventObj,
+    getInvalidStorage,
+    getCustomStorage,
 };

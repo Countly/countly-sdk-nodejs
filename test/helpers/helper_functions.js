@@ -26,9 +26,11 @@ const DIR_Bulk_request = (`${dir}/bulk_data/__cly_req_queue.json`);
 
 // Custom
 const DIR_Test = (`${dir_test}/customStorageDirectory`);
+const DIR_Test_event = (`${dir_test}/customStorageDirectory/__cly_event.json`);
+const DIR_Test_request = (`${dir_test}/customStorageDirectory/__cly_queue.json`);
 const DIR_Test_bulk = (`${dir_test}/customStorageDirectory/__cly_bulk_queue.json`);
-const DIR_Test_event = (`${dir_test}/customStorageDirectory/ __cly_bulk_event.json`);
-const DIR_Test_request = (`${dir_test}/customStorageDirectory/__cly_req_queue.json`);
+const DIR_Test_bulk_event = (`${dir_test}/customStorageDirectory/__cly_bulk_event.json`);
+const DIR_Test_bulk_request = (`${dir_test}/customStorageDirectory/__cly_req_queue.json`);
 
 // timeout variables
 const sWait = 50;
@@ -48,10 +50,10 @@ function readEventQueue(givenPath = null, isBulk = false) {
     return a;
 }
 // parsing request queue
-function readRequestQueue(givenPath = null, isBulk = false) {
+function readRequestQueue(customPath = false, isBulk = false) {
     var destination = DIR_CLY_request;
-    if (givenPath !== null) {
-        destination = givenPath;
+    if (customPath) {
+        destination = DIR_Test_request;
     }
     var a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
     if (isBulk) {
@@ -66,7 +68,7 @@ function doesFileStoragePathsExist(callback, isBulk = false, testPath = false) {
         paths = [DIR_Bulk_request, DIR_Bulk_event, DIR_Bulk_bulk];
     }
     else if (testPath) {
-        paths = [DIR_Test_bulk, DIR_Test_event, DIR_Test_request];
+        paths = [DIR_Test_bulk, DIR_Test_bulk_event, DIR_Test_bulk_request];
     }
 
     let errors = 0;
