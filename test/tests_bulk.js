@@ -95,7 +95,8 @@ describe("Bulk Tests", () => {
     beforeEach(async() => {
         await hp.clearStorage();
     });
-
+    // without any config option default bulk storage
+    // bulk mode is memory only by default
     it("1- CNR", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -112,6 +113,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // storage path and storage type provided in bulk
+    // type should be file and path should be correct
     it("2- CNR_cPath_file", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -131,6 +134,8 @@ describe("Bulk Tests", () => {
         }, hp.sWait);
     });
 
+    // file storage type in config
+    // path should become the default "../bulk_data/"
     it("3- CNR_file", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -149,6 +154,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // memory storage type in config
+    // path should become undefined and storage files shouldn't exist
     it("4- CNR_memory", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -167,6 +174,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // custom storage path and memory storage type provided in config
+    // path should become undefined, type should be memory storage 
     it("5- CNR_cPath_memory", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -186,6 +195,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // persist_queue is true in bulk config
+    // should switch to file storage and default bulk path
     it("6- CNR_persistTrue", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -204,6 +215,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // persist_queue is false in bulk config
+    // should result same with default bulk configurations
     it("7- CNR_persistFalse", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -222,6 +235,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // custom path is provided and persist_queue is true in config
+    // custom path should become the storage path and switch to file storage
     it("8- CNR_cPath_persistTrue", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -241,6 +256,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // custom path is provided and persist_queue is false in config
+    // storage path should become undefined, should stay in memory storage
     it("9- CNR_cPath_persistFalse", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -260,6 +277,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // persist_queue is true and storage type is file
+    // should directly switch to the default file storage for bulk
     it("10- CNR_persistTrue_file", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -279,6 +298,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // persist_queue is false and storage type is file
+    // storage type should overrule and switch into the default bulk file storage
     it("11- CNR_persistFalse_file", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -298,6 +319,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // persist_queue is true and storage type is file and custom path is given
+    // storage type should overrule and switch into the custom path file storage 
     it("12- CNR_cPath_persistTrue_file", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -318,6 +341,8 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 
+    // persist_queue is false and storage type is file and custom path is given
+    // storage type should overrule and switch into the custom path file storage 
     it("13- CNR_cPath_persistFalse_file", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
@@ -338,7 +363,3 @@ describe("Bulk Tests", () => {
         }, hp.mWait);
     });
 });
-
-// Currently tested: CNR, CNR_cPath_file, CNR_file
-// TODO: Add tests for the following:
-// - CR_CG for all of the above
