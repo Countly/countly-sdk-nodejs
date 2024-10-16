@@ -15,9 +15,10 @@ function initMain() {
 }
 
 describe("View test", () => {
+    beforeEach(async() => {
+        await hp.clearStorage();
+    });
     it("Record and validate page views", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         // send track view
@@ -30,8 +31,6 @@ describe("View test", () => {
         }, hp.sWait);
     });
     it("Record and validate timed page views with same name", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         Countly.track_view(pageNameOne);
@@ -52,8 +51,6 @@ describe("View test", () => {
         }, hp.mWait);
     });
     it("Record and validate timed page views with same name", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain();
         Countly.track_view(pageNameOne);

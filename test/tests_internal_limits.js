@@ -22,6 +22,9 @@ function initLimitsMain() {
 
 // Integration tests with countly initialized
 describe("Testing internal limits", () => {
+    beforeEach(async() => {
+        await hp.clearStorage();
+    });
     describe("Testing truncation functions", () => {
         it("truncateSingleValue: Check if the string is truncated", () => {
             var newStr = cc.truncateSingleValue("123456789", 3, "test");
@@ -56,8 +59,6 @@ describe("Testing internal limits", () => {
     });
 
     it("1. Check custom event truncation", (done) => {
-    // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // send event
@@ -88,8 +89,6 @@ describe("Testing internal limits", () => {
     });
 
     it("2. Check countly view event truncation", (done) => {
-        // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // page view
@@ -110,8 +109,6 @@ describe("Testing internal limits", () => {
         }, hp.sWait);
     });
     it("3. Check breadcrumbs and error truncation", (done) => {
-        // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // add log
@@ -154,8 +151,6 @@ describe("Testing internal limits", () => {
         }, hp.sWait);
     });
     it("4. Check user details truncation", (done) => {
-        // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // add user details
@@ -209,8 +204,6 @@ describe("Testing internal limits", () => {
         }, hp.sWait);
     });
     it("5. Check custom properties truncation", (done) => {
-        // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // add custom properties
