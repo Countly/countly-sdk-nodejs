@@ -6,6 +6,7 @@ var assert = require("assert");
 var fs = require("fs");
 var fsp = require("fs/promises");
 var Countly = require("../../lib/countly");
+var CountlyStorage = require("../../lib/countly-storage");
 
 // paths for convenience
 var dir = path.resolve(__dirname, "../../");
@@ -50,14 +51,20 @@ function readEventQueue(givenPath = null, isBulk = false) {
     return a;
 }
 // parsing request queue
-function readRequestQueue(customPath = false, isBulk = false) {
+function readRequestQueue(customPath = false, isBulk = false, isMemory = false) {
     var destination = DIR_CLY_request;
     if (customPath) {
         destination = DIR_Test_request;
     }
-    var a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
+    var a;
     if (isBulk) {
         a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_req_queue;
+    }
+    if (isMemory) {
+        a = CountlyStorage.storeGet("cly_queue");
+    }
+    else {
+        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
     }
     return a;
 }
@@ -68,7 +75,7 @@ function doesFileStoragePathsExist(callback, isBulk = false, testPath = false) {
         paths = [DIR_Bulk_request, DIR_Bulk_event, DIR_Bulk_bulk];
     }
     else if (testPath) {
-        paths = [DIR_Test_bulk, DIR_Test_bulk_event, DIR_Test_bulk_request];
+        paths = [DIR_Test_event, DIR_Test_request];
     }
 
     let errors = 0;
