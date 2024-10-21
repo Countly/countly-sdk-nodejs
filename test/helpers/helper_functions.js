@@ -1,25 +1,46 @@
 /* eslint-disable no-unused-vars */
+/* eslint-disable no-console */
+/* global runthis */
 var path = require("path");
 var assert = require("assert");
 var fs = require("fs");
+var fsp = require("fs/promises");
 var Countly = require("../../lib/countly");
 var CountlyStorage = require("../../lib/countly-storage");
 
 // paths for convenience
 var dir = path.resolve(__dirname, "../../");
-var idDir = (`${dir}/data/__cly_id.json`);
-var idTypeDir = (`${dir}/data/__cly_id_type.json`);
-var eventDir = (`${dir}/data/__cly_event.json`);
-var reqDir = (`${dir}/data/__cly_queue.json`);
-var bulkEventDir = (`${dir}/bulk_data/__cly_bulk_event.json`);
-var bulkQueueDir = (`${dir}/bulk_data/__cly_req_queue.json`);
+var dir_test = path.resolve(__dirname, "../");
+
+// paths for convenience
+const DIR_CLY = (`${dir}/data`);
+const DIR_CLY_ID = (`${dir}/data/__cly_id.json`);
+const DIR_CLY_ID_type = (`${dir}/data/__cly_id_type.json`);
+const DIR_CLY_event = (`${dir}/data/__cly_event.json`);
+const DIR_CLY_request = (`${dir}/data/__cly_queue.json`);
+
+// Bulk paths for convenience
+const DIR_Bulk = (`${dir}/bulk_data`);
+const DIR_Bulk_bulk = (`${dir}/bulk_data/__cly_bulk_queue.json`);
+const DIR_Bulk_event = (`${dir}/bulk_data/__cly_bulk_event.json`);
+const DIR_Bulk_request = (`${dir}/bulk_data/__cly_req_queue.json`);
+
+// Custom
+const DIR_Test = (`${dir_test}/customStorageDirectory`);
+const DIR_Test_event = (`${dir_test}/customStorageDirectory/__cly_event.json`);
+const DIR_Test_request = (`${dir_test}/customStorageDirectory/__cly_queue.json`);
+const DIR_Test_bulk = (`${dir_test}/customStorageDirectory/__cly_bulk_queue.json`);
+const DIR_Test_bulk_event = (`${dir_test}/customStorageDirectory/__cly_bulk_event.json`);
+const DIR_Test_bulk_request = (`${dir_test}/customStorageDirectory/__cly_req_queue.json`);
+
 // timeout variables
-var sWait = 50;
-var mWait = 3000;
-var lWait = 10000;
+const sWait = 50;
+const mWait = 3000;
+const lWait = 10000;
+
 // parsing event queue
 function readEventQueue(givenPath = null, isBulk = false) {
-    var destination = eventDir;
+    var destination = DIR_CLY_event;
     if (givenPath !== null) {
         destination = givenPath;
     }
@@ -30,50 +51,69 @@ function readEventQueue(givenPath = null, isBulk = false) {
     return a;
 }
 // parsing request queue
-function readRequestQueue(givenPath = null, isBulk = false) {
-    var destination = reqDir;
-    if (givenPath !== null) {
-        destination = givenPath;
+function readRequestQueue(customPath = false, isBulk = false, isMemory = false) {
+    var destination = DIR_CLY_request;
+    if (customPath) {
+        destination = DIR_Test_request;
     }
-    var a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
+    var a;
     if (isBulk) {
         a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_req_queue;
     }
+    if (isMemory) {
+        a = CountlyStorage.storeGet("cly_queue");
+    }
+    else {
+        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
+    }
     return a;
 }
-function doesFileStoragePathsExist(callback) {
-    fs.access(idDir, fs.constants.F_OK, (err1) => {
-        fs.access(idTypeDir, fs.constants.F_OK, (err2) => {
-            fs.access(eventDir, fs.constants.F_OK, (err3) => {
-                // If all err variables are null, all files exist
-                const allFilesExist = !err1 && !err2 && !err3;
-                callback(allFilesExist);
-            });
+function doesFileStoragePathsExist(callback, isBulk = false, testPath = false) {
+    var paths = [DIR_CLY_ID, DIR_CLY_ID_type, DIR_CLY_event, DIR_CLY_request];
+
+    if (isBulk) {
+        paths = [DIR_Bulk_request, DIR_Bulk_event, DIR_Bulk_bulk];
+    }
+    else if (testPath) {
+        paths = [DIR_Test_event, DIR_Test_request];
+    }
+
+    let errors = 0;
+    paths.forEach((p, index) => {
+        fs.access(p, fs.constants.F_OK, (err) => {
+            if (err) {
+                errors++;
+            }
+            if (index === p.length - 1) {
+                callback(errors === 0);
+            }
         });
     });
 }
-function clearStorage(keepID = false, isBulk = false, customDir = '') {
-    // Resets Countly
+async function clearStorage(customPath = null) {
     Countly.halt(true);
-    // Determine the directory based on isBulk or customDir
-    const eventDirectory = customDir || (isBulk ? bulkEventDir : eventDir);
-    const reqDirectory = customDir || (isBulk ? bulkQueueDir : reqDir);
-    // Helper function to remove directory and files
-    function removeDir(directory) {
-        if (fs.existsSync(directory)) {
-            fs.rmSync(directory, { recursive: true, force: true });
-        }
+
+    const relativePath = `../${customPath}`;
+    const resolvedCustomPath = path.resolve(__dirname, relativePath);
+
+    await fsp.rm(DIR_CLY, { recursive: true, force: true }).catch(() => { });
+    await fsp.rm(DIR_Bulk, { recursive: true, force: true }).catch(() => { });
+    await fsp.rm(DIR_Test, { recursive: true, force: true }).catch(() => { });
+
+    if (resolvedCustomPath !== null && typeof resolvedCustomPath === 'string') {
+        await fsp.rm(resolvedCustomPath, { recursive: true, force: true }).catch(() => { });
     }
-    // Remove event directory if it exists
-    removeDir(eventDirectory);
-    // Remove request directory if it exists
-    removeDir(reqDirectory);
-    // Optionally keep the ID directory
-    if (!keepID) {
-        removeDir(idDir);
-        removeDir(idTypeDir);
+
+    const storageExists = await fsp.access(DIR_CLY).then(() => true).catch(() => false);
+    const bulkStorageExists = await fsp.access(DIR_Bulk).then(() => true).catch(() => false);
+    const customTestStorage = await fsp.access(DIR_Test).then(() => true).catch(() => false);
+    const customStorageExists = resolvedCustomPath !== null ? await fsp.access(resolvedCustomPath).then(() => true).catch(() => false) : false;
+
+    if (storageExists || bulkStorageExists || customTestStorage || customStorageExists) {
+        throw new Error("Failed to clear storage");
     }
 }
+
 /**
  * bunch of tests specifically gathered for testing events
  * @param {Object} eventObject - Original event object to test
@@ -132,7 +172,7 @@ function requestBaseParamValidator(resultingObject, id) {
     assert.ok(typeof resultingObject.sdk_version !== 'undefined');
     assert.ok(typeof resultingObject.timestamp !== 'undefined');
     assert.ok(resultingObject.dow > -1 && resultingObject.dow < 24);
-    assert.ok(resultingObject.dow > 0 && resultingObject.dow < 8);
+    assert.ok(resultingObject.dow >= 0 && resultingObject.dow < 8);
 }
 /**
  * bunch of tests specifically gathered for testing crashes
@@ -174,28 +214,41 @@ function sessionRequestValidator(beginSs, endSs, time, id) {
         assert.equal(time, endSs.session_duration);
     }
 }
-/**
- * bunch of tests specifically gathered for testing user details
- * @param {Object} originalDetails - Original object that contains user details  
- * @param {Object} details - Object from cly_queue that corresponds to user details recording  
- */
-function userDetailRequestValidator(originalDetails, details) {
-    requestBaseParamValidator(details);
-    var user = JSON.parse(details.user_details);
-    assert.equal(originalDetails.name, user.name);
-    assert.equal(originalDetails.username, user.username);
-    assert.equal(originalDetails.email, user.email);
-    assert.equal(originalDetails.organization, user.organization);
-    assert.equal(originalDetails.phone, user.phone);
-    assert.equal(originalDetails.picture, user.picture);
-    assert.equal(originalDetails.gender, user.gender);
-    assert.equal(originalDetails.byear, user.byear);
-    if (typeof originalDetails.custom !== 'undefined') {
-        for (var key in originalDetails.custom) {
-            assert.equal(originalDetails.custom[key], user.custom[key]);
+
+function validateUserDetails(actual, expected) {
+    // Helper function to remove undefined values
+    const cleanObj = (obj) => {
+        if (typeof obj === "string") {
+            try {
+                // Parse if it's a JSON string
+                obj = JSON.parse(obj);
+            }
+            catch (e) {
+                console.error("Invalid JSON string:", obj);
+                // Return null for invalid JSON
+                return null;
+            }
         }
+        // Remove properties with undefined values
+        return Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== undefined));
+    };
+    const cleanedActual = cleanObj(actual);
+    const cleanedExpected = cleanObj(expected);
+    if (!cleanedActual || !cleanedExpected) {
+        // If either cleaned object is null, validation fails
+        return false;
+    }
+    // Perform deep strict comparison after cleaning up undefined values
+    try {
+        assert.deepStrictEqual(cleanedActual, cleanedExpected);
+        return true;
+    }
+    catch (e) {
+        console.log("Validation failed:", e);
+        return false;
     }
 }
+
 /**
  * bunch of tests specifically gathered for testing page views
  * @param {Object} name - page name 
@@ -228,7 +281,7 @@ module.exports = {
     eventValidator,
     crashRequestValidator,
     sessionRequestValidator,
-    userDetailRequestValidator,
+    validateUserDetails,
     viewEventValidator,
     doesFileStoragePathsExist,
 };

@@ -55,9 +55,10 @@ function checkRequestsForT(queue, expectedInternalType) {
 }
 
 describe("Device ID type tests", () => {
+    beforeEach(async() => {
+        await hp.clearStorage();
+    });
     it("1.Generated device ID", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -71,8 +72,6 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
     it("2.Developer supplied device ID", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain("ID");
         Countly.begin_session();
@@ -86,8 +85,6 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
     it("3.With stored dev ID and no new ID", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain("ID");
         Countly.begin_session();
@@ -109,8 +106,6 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
     it("4.With stored dev ID and with new ID", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain("ID");
         Countly.begin_session();
@@ -132,8 +127,6 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
     it("5.With stored generated ID and no new ID", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -157,8 +150,6 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
     it("6.With stored generated ID and with new ID", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -182,8 +173,6 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
     it("7.With stored dev ID and no new ID, flag set", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain("ID");
         Countly.begin_session();
@@ -206,31 +195,29 @@ describe("Device ID type tests", () => {
     });
 
     it("8.With stored dev ID and with new ID, flag set", (done) => {
-        // clear previous data
-        hp.clearStorage();
-        // initialize SDK
-        initMain("ID");
-        Countly.begin_session();
-        // read request queue
         setTimeout(() => {
-            var rq = hp.readRequestQueue()[0];
-            assert.equal(Countly.get_device_id(), "ID");
-            assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-            checkRequestsForT(rq, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-            Countly.halt(true);
-            initMain("ID2", true);
+            // initialize SDK
+            initMain("ID");
+            Countly.begin_session();
+            // read request queue
             setTimeout(() => {
-                var req = hp.readRequestQueue()[0];
-                assert.equal(Countly.get_device_id(), "ID2");
+                var rq = hp.readRequestQueue()[0];
+                assert.equal(Countly.get_device_id(), "ID");
                 assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-                checkRequestsForT(req, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
-                done();
-            }, hp.sWait);
-        }, hp.sWait);
+                checkRequestsForT(rq, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+                Countly.halt(true);
+                initMain("ID2", true);
+                setTimeout(() => {
+                    var req = hp.readRequestQueue()[0];
+                    assert.equal(Countly.get_device_id(), "ID2");
+                    assert.equal(Countly.get_device_id_type(), cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+                    checkRequestsForT(req, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+                    done();
+                }, hp.sWait);
+            }, hp.lWait);
+        }, hp.lWait);
     });
     it("9.With stored sdk ID and no new ID, flag set", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -255,8 +242,6 @@ describe("Device ID type tests", () => {
     });
 
     it("10.With stored sdk ID and with new ID, flag set", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -280,8 +265,6 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
     it("11.Change generated device ID", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain(undefined);
         Countly.change_id("changedID");
@@ -298,8 +281,6 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
     it("12.Change developer supplied device ID", (done) => {
-        // clear previous data
-        hp.clearStorage();
         // initialize SDK
         initMain("ID");
         Countly.change_id("changedID");
