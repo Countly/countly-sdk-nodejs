@@ -1,18 +1,18 @@
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ed5f07ef6f8b4503ac01b2dab190de01)](https://www.codacy.com/gh/Countly/countly-sdk-nodejs/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-nodejs&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ed5f07ef6f8b4503ac01b2dab190de01)](https://app.codacy.com/gh/Countly/countly-sdk-nodejs/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![npm version](https://badge.fury.io/js/countly-sdk-nodejs.svg)](https://badge.fury.io/js/countly-sdk-nodejs) 
 [![Inline docs](https://inch-ci.org/github/Countly/countly-sdk-nodejs.svg?branch=master)](https://inch-ci.org/github/Countly/countly-sdk-nodejs)
 
 # Countly NodeJS SDK 
 
-This repository contains the Countly NodeJS SDK, which can be integrated into NodeJS running device or server. The Countly NodeJS SDK is intended to be used with [Countly Community Edition](https://github.com/Countly/countly-server) or [Countly Enterprise Edition](https://count.ly/product).
+This repository contains the Countly NodeJS SDK, which can be integrated into NodeJS running device or server. The Countly NodeJS SDK is intended to be used with [Countly Lite](https://countly.com/lite), [Countly Flex](https://countly.com/flex) or [Countly Enterprise](https://countly.com/enterprise).
 ## What is Countly?
-[Countly](https://count.ly) is a product analytics solution and innovation enabler that helps teams track product performance and customer journey and behavior across [mobile](https://count.ly/mobile-analytics), [web](http://count.ly/web-analytics),
+[Countly](https://count.ly) is a product analytics solution and innovation enabler that helps teams track product performance and customer journey and behavior across [mobile](https://count.ly/mobile-analytics), [web](https://count.ly/web-analytics),
 and [desktop](https://count.ly/desktop-analytics) applications. [Ensuring privacy by design](https://count.ly/privacy-by-design), Countly allows you to innovate and enhance your products to provide personalized and customized customer experiences, and meet key business and revenue goals.
 
 Track, measure, and take action - all without leaving Countly.
 
 * **Questions or feature requests?** [Join the Countly Community on Discord](https://discord.gg/countly)
-* **Looking for the Countly Server?** [Countly Community Edition repository](https://github.com/Countly/countly-server)
+* **Looking for the Countly Server?** [Countly Server repository](https://github.com/Countly/countly-server)
 * **Looking for other Countly SDKs?** [An overview of all Countly SDKs for mobile, web and desktop](https://support.count.ly/hc/en-us/articles/360037236571-Downloading-and-Installing-SDKs#officially-supported-sdks)
 
 ## Integrating Countly SDK in your projects

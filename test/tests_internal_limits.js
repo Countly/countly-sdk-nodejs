@@ -22,6 +22,9 @@ function initLimitsMain() {
 
 // Integration tests with countly initialized
 describe("Testing internal limits", () => {
+    beforeEach(async() => {
+        await hp.clearStorage();
+    });
     describe("Testing truncation functions", () => {
         it("truncateSingleValue: Check if the string is truncated", () => {
             var newStr = cc.truncateSingleValue("123456789", 3, "test");
@@ -56,8 +59,6 @@ describe("Testing internal limits", () => {
     });
 
     it("1. Check custom event truncation", (done) => {
-    // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // send event
@@ -79,16 +80,15 @@ describe("Testing internal limits", () => {
             assert.ok(event.segmentation["key of 3"]);
             assert.ok(!event.segmentation["key of 4"]);
             assert.equal(event.segmentation["key of 3"], "Value of");
-            assert.ok(event.timestamp);
-            assert.ok(event.hour);
-            assert.ok(event.dow);
+            // common parameter validation
+            assert.ok(event.timestamp !== 'undefined');
+            assert.ok(event.hour !== 'undefined');
+            assert.ok(event.dow !== 'undefined');
             done();
         }, hp.sWait);
     });
 
     it("2. Check countly view event truncation", (done) => {
-        // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // page view
@@ -101,15 +101,14 @@ describe("Testing internal limits", () => {
             assert.equal(event.segmentation.name, "a very l");
             assert.equal(event.segmentation.visit, 1);
             assert.ok(event.segmentation.segment);
-            assert.ok(event.timestamp);
-            assert.ok(event.hour);
-            assert.ok(event.dow);
+            // common parameter validation
+            assert.ok(event.timestamp !== 'undefined');
+            assert.ok(event.hour !== 'undefined');
+            assert.ok(event.dow !== 'undefined');
             done();
         }, hp.sWait);
     });
     it("3. Check breadcrumbs and error truncation", (done) => {
-        // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // add log
@@ -134,9 +133,10 @@ describe("Testing internal limits", () => {
             assert.ok(req.device_id);
             assert.ok(req.sdk_name);
             assert.ok(req.sdk_version);
-            assert.ok(req.timestamp);
-            assert.ok(req.hour);
-            assert.ok(req.dow);
+            // common parameter validation
+            assert.ok(req.timestamp !== 'undefined');
+            assert.ok(req.hour !== 'undefined');
+            assert.ok(req.dow !== 'undefined');
             var crash = JSON.parse(req.crash);
             assert.equal(crash._logs, "log5 too\nlog6\nlog7");
             assert.ok(crash._os);
@@ -151,8 +151,6 @@ describe("Testing internal limits", () => {
         }, hp.sWait);
     });
     it("4. Check user details truncation", (done) => {
-        // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // add user details
@@ -184,9 +182,10 @@ describe("Testing internal limits", () => {
             assert.ok(req.device_id);
             assert.ok(req.sdk_name);
             assert.ok(req.sdk_version);
-            assert.ok(req.timestamp);
-            assert.ok(req.hour);
-            assert.ok(req.dow);
+            // common parameter validation
+            assert.ok(req.timestamp !== 'undefined');
+            assert.ok(req.hour !== 'undefined');
+            assert.ok(req.dow !== 'undefined');
             var details = JSON.parse(req.user_details);
             assert.equal(details.name, 'Gottlob ');
             assert.equal(details.username, 'Grundges');
@@ -205,8 +204,6 @@ describe("Testing internal limits", () => {
         }, hp.sWait);
     });
     it("5. Check custom properties truncation", (done) => {
-        // clear storage
-        hp.clearStorage();
         // init Countly
         initLimitsMain();
         // add custom properties
@@ -229,9 +226,10 @@ describe("Testing internal limits", () => {
             assert.ok(req.device_id);
             assert.ok(req.sdk_name);
             assert.ok(req.sdk_version);
-            assert.ok(req.timestamp);
-            assert.ok(req.hour);
-            assert.ok(req.dow);
+            // common parameter validation
+            assert.ok(req.timestamp !== 'undefined');
+            assert.ok(req.hour !== 'undefined');
+            assert.ok(req.dow !== 'undefined');
             var details = JSON.parse(req.user_details).custom;
             // set
             assert.equal(details['name of '], 'Bertrand');

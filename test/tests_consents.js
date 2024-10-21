@@ -62,8 +62,10 @@ function events() {
 
 // tests
 describe("Internal event consent tests", () => {
+    beforeEach(async() => {
+        await hp.clearStorage();
+    });
     it("Only custom event should be sent to the queue", (done) => {
-        hp.clearStorage();
         initMain();
         Countly.add_consent(["events"]);
         events();
@@ -75,7 +77,6 @@ describe("Internal event consent tests", () => {
         }, hp.sWait);
     });
     it("All but custom event should be sent to the queue", (done) => {
-        hp.clearStorage();
         initMain();
         Countly.add_consent(["sessions", "views", "users", "star-rating", "apm", "feedback"]);
         events();
@@ -91,7 +92,6 @@ describe("Internal event consent tests", () => {
         }, hp.mWait);
     });
     it("Non-merge ID change should reset all consents", (done) => {
-        hp.clearStorage();
         initMain();
         Countly.add_consent(["sessions", "views", "users", "star-rating", "apm", "feedback"]);
         Countly.change_id("Richard Wagner II", false);
@@ -102,7 +102,6 @@ describe("Internal event consent tests", () => {
         }, hp.sWait);
     });
     it("Merge ID change should not reset consents", (done) => {
-        hp.clearStorage();
         initMain();
         Countly.add_consent(["sessions", "views", "users", "star-rating", "apm", "feedback"]);
         // Countly.change_id("Richard Wagner the second", true);

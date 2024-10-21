@@ -1,3 +1,11 @@
+## 24.10.0
+- Default max segmentation value count changed from 30 to 100
+- Mitigated an issue where SDK could create an unintended dump file
+- Added a new init time config option (conf.storage_type) which can make user set the SDK storage option:
+  - File Storage
+  - Memory Only Storage
+- Added a new init time config option (conf.custom_storage_method) which enables user to provide custom storage methods
+
 ## 22.06.0
 - Fixed a bug where remote config requests were rejected
 - Fixed a bug where empty storage object did cause some issues
