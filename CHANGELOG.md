@@ -1,3 +1,6 @@
+## XX.XX.XX
+- Added a new method `set_id(newDeviceId)` for managing device ID changes according to the device ID Type
+
 ## 24.10.0
 - Default max segmentation value count changed from 30 to 100
 - Mitigated an issue where SDK could create an unintended dump file
