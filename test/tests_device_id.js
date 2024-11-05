@@ -31,7 +31,8 @@ describe("Device ID tests", () => {
     beforeEach(async() => {
         await hp.clearStorage();
     });
-    it("1.set_id with SDK generated to developer supplied", (done) => {
+
+    it("1- set_id with SDK generated to developer supplied", (done) => {
         // initialize SDK
         initMain(undefined);
         validateSdkGeneratedId(Countly.get_device_id());
@@ -47,7 +48,8 @@ describe("Device ID tests", () => {
             done();
         }, hp.sWait);
     });
-    it("2.set_id with developer supplied to developer supplied", (done) => {
+
+    it("2- set_id with developer supplied to developer supplied", (done) => {
         // initialize SDK
         initMain("ID2");
         validateDeveloperSuppliedId("ID2");
@@ -61,7 +63,8 @@ describe("Device ID tests", () => {
             done();
         }, hp.sWait);
     });
-    it("3.set_id with same custom id", (done) => {
+
+    it("3- set_id with same custom id", (done) => {
         // initialize SDK
         initMain("ID");
         validateDeveloperSuppliedId("ID");
@@ -69,7 +72,8 @@ describe("Device ID tests", () => {
         validateDeveloperSuppliedId("ID");
         done();
     });
-    it("4.set_id with same sdk generated id", (done) => {
+
+    it("4- set_id with same sdk generated id", (done) => {
         // initialize SDK
         initMain(undefined);
         var id = Countly.get_device_id();
@@ -79,7 +83,8 @@ describe("Device ID tests", () => {
         validateSdkGeneratedId(id);
         done();
     });
-    it("5.set_id with invalid ids", (done) => {
+
+    it("5- set_id with invalid ids", (done) => {
         // initialize SDK
         initMain(undefined);
         var id = Countly.get_device_id();

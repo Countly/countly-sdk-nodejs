@@ -58,7 +58,7 @@ describe("Device ID type tests", () => {
     beforeEach(async() => {
         await hp.clearStorage();
     });
-    it("1.Generated device ID", (done) => {
+    it("1- Generated device ID", (done) => {
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -71,7 +71,8 @@ describe("Device ID type tests", () => {
             done();
         }, hp.sWait);
     });
-    it("2.Developer supplied device ID", (done) => {
+
+    it("2- Developer supplied device ID", (done) => {
         // initialize SDK
         initMain("ID");
         Countly.begin_session();
@@ -84,7 +85,8 @@ describe("Device ID type tests", () => {
             done();
         }, hp.sWait);
     });
-    it("3.With stored dev ID and no new ID", (done) => {
+
+    it("3- With stored dev ID and no new ID", (done) => {
         // initialize SDK
         initMain("ID");
         Countly.begin_session();
@@ -105,7 +107,8 @@ describe("Device ID type tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
-    it("4.With stored dev ID and with new ID", (done) => {
+
+    it("4- With stored dev ID and with new ID", (done) => {
         // initialize SDK
         initMain("ID");
         Countly.begin_session();
@@ -126,7 +129,8 @@ describe("Device ID type tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
-    it("5.With stored generated ID and no new ID", (done) => {
+
+    it("5- With stored generated ID and no new ID", (done) => {
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -149,7 +153,8 @@ describe("Device ID type tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
-    it("6.With stored generated ID and with new ID", (done) => {
+
+    it("6- With stored generated ID and with new ID", (done) => {
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -172,7 +177,8 @@ describe("Device ID type tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
-    it("7.With stored dev ID and no new ID, flag set", (done) => {
+
+    it("7- With stored dev ID and no new ID, flag set", (done) => {
         // initialize SDK
         initMain("ID");
         Countly.begin_session();
@@ -194,7 +200,7 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
 
-    it("8.With stored dev ID and with new ID, flag set", (done) => {
+    it("8- With stored dev ID and with new ID, flag set", (done) => {
         setTimeout(() => {
             // initialize SDK
             initMain("ID");
@@ -217,7 +223,8 @@ describe("Device ID type tests", () => {
             }, hp.lWait);
         }, hp.lWait);
     });
-    it("9.With stored sdk ID and no new ID, flag set", (done) => {
+
+    it("9- With stored sdk ID and no new ID, flag set", (done) => {
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -241,7 +248,7 @@ describe("Device ID type tests", () => {
         }, hp.sWait);
     });
 
-    it("10.With stored sdk ID and with new ID, flag set", (done) => {
+    it("10- With stored sdk ID and with new ID, flag set", (done) => {
         // initialize SDK
         initMain(undefined);
         Countly.begin_session();
@@ -264,7 +271,8 @@ describe("Device ID type tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
-    it("11.Change generated device ID", (done) => {
+
+    it("11- Change generated device ID", (done) => {
         // initialize SDK
         initMain(undefined);
         Countly.change_id("changedID");
@@ -280,7 +288,8 @@ describe("Device ID type tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
-    it("12.Change developer supplied device ID", (done) => {
+
+    it("12- Change developer supplied device ID", (done) => {
         // initialize SDK
         initMain("ID");
         Countly.change_id("changedID");
@@ -296,7 +305,8 @@ describe("Device ID type tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
-    it("13.Check new DeviceIdType interface is equal to common interface", (done) => {
+
+    it("13- Check new DeviceIdType interface is equal to common interface", (done) => {
         setTimeout(() => {
             assert.equal(Countly.DeviceIdType.DEVELOPER_SUPPLIED, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
             assert.equal(Countly.DeviceIdType.SDK_GENERATED, cc.deviceIdTypeEnums.SDK_GENERATED);
