@@ -296,4 +296,11 @@ describe("Device ID type tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
+    it("13.Check new DeviceIdType interface is equal to common interface", (done) => {
+        setTimeout(() => {
+            assert.equal(Countly.DeviceIdType.DEVELOPER_SUPPLIED, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
+            assert.equal(Countly.DeviceIdType.SDK_GENERATED, cc.deviceIdTypeEnums.SDK_GENERATED);
+            done();
+        });
+    });
 });
