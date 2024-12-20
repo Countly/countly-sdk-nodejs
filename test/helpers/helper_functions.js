@@ -284,4 +284,5 @@ module.exports = {
     validateUserDetails,
     viewEventValidator,
     doesFileStoragePathsExist,
+    requestBaseParamValidator,
 };
