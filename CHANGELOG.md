@@ -1,3 +1,6 @@
+## 24.10.2
+- Added timezone support for server
+
 ## 24.10.1
 - Added a new method `set_id(newDeviceId)` for managing device ID changes according to the device ID Type
 - Added `DeviceIdType` enums to be used to evaluate the device ID type.
