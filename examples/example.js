@@ -12,7 +12,9 @@ var Countly = require("../lib/countly.js");
 Countly.init({
     app_key: COUNTLY_APP_KEY,
     url: COUNTLY_SERVER_KEY, //your server goes here
-    debug: true
+    debug: true,
+    clear_stored_device_id: true, //just for testing purposes
+    device_id: "id_" + Math.floor(Math.random() * 1000000) //just for testing purposes
 });
 
 Countly.begin_session();
