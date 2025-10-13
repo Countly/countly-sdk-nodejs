@@ -24,7 +24,8 @@ server.start(function() {
 });
 
 
-var user = server.add_user({device_id: "my_device_id"});
+var user = server.add_user({ device_id: "my_device_id_1" });
+var user2 = server.add_user({ device_id: "my_device_id_2" });
 
 user.begin_session({_os: "Android", _os_version: "7", _app_version: "1.0"}, 240, 1500645060)
     .add_event({key: "Test1", timestamp: 1500645060})
@@ -45,3 +46,9 @@ user.begin_session({_os: "Android", _os_version: "7", _app_version: "1.0"}, 240,
     .custom_push("check", "a")
     .custom_push_unique("tags", "morning")
     .custom_save();
+
+user2.begin_session({ _os: "iOS", _os_version: "10", _app_version: "1.0" }, 300, 1500645060)
+    .add_event({ key: "Test1", timestamp: 1500645060 })
+    .add_event({ key: "Test2", timestamp: 1500645060 })
+    .add_event({ key: "Test3", timestamp: 1500645060 })
+    .user_details({ name: "Test user2", email: "test2@test.test" })

@@ -27,22 +27,22 @@ setTimeout(function() {
         "dur": 1000,
         "segmentation": {
             "app_version": "1.0",
-            "country": "Turkey"
+            "country": "GB"
         }
     });
 }, 5000);
 
 setTimeout(function() {
     Countly.user_details({
-        "name": "Arturs Sosins",
-        "username": "ar2rsawseen",
+        "name": "User name",
+        "username": "User nickname",
         "email": "test@test.com",
         "organization": "Countly",
-        "phone": "+37112345678",
-        //Web URL to picture
-        "picture": "https://pbs.twimg.com/profile_images/1442562237/012_n_400x400.jpg",
+        "phone": "+37144345678",
+        // "picture": "http://www.gravatar.com/avatar/9b8f4f4c3b9b0f2e7f5f4e4e4e4e4e4e",
+        "picturePath": "./logo.png",
         "gender": "M",
-        "byear": 1987, //birth year
+        "byear": 1987,
         "custom": {
             "key1": "value1",
             "key2": "value2",
@@ -73,7 +73,7 @@ setTimeout(function() {
         "count": 1,
         "segmentation": {
             "app_version": "1.0",
-            "country": "Turkey"
+            "country": "GB"
         }
     });
 }, 50000);

@@ -1,3 +1,7 @@
+## 24.10.3
+- Added support for uploading user images by providing path to the local image using `picturePath` parameter in `user_details` method (non-bulk)
+- Reduced SDK log verbosity
+
 ## 24.10.2
 - Added timezone support for server
 
