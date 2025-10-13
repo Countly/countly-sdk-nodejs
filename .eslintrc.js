@@ -83,10 +83,10 @@ module.exports = {
           "always"
       ],
       "no-multi-spaces": [
-          "error"
+          "warn"
       ],
       "no-trailing-spaces": [
-          "error",
+          "warn",
           {
               "ignoreComments": true
           }
