@@ -43,6 +43,37 @@ describe("User details tests", () => {
         }, hp.sWait);
     });
 
+    it("set_properties - No custom", (done) => {
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+        });
+        Countly.userProfile.set_properties({
+            name: "Alexandrina Jovovich",
+            username: "alex_jov",
+            email: "alex@example.com",
+            organization: "TechNova",
+            phone: "+987654321",
+            picture: "https://example.com/images/profile_alex.jpg",
+            picturePath: "/test/file/path.jpg",
+        });
+        Countly.userProfile.save();
+
+        setTimeout(() => {
+            var req = hp.readRequestQueue()[0];
+            const actualUserDetails = JSON.parse(req.user_details);
+            assert.equal(actualUserDetails.name, "Alexandrina Jovovich");
+            assert.equal(actualUserDetails.username, "alex_jov");
+            assert.equal(actualUserDetails.email, "alex@example.com");
+            assert.equal(actualUserDetails.organization, "TechNova");
+            assert.equal(actualUserDetails.phone, "+987654321");
+            assert.equal(actualUserDetails.picture, "https://example.com/images/profile_alex.jpg");
+            assert.equal(actualUserDetails.picturePath, "/test/file/path.jpg");
+            assert.equal(actualUserDetails.custom, undefined);
+            done();
+        }, hp.sWait);
+    });
+
     it("set_property", (done) => {
         Countly.init({
             app_key: "YOUR_APP_KEY",
@@ -208,6 +239,20 @@ describe("User details tests", () => {
             const actualUserDetails = JSON.parse(req.user_details);
             assert.equal(actualUserDetails.custom.keep, "value");
             assert.equal(actualUserDetails.custom.remove, undefined);
+            done();
+        }, hp.sWait);
+    });
+
+    it("save - Nothing to save", (done) => {
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+        });
+        Countly.userProfile.save();
+
+        setTimeout(() => {
+            var req = hp.readRequestQueue();
+            assert.deepEqual(req.length, 0);
             done();
         }, hp.sWait);
     });
