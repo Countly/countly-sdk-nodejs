@@ -140,8 +140,8 @@ describe("User details tests", () => {
             var req = hp.readRequestQueue()[0];
             const actualUserDetails = JSON.parse(req.user_details);
             assert.equal(actualUserDetails.custom.keep, "important");
-            assert.equal(actualUserDetails.custom.temp1, undefined);
-            assert.equal(actualUserDetails.custom.temp2, undefined);
+            assert.equal(actualUserDetails.custom.temp1, "");
+            assert.equal(actualUserDetails.custom.temp2, "");
             done();
         }, hp.sWait);
     });
@@ -260,6 +260,49 @@ describe("User details tests", () => {
         setTimeout(() => {
             var req = hp.readRequestQueue();
             assert.deepEqual(req.length, 0);
+            done();
+        }, hp.sWait);
+    });
+
+    it("Legacy calls", (done) => {
+        Countly.init({
+            app_key: "YOUR_APP_KEY",
+            url: "https://try.count.ly",
+        });
+
+        Countly.user_details({ name: "Legacy User", email: "legacy@example.com", custom: { legacy_key: "legacy_value" } });
+
+        Countly.userData.set("name", "Should Not Override");
+        Countly.userData.unset("legacy_key");
+        Countly.userData.increment("some_counter");
+        Countly.userData.increment_by("another_counter", 5);
+        Countly.userData.push("some_array", "value");
+        Countly.userData.push_unique("unique_array", "unique_value");
+        Countly.userData.pull("some_array", "value");
+        Countly.userData.set_once("set_array", "set_value");
+        Countly.userData.max("max_value", 100);
+        Countly.userData.min("min_value", 10);
+        Countly.userData.multiply("multiplier", 3);
+        Countly.userData.save();
+        setTimeout(() => {
+            var queue = hp.readRequestQueue();
+            const actualUserDetails = JSON.parse(queue[0].user_details);
+            assert.equal(actualUserDetails.name, "Legacy User");
+            assert.equal(actualUserDetails.email, "legacy@example.com");
+            assert.equal(actualUserDetails.custom.legacy_key, "legacy_value");
+
+            const secondUserDetails = JSON.parse(queue[1].user_details);
+            assert.equal(secondUserDetails.custom.name, "Should Not Override");
+            assert.equal(secondUserDetails.custom.legacy_key, "");
+            assert.equal(secondUserDetails.custom.some_counter.$inc, 1);
+            assert.equal(secondUserDetails.custom.another_counter.$inc, 5);
+            assert.equal(secondUserDetails.custom.some_array.$push, "value");
+            assert.equal(secondUserDetails.custom.unique_array.$addToSet, "unique_value");
+            assert.equal(secondUserDetails.custom.some_array.$pull, "value");
+            assert.equal(secondUserDetails.custom.set_array.$setOnce, "set_value");
+            assert.equal(secondUserDetails.custom.max_value.$max, 100);
+            assert.equal(secondUserDetails.custom.min_value.$min, 10);
+            assert.equal(secondUserDetails.custom.multiplier.$mul, 3);
             done();
         }, hp.sWait);
     });
