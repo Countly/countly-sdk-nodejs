@@ -1,3 +1,21 @@
+## XX.XX.XX
+- Added `Countly.userProfile` with following calls and functionality
+  - `increment` for incrementing custom property value by 1
+  - `increment_by` for incrementing custom property value by provided value.
+  - `max` for saving maximal value between existing and provided.
+  - `min` for saving minimal value between existing and provided.
+  - `multiply` for multiplying custom property value by provided value.
+  - `pull` for removing value from array.
+  - `push` for inserting value to array which can have duplicates.
+  - `push_unique` for inserting value to array of unique values.
+  - `save` for sending provided values to server.
+  - `set_once` for setting value if it does not exist.
+  - `set_properties` for setting either custom user properties or predefined user properties.
+  - `set_property` for setting a single user property. It can be either a custom one or one of the predefined ones.
+
+- Deprecated `Countly.userData` added `Countly.userProfile` as replacement, mentioned above.
+- Deprecated `Countly.user_details`, please use `Countly.userProfile.set_properties` as replacement.
+
 ## 24.10.3
 - Added support for uploading user images by providing path to the local image using `picturePath` parameter in `user_details` method (non-bulk)
 - Reduced SDK log verbosity

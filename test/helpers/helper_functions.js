@@ -64,7 +64,12 @@ function readRequestQueue(customPath = false, isBulk = false, isMemory = false) 
         a = CountlyStorage.storeGet("cly_queue");
     }
     else {
-        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
+        try {
+            a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
+        }
+        catch (e) {
+            a = [];
+        }
     }
     return a;
 }
