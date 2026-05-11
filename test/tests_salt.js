@@ -52,29 +52,22 @@ function parseMultipartFields(contentType, bodyBuffer) {
 
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
-        if (!part || part === "--\r\n" || part === "--") {
-            continue;
-        }
+        if (part && part !== "--\r\n" && part !== "--") {
+            const nameMatch = /name="([^"]+)"/.exec(part);
+            const valueStart = part.indexOf("\r\n\r\n");
 
-        const nameMatch = /name="([^"]+)"/.exec(part);
-        if (!nameMatch) {
-            continue;
-        }
+            if (nameMatch && valueStart !== -1) {
+                let value = part.substring(valueStart + 4);
+                if (value.endsWith("\r\n")) {
+                    value = value.substring(0, value.length - 2);
+                }
+                if (value.endsWith("--")) {
+                    value = value.substring(0, value.length - 2);
+                }
 
-        const valueStart = part.indexOf("\r\n\r\n");
-        if (valueStart === -1) {
-            continue;
+                fields.push({ name: nameMatch[1], value: value });
+            }
         }
-
-        let value = part.substring(valueStart + 4);
-        if (value.endsWith("\r\n")) {
-            value = value.substring(0, value.length - 2);
-        }
-        if (value.endsWith("--")) {
-            value = value.substring(0, value.length - 2);
-        }
-
-        fields.push({ name: nameMatch[1], value: value });
     }
 
     return fields;
