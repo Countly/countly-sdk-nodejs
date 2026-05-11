@@ -1,3 +1,6 @@
+## 24.10.4
+- Added a new init time flag `salt` for request tampering protection (should be used in tandem with server options)
+
 ## 24.10.3
 - Added support for uploading user images by providing path to the local image using `picturePath` parameter in `user_details` method (non-bulk)
 - Reduced SDK log verbosity

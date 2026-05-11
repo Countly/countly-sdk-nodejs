@@ -38,17 +38,40 @@ const sWait = 50;
 const mWait = 3000;
 const lWait = 10000;
 
+function readStoredValue(storageKey, destination, fileKey, fallbackValue) {
+    try {
+        const storedValue = CountlyStorage.storeGet(storageKey, undefined);
+        if (typeof storedValue !== "undefined") {
+            return storedValue;
+        }
+    }
+    catch (error) {
+        // Ignore storage access errors and fall back to direct file reads.
+    }
+
+    try {
+        const fileData = JSON.parse(fs.readFileSync(destination, "utf-8"));
+        if (fileData && typeof fileData[fileKey] !== "undefined") {
+            return fileData[fileKey];
+        }
+    }
+    catch (error) {
+        // Ignore incomplete or missing file contents and return the fallback value.
+    }
+
+    return fallbackValue;
+}
+
 // parsing event queue
 function readEventQueue(givenPath = null, isBulk = false) {
     var destination = DIR_CLY_event;
     if (givenPath !== null) {
         destination = givenPath;
     }
-    var a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_event;
     if (isBulk) {
-        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_bulk_event;
+        return readStoredValue("cly_bulk_event", destination, "cly_bulk_event", {});
     }
-    return a;
+    return readStoredValue("cly_event", destination, "cly_event", []);
 }
 // parsing request queue
 function readRequestQueue(customPath = false, isBulk = false, isMemory = false) {
@@ -56,17 +79,13 @@ function readRequestQueue(customPath = false, isBulk = false, isMemory = false) 
     if (customPath) {
         destination = DIR_Test_request;
     }
-    var a;
     if (isBulk) {
-        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_req_queue;
+        return readStoredValue("cly_req_queue", destination, "cly_req_queue", []);
     }
     if (isMemory) {
-        a = CountlyStorage.storeGet("cly_queue");
+        return CountlyStorage.storeGet("cly_queue", []);
     }
-    else {
-        a = JSON.parse(fs.readFileSync(destination, "utf-8")).cly_queue;
-    }
-    return a;
+    return readStoredValue("cly_queue", destination, "cly_queue", []);
 }
 function doesFileStoragePathsExist(callback, isBulk = false, testPath = false) {
     var paths = [DIR_CLY_ID, DIR_CLY_ID_type, DIR_CLY_event, DIR_CLY_request];
