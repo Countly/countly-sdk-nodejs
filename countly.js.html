@@ -84,6 +84,8 @@
 var os = require("os");
 var http = require("http");
 var https = require("https");
+var fs = require("fs");
+var path = require("path");
 var cluster = require("cluster");
 var cc = require("./countly-common");
 var Bulk = require("./countly-bulk");
@@ -94,7 +96,7 @@ Countly.StorageTypes = cc.storageTypeEnums;
 Countly.DeviceIdType = cc.deviceIdTypeEnums;
 Countly.Bulk = Bulk;
 (function() {
-    var SDK_VERSION = "24.10.2";
+    var SDK_VERSION = "24.10.4";
     var SDK_NAME = "javascript_native_nodejs";
 
     var inited = false;
@@ -162,6 +164,7 @@ Countly.Bulk = Bulk;
  * @param {number} [conf.session_update=60] - how often in seconds should session be extended
  * @param {number} [conf.max_events=100] - maximum amount of events to send in one batch
  * @param {boolean} [conf.force_post=false] - force using post method for all requests
+ * @param {string} [conf.salt] - shared secret used to append checksum256 to outgoing requests
  * @param {boolean} [conf.clear_stored_device_id=false] - set it to true if you want to erase the stored device ID
  * @param {boolean} [conf.test_mode=false] - set it to true if you want to initiate test_mode
  * @param {string} [conf.storage_path] - where SDK would store data, including id, queues, etc
@@ -221,6 +224,7 @@ Countly.Bulk = Bulk;
             Countly.city = conf.city || Countly.city || null;
             Countly.ip_address = conf.ip_address || Countly.ip_address || null;
             Countly.force_post = conf.force_post || Countly.force_post || false;
+            Countly.salt = conf.salt || Countly.salt || null;
             Countly.require_consent = conf.require_consent || Countly.require_consent || false;
             Countly.remote_config = conf.remote_config || Countly.remote_config || false;
             Countly.http_options = conf.http_options || Countly.http_options || null;
@@ -274,6 +278,7 @@ Countly.Bulk = Bulk;
                     cc.log(cc.logLevelEnums.DEBUG, `init, IP address: [${Countly.ip_address}].`);
                 }
                 cc.log(cc.logLevelEnums.DEBUG, `init, Force POST requests: [${Countly.force_post}].`);
+                cc.log(cc.logLevelEnums.DEBUG, `init, Salt is configured: [${!!Countly.salt}].`);
                 cc.log(cc.logLevelEnums.DEBUG, `init, Storage path: [${CountlyStorage.getStoragePath()}].`);
                 cc.log(cc.logLevelEnums.DEBUG, `init, Require consent: [${Countly.require_consent}].`);
                 if (Countly.remote_config) {
@@ -412,6 +417,7 @@ Countly.Bulk = Bulk;
         Countly.city = undefined;
         Countly.ip_address = undefined;
         Countly.force_post = undefined;
+        Countly.salt = undefined;
         Countly.require_consent = undefined;
         Countly.http_options = undefined;
         CountlyStorage.resetStorage();
@@ -889,7 +895,8 @@ Countly.Bulk = Bulk;
     * @param {string=} user.organization - user's organization or company
     * @param {string=} user.phone - user's phone number
     * @param {string=} user.picture - url to user's picture
-    * @param {string=} user.gender - M value for male and F value for femail
+    * @param {string=} user.picturePath - local path to user's picture, if 'user.picture' is set this will be ignored
+    * @param {string=} user.gender - M value for male and F value for female
     * @param {number=} user.byear - user's birth year used to calculate current age
     * @param {Object=} user.custom - object with custom key value properties you want to save with user
     * */
@@ -906,7 +913,12 @@ Countly.Bulk = Bulk;
             user.gender = cc.truncateSingleValue(user.gender, Countly.maxValueSize, "user_details", Countly.debug);
             user.byear = cc.truncateSingleValue(user.byear, Countly.maxValueSize, "user_details", Countly.debug);
             user.custom = cc.truncateObject(user.custom, Countly.maxKeyLength, Countly.maxValueSize, Countly.maxSegmentationValues, "user_details");
-            toRequestQueue({ user_details: JSON.stringify(cc.getProperties(user, props)) });
+            var request = { user_details: JSON.stringify(cc.getProperties(user, props)) };
+            if (!user.picture &amp;&amp; user.picturePath) {
+                cc.log(cc.logLevelEnums.INFO, "user_details, Picture is not set but picturePath is set, will try to upload picture from path.");
+                request.picturePath = user.picturePath;
+            }
+            toRequestQueue(request);
         }
     };
 
@@ -1696,26 +1708,103 @@ Countly.Bulk = Bulk;
             isBroad = isBroad || false;
             cc.log(cc.logLevelEnums.INFO, `makeRequest, Sending ${info} HTTP request`);
             var serverOptions = parseUrl(url);
-            var data = prepareParams(params);
+            var data;
             var method = "GET";
             var options = {
                 host: serverOptions.host,
                 port: serverOptions.port,
-                path: `${api}?${data}`,
+                path: api,
                 method: "GET",
             };
 
-            if (data.length >= 2000 || Countly.force_post) {
-                method = "POST";
+            if (params &amp;&amp; params.picturePath) {
+                try {
+                    var filePath = params.picturePath;
+                    var fileName = path.basename(filePath);
+                    var ext = (fileName.split('.').pop() || '').toLowerCase();
+                    var contentType = 'application/octet-stream';
+                    if (ext === 'png') {
+                        contentType = 'image/png';
+                    }
+                    else if (ext === 'jpg' || ext === 'jpeg') {
+                        contentType = 'image/jpeg';
+                    }
+                    else if (ext === 'gif') {
+                        contentType = 'image/gif';
+                    }
+
+                    var boundary = `FormBoundary${Math.random().toString(16).slice(2)}`;
+                    var bodyParts = [];
+                    var uploadParams = {};
+
+                    for (var p in params) {
+                        if (Object.prototype.hasOwnProperty.call(params, p) &amp;&amp; typeof params[p] !== "undefined" &amp;&amp; p !== "picturePath") {
+                            uploadParams[p] = params[p];
+                        }
+                    }
+
+                    var uploadChecksum = null;
+                    if (Countly.salt) {
+                        uploadChecksum = cc.calculateChecksum(cc.serializeParams(uploadParams), Countly.salt, true);
+                    }
+
+                    for (var param in uploadParams) {
+                        if (Object.prototype.hasOwnProperty.call(uploadParams, param)) {
+                            var value = uploadParams[param];
+                            bodyParts.push(Buffer.from(`--${boundary}\r\n`));
+                            bodyParts.push(Buffer.from(`Content-Disposition: form-data; name="${param}"\r\n\r\n`));
+                            bodyParts.push(Buffer.from(String(value)));
+                            bodyParts.push(Buffer.from('\r\n'));
+                        }
+                    }
+
+                    if (uploadChecksum) {
+                        bodyParts.push(Buffer.from(`--${boundary}\r\n`));
+                        bodyParts.push(Buffer.from('Content-Disposition: form-data; name="checksum256"\r\n\r\n'));
+                        bodyParts.push(Buffer.from(uploadChecksum));
+                        bodyParts.push(Buffer.from('\r\n'));
+                    }
+
+                    bodyParts.push(Buffer.from(`--${boundary}\r\n`));
+                    bodyParts.push(Buffer.from(`Content-Disposition: form-data; name="user_picture"; filename="${fileName}"\r\n`));
+                    bodyParts.push(Buffer.from(`Content-Type: ${contentType}\r\n\r\n`));
+                    var fileBuffer = fs.readFileSync(filePath);
+                    bodyParts.push(fileBuffer);
+                    bodyParts.push(Buffer.from('\r\n'));
+
+                    bodyParts.push(Buffer.from(`--${boundary}--\r\n`));
+
+                    data = Buffer.concat(bodyParts);
+                    method = "POST";
+                    options.method = "POST";
+                    options.path = api;
+                    options.headers = options.headers || {};
+                    options.headers['Content-Type'] = `multipart/form-data; boundary=${boundary}`;
+                    options.headers['Content-Length'] = data.length;
+                }
+                catch (e) {
+                    cc.log(cc.logLevelEnums.ERROR, `makeRequest, Failed preparing picture upload: [${e}]. Falling back to sending request without image.`);
+                    // Remove picturePath to continue with regular request
+                    delete params.picturePath;
+                }
             }
 
-            if (method === "POST") {
-                options.method = "POST";
-                options.path = api;
-                options.headers = {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "Content-Length": Buffer.byteLength(data),
-                };
+            if (!data) {
+                data = prepareParams(params);
+                options.path = `${api}?${data}`;
+
+                if (data.length >= 2000 || Countly.force_post) {
+                    method = "POST";
+                }
+
+                if (method === "POST") {
+                    options.method = "POST";
+                    options.path = api;
+                    options.headers = {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "Content-Length": Buffer.byteLength(data),
+                    };
+                }
             }
 
             if (typeof Countly.http_options === "function") {
@@ -1774,16 +1863,14 @@ Countly.Bulk = Bulk;
     }
 
     /**
-     *  Convert JSON object to query params
+     *  Convert JSON object to query params and append checksum when configured
      *  @param {Object} params - object with url params
+     *  @param {Boolean} decodeBeforeHash - if true request data is URL-decoded before hashing
      *  @returns {String} query string
      */
-    function prepareParams(params) {
-        var str = [];
-        for (var i in params) {
-            str.push(`${i}=${encodeURIComponent(params[i])}`);
-        }
-        return str.join("&amp;");
+    function prepareParams(params, decodeBeforeHash) {
+        var data = cc.serializeParams(params);
+        return cc.addChecksum(data, Countly.salt, decodeBeforeHash, false);
     }
 
     /**
@@ -1857,7 +1944,7 @@ module.exports = Countly;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.4</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
