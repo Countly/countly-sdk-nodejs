@@ -1,3 +1,8 @@
+## Next Release
+- Fixed a bug where calling "track_errors" repeatedly would register duplicate error handlers, causing a single error to be recorded multiple times
+- Fixed a bug in CountlyBulk where explicitly provided "hour", "dow" and "tz" values of 0 were overridden with current time values in "add_request" and "add_bulk_request"
+- SDK now removes its process and cluster event listeners when "halt" is called
+
 ## 24.10.4
 - Added a new init time flag `salt` for request tampering protection (should be used in tandem with server options)
 

@@ -81,9 +81,9 @@ describe("Testing internal limits", () => {
             assert.ok(!event.segmentation["key of 4"]);
             assert.equal(event.segmentation["key of 3"], "Value of");
             // common parameter validation
-            assert.ok(event.timestamp !== 'undefined');
-            assert.ok(event.hour !== 'undefined');
-            assert.ok(event.dow !== 'undefined');
+            assert.ok(typeof event.timestamp !== 'undefined');
+            assert.ok(event.hour > -1 && event.hour < 24);
+            assert.ok(event.dow > -1 && event.dow < 7);
             done();
         }, hp.sWait);
     });
@@ -102,9 +102,9 @@ describe("Testing internal limits", () => {
             assert.equal(event.segmentation.visit, 1);
             assert.ok(event.segmentation.segment);
             // common parameter validation
-            assert.ok(event.timestamp !== 'undefined');
-            assert.ok(event.hour !== 'undefined');
-            assert.ok(event.dow !== 'undefined');
+            assert.ok(typeof event.timestamp !== 'undefined');
+            assert.ok(event.hour > -1 && event.hour < 24);
+            assert.ok(event.dow > -1 && event.dow < 7);
             done();
         }, hp.sWait);
     });
@@ -134,9 +134,9 @@ describe("Testing internal limits", () => {
             assert.ok(req.sdk_name);
             assert.ok(req.sdk_version);
             // common parameter validation
-            assert.ok(req.timestamp !== 'undefined');
-            assert.ok(req.hour !== 'undefined');
-            assert.ok(req.dow !== 'undefined');
+            assert.ok(typeof req.timestamp !== 'undefined');
+            assert.ok(req.hour > -1 && req.hour < 24);
+            assert.ok(req.dow > -1 && req.dow < 7);
             var crash = JSON.parse(req.crash);
             assert.equal(crash._logs, "log5 too\nlog6\nlog7");
             assert.ok(crash._os);
@@ -183,9 +183,9 @@ describe("Testing internal limits", () => {
             assert.ok(req.sdk_name);
             assert.ok(req.sdk_version);
             // common parameter validation
-            assert.ok(req.timestamp !== 'undefined');
-            assert.ok(req.hour !== 'undefined');
-            assert.ok(req.dow !== 'undefined');
+            assert.ok(typeof req.timestamp !== 'undefined');
+            assert.ok(req.hour > -1 && req.hour < 24);
+            assert.ok(req.dow > -1 && req.dow < 7);
             var details = JSON.parse(req.user_details);
             assert.equal(details.name, 'Gottlob ');
             assert.equal(details.username, 'Grundges');
@@ -227,9 +227,9 @@ describe("Testing internal limits", () => {
             assert.ok(req.sdk_name);
             assert.ok(req.sdk_version);
             // common parameter validation
-            assert.ok(req.timestamp !== 'undefined');
-            assert.ok(req.hour !== 'undefined');
-            assert.ok(req.dow !== 'undefined');
+            assert.ok(typeof req.timestamp !== 'undefined');
+            assert.ok(req.hour > -1 && req.hour < 24);
+            assert.ok(req.dow > -1 && req.dow < 7);
             var details = JSON.parse(req.user_details).custom;
             // set
             assert.equal(details['name of '], 'Bertrand');

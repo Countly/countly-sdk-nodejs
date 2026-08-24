@@ -172,8 +172,8 @@ function eventValidator(eventObject, eventQueue, time) {
     }
     // common parameter validation
     assert.ok(typeof eventQueue.timestamp !== 'undefined');
-    assert.ok(typeof eventQueue.hour !== 'undefined');
-    assert.ok(typeof eventQueue.dow !== 'undefined');
+    assert.ok(eventQueue.hour > -1 && eventQueue.hour < 24);
+    assert.ok(eventQueue.dow > -1 && eventQueue.dow < 7);
 }
 /**
  * bunch of tests specifically gathered for other validators
@@ -190,8 +190,8 @@ function requestBaseParamValidator(resultingObject, id) {
     assert.ok(typeof resultingObject.sdk_name !== 'undefined');
     assert.ok(typeof resultingObject.sdk_version !== 'undefined');
     assert.ok(typeof resultingObject.timestamp !== 'undefined');
-    assert.ok(resultingObject.dow > -1 && resultingObject.dow < 24);
-    assert.ok(resultingObject.dow >= 0 && resultingObject.dow < 8);
+    assert.ok(resultingObject.hour > -1 && resultingObject.hour < 24);
+    assert.ok(resultingObject.dow > -1 && resultingObject.dow < 7);
 }
 /**
  * bunch of tests specifically gathered for testing crashes
@@ -278,8 +278,8 @@ function viewEventValidator(name, viewObj, time) {
     assert.equal('[CLY]_view', viewObj.key);
     assert.equal(1, viewObj.count);
     assert.ok(typeof viewObj.timestamp !== 'undefined');
-    assert.ok(viewObj.dow > -1 && viewObj.dow < 24);
-    assert.ok(viewObj.dow > 0 && viewObj.dow < 8);
+    assert.ok(viewObj.hour > -1 && viewObj.hour < 24);
+    assert.ok(viewObj.dow > -1 && viewObj.dow < 7);
     assert.equal(name, viewObj.segmentation.name);
     if (typeof time === 'undefined') {
         assert.equal(1, viewObj.segmentation.visit);
