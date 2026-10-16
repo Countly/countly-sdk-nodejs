@@ -1,4 +1,39 @@
 ## Next Release
+- ! Minor breaking change ! The SDK now stores its data (device ID, unsent requests and events) in a ".countly-storage" folder in the app's working directory instead of a "data" folder inside the SDK package, where every reinstall or upgrade of the package deleted it and the next start became a new user:
+  - A relative "storage_path" is now resolved against the app's working directory instead of the SDK's own folder
+  - Files are stored inside the given "storage_path" folder also when the path has no trailing slash
+  - Data found at the old location is moved to the new one once, and the old files are kept with a ".migrated" suffix. If the new folder is not writable, the old location stays in use
+  - CountlyBulk with file storage and no "storage_path" now stores its data in ".countly-storage/bulk/<app_key>"
+  - Add ".countly-storage/" to your ".gitignore". Command line tools started from different folders, and containers, should set an absolute "storage_path" (for example a folder in the user's home or a mounted volume) to keep one device ID
+  - The SDK now prints a warning, also when logging is off, when the storage folder is not writable (for example on read-only file systems such as AWS Lambda) and when two instances of the same kind store their files in the same folder
+- ! Minor breaking change ! The SDK now keeps the Node.js process running only while it has data to send and the server is answering. A script that records data now ends by itself once the data is delivered; data that cannot be sent yet stays stored and is sent on the next start
+- ! Minor breaking change ! Requests now fail when the server sends nothing for 30 seconds, and are sent again later. The time can be set with the new "request_timeout" init option, in seconds (also for CountlyBulk)
+- ! Minor breaking change ! With "track_errors", an unhandled promise rejection is now recorded as a non-fatal error, as the process keeps running after it. Uncaught exceptions are still recorded as fatal crashes
+- ! Minor breaking change ! Changing the device ID without merge now also clears the stored remote config values, breadcrumbs and calls waiting for consent, and sends the previous user's open view duration and unsaved custom property changes under the previous ID before switching. Remote config values that were still downloading for the previous device ID are not used; the "fetch_remote_config" callback then gets an error
+- ! Minor breaking change ! In a cluster, a worker now asks the main process once whether it runs the SDK, and the main process answers. These messages have a "cly" property, and your own "message" handlers in the main process and in workers receive them as well
+- Added a new method "flush" that sends all recorded data right away and tells when it is delivered, for example before a script ends or in a shutdown handler before "process.exit()"
+- Added a new init time flag "standalone_worker" that lets a cluster worker send its own data when the main process does not run the SDK, for example in PM2 cluster mode. Each worker stores its data in its own "worker-<number>" folder, numbered by PM2's instance number, or else by the cluster worker ID (which changes when a worker is restarted, so pass "device_id" to keep one ID)
+- A cluster worker whose main process does not run the SDK now prints a warning that its data is not sent, also when logging is off
+- CountlyBulk now prints a warning when "salt" is set, as Countly servers drop bulk data of apps that have a salt configured
+- Fixed a bug where one request that got no answer, or whose answer was cut off, stopped all further sending until the app restarted (also in CountlyBulk)
+- Fixed a bug where calling "process.exit()" right after an SDK call could leave the storage file empty and lose all stored data or the device ID. Files are now replaced in one step, and data not yet written is saved when the process exits
+- Fixed a bug where a request was removed from the stored queue before the server confirmed it, so it was lost if the process ended meanwhile
+- Fixed a bug where creating a CountlyBulk instance changed where, or whether, the SDK and other CountlyBulk instances stored their data, and where two CountlyBulk instances could send each other's data under the wrong app
+- Fixed a bug where removing consent was never reported to the server
+- Fixed a bug where consent changes of CountlyBulk users were never sent
+- Fixed a bug where a BigInt value or an object that refers to itself in event, view, user property or crash data crashed the app. BigInt values are now sent as text and self references are left out
+- Fixed a bug where "change_id" with an empty value stopped all tracking. Such values are now ignored with a warning, and an empty device ID stored by an older version is ignored at start
+- Fixed a bug where the previous user's open view, custom property changes and breadcrumbs were sent under the new device ID after "change_id" without merge
+- Fixed a bug where headers added in "http_options" made every GET request fail, so nothing was sent
+- Fixed a bug where "request" cut every value to 256 characters, which broke raw event and user payloads. Raw requests now also count towards the request queue size
+- Fixed a bug where requests containing an apostrophe failed the checksum check of Countly 26.01 and newer servers when "salt" is set. The characters ! ' ( ) * are now percent-encoded
+- Fixed a bug where a CountlyBulk user created with "ip_address" threw an error on most calls
+- Fixed a bug where giving consent to a CountlyBulk user after a "begin_session" or "report_view" call that waited for consent crashed the app. The waiting call is now sent
+- Fixed a bug where the CountlyBulk "start" callback reported an empty queue while data was still waiting for a retry or being sent
+- Queued requests are now sent one after another without waiting for the next heartbeat, and all recorded events are packed into requests at each heartbeat (also in CountlyBulk)
+- File storage now combines repeated writes of the same data, so a busy app no longer rewrites the whole queue file for every recorded item
+- Memory storage no longer writes files when a fatal crash is recorded
+- Requests that were running when "halt" was called no longer change the SDK's state afterwards
 - Fixed a bug where calling "track_errors" repeatedly would register duplicate error handlers, causing a single error to be recorded multiple times
 - Fixed a bug in CountlyBulk where explicitly provided "hour", "dow" and "tz" values of 0 were overridden with current time values in "add_request" and "add_bulk_request"
 - SDK now removes its process and cluster event listeners when "halt" is called

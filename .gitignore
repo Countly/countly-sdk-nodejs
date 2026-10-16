@@ -5,3 +5,4 @@ bulk_data/**
 .nyc_output
 coverage
 coverage-report.txt
+.countly-storage/

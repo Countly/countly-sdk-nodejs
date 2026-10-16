@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 /* global runthis */
 const assert = require("assert");
+const path = require("path");
 var Countly = require("../lib/countly");
 var storage = require("../lib/countly-storage");
 var hp = require("./helpers/helper_functions");
@@ -8,6 +9,10 @@ var testUtils = require("./helpers/test_utils");
 
 var appKey = "YOUR_APP_KEY";
 var serverUrl = "https://your.server.ly";
+// relative storage paths are resolved against the working directory, which is the SDK root when tests run
+var customPath = "test/customStorageDirectory/";
+var defaultFolder = path.resolve(".countly-storage");
+var customFolder = path.resolve(customPath);
 
 const { StorageTypes } = Countly;
 
@@ -31,11 +36,11 @@ function validateStorageMethods() {
 function validateStorageTypeAndPath(expectedStorageType, isCustomPath = false) {
     if (expectedStorageType === StorageTypes.FILE) {
         if (!isCustomPath) {
-            assert.equal(storage.getStoragePath(), "../data/");
+            assert.equal(storage.getStoragePath(), defaultFolder);
             assert.equal(storage.getStorageType(), StorageTypes.FILE);
         }
         else {
-            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            assert.equal(storage.getStoragePath(), customFolder);
             assert.equal(storage.getStorageType(), StorageTypes.FILE);
         }
     }
@@ -46,11 +51,11 @@ function validateStorageTypeAndPath(expectedStorageType, isCustomPath = false) {
     // get storage type returns null in case of a custom method
     else if (expectedStorageType === null) {
         if (!isCustomPath) {
-            assert.equal(storage.getStoragePath(), "../data/");
+            assert.equal(storage.getStoragePath(), defaultFolder);
             assert.equal(storage.getStorageType(), null);
         }
         else {
-            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            assert.equal(storage.getStoragePath(), customFolder);
             assert.equal(storage.getStorageType(), null);
         }
     }
@@ -132,7 +137,7 @@ describe("Storage Tests", () => {
     });
 
     // if no config option provided sdk should init storage with default settings
-    // "../data/" as the storage path, FILE as the storage type
+    // ".countly-storage" in the working directory as the storage path, FILE as the storage type
     it("1- noConfigOption", (done) => {
         Countly.init({
             app_key: appKey,
@@ -155,7 +160,7 @@ describe("Storage Tests", () => {
         Countly.init({
             app_key: appKey,
             url: serverUrl,
-            storage_path: "../test/customStorageDirectory/",
+            storage_path: customPath,
             storage_type: StorageTypes.FILE,
         });
         shouldFilesExist(true);
@@ -171,7 +176,7 @@ describe("Storage Tests", () => {
     });
 
     // if invalid path is provided such as null or undefined sdk should init storage with default path
-    // validateStorageTypeAndPath checks path as "../data/" if true is not passed as second param
+    // validateStorageTypeAndPath checks path as the default folder if true is not passed as second param
     it("3- file_invalid_path", (done) => {
         Countly.init({
             app_key: appKey,
@@ -239,7 +244,7 @@ describe("Storage Tests", () => {
             app_key: appKey,
             url: serverUrl,
             storage_type: StorageTypes.MEMORY,
-            storage_path: "../test/customStorageDirectory/",
+            storage_path: customPath,
         });
         shouldFilesExist(false);
         validateStorageTypeAndPath(StorageTypes.MEMORY);
@@ -302,17 +307,17 @@ describe("Storage Tests", () => {
             app_key: appKey,
             url: serverUrl,
             custom_storage_method: testUtils.getCustomStorage(),
-            storage_path: "../test/customStorageDirectory/",
+            storage_path: customPath,
         });
         shouldFilesExist(true);
         // storage type will be null since custom method is provided
         // path will be the custom path in this case
-        validateStorageTypeAndPath(null, "../test/customStorageDirectory/");
+        validateStorageTypeAndPath(null, customPath);
         createData();
 
         setTimeout(() => {
             shouldFilesExist(true);
-            validateStorageTypeAndPath(null, "../test/customStorageDirectory/");
+            validateStorageTypeAndPath(null, customPath);
             validateData(false, true);
             done();
         }, hp.mWait);
@@ -387,7 +392,7 @@ describe("Storage Tests", () => {
     // initStorage method with File storage type and custom path
     // storage should initialize correctly with custom path
     it("14- initStorage_file_cPath_noInit", (done) => {
-        storage.initStorage("../test/customStorageDirectory/", StorageTypes.FILE);
+        storage.initStorage(customPath, StorageTypes.FILE);
         shouldFilesExist(true);
         // storage type will be File since it's default
         validateStorageTypeAndPath(StorageTypes.FILE, true);
@@ -416,7 +421,7 @@ describe("Storage Tests", () => {
 
     // initStorage method with custom storage method and custom path
     it("17- initStorage_custom_cPath_noInit", (done) => {
-        storage.initStorage("../test/customStorageDirectory/", null, false, testUtils.getCustomStorage());
+        storage.initStorage(customPath, null, false, testUtils.getCustomStorage());
         shouldFilesExist(true);
         validateStorageTypeAndPath(null, true);
         validateStorageMethods();

@@ -53,7 +53,8 @@ describe("Unhandled Error logic", () => {
     it("Validate unhandled rejection recording", (done) => {
         setTimeout(() => {
             var req = hp.readRequestQueue()[0];
-            hp.crashRequestValidator(req, false);
+            // the process keeps running after an unhandled rejection, so it is recorded as non-fatal
+            hp.crashRequestValidator(req, true);
             done();
         }, hp.mWait);
     });
