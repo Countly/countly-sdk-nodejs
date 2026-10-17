@@ -2,6 +2,7 @@ const assert = require("assert");
 const crypto = require("crypto");
 const path = require("path");
 const Countly = require("../lib/countly");
+const cc = require("../lib/countly-common");
 const hp = require("./helpers/helper_functions");
 const { startMockServer, receivedEvents } = require("./helpers/mock_server");
 const { runScript, makeTempDir, removeTempDirs, readStoredFile } = require("./helpers/run_script");
@@ -182,5 +183,75 @@ describe("Delivery tests", () => {
     it("10- an error thrown in the flush callback surfaces like in any other callback, not as an unhandled rejection", async() => {
         const run = await runScript("flush_callback_throws.js", { STORAGE_DIR: makeTempDir("flush-callback") }, 20000);
         assert.ok(run.stdout.indexOf("uncaught exception: thrown in flush callback") !== -1, run.stdout + run.stderr);
+    });
+
+    it("11- signs values with any character so that the checksum check of 26.01 servers passes", () => {
+        const salt = "parity-salt";
+        const characters = ["😀", "👍🏽", "𝄞", "\u{10FFFF}"];
+        for (let code = 0; code <= 0xFFFF; code++) {
+            if (code < 0xD800 || code > 0xDFFF) {
+                characters.push(String.fromCharCode(code));
+            }
+        }
+        const failing = characters.filter((character) => {
+            const params = { app_key: appKey, device_id: `user${character}`, events: JSON.stringify([{ key: `key${character}`, segmentation: { value: character } }]) };
+            const query = cc.addChecksum(cc.serializeParams(params), salt, false, false);
+            return !passesServerChecksum({ url: `/i?${query}` }, salt);
+        });
+        assert.deepStrictEqual(failing.map((character) => `U+${character.codePointAt(0).toString(16).toUpperCase()}`), []);
+    });
+
+    it("12- a device ID cut in the middle of an emoji is still sent, and does not block the data behind it", async() => {
+        const server = await startMockServer();
+        const cutName = "Ali😀".substring(0, 4);
+        initSending({ url: server.url, device_id: cutName, interval: 100, fail_timeout: 1 });
+        Countly.add_event({ key: "first" });
+        Countly.change_id("healthy-user", false);
+        Countly.add_event({ key: "after_switch" });
+        const delivered = await Countly.flush(10);
+        await server.close();
+        assert.strictEqual(delivered, true);
+        const events = receivedEvents(server.requests);
+        assert.deepStrictEqual(events.map((e) => [e.key, e.device_id]), [["first", "Ali\uFFFD"], ["after_switch", "healthy-user"]]);
+    });
+
+    it("13- flush before init resolves false, also through its callback", async() => {
+        Countly.halt(false);
+        const result = await Countly.flush();
+        const viaCallback = await new Promise((resolve) => {
+            Countly.flush(1, resolve);
+        });
+        assert.strictEqual(result, false);
+        assert.strictEqual(viaCallback, false);
+    });
+
+    it("14- flush resolves true right away when nothing is waiting to be sent", async() => {
+        const server = await startMockServer();
+        initSending({ url: server.url, device_id: "idle-user", interval: 10000 });
+        const started = Date.now();
+        const result = await Countly.flush();
+        const elapsed = Date.now() - started;
+        await server.close();
+        assert.strictEqual(result, true);
+        assert.ok(elapsed < 1000, `flush took ${elapsed} ms`);
+        assert.equal(server.requests.length, 0);
+    });
+
+    it("15- flush stops waiting after its time limit, and the data is still delivered afterwards", async() => {
+        const server = await startMockServer((req, res) => {
+            setTimeout(() => answerSuccess(res), 1500);
+        });
+        initSending({ url: server.url, device_id: "slow-user", interval: 100, request_timeout: 10 });
+        Countly.user_details({ name: "slow" });
+        const started = Date.now();
+        const result = await Countly.flush(0.3);
+        const elapsed = Date.now() - started;
+        const later = await Countly.flush(5);
+        await server.close();
+        assert.strictEqual(result, false);
+        assert.ok(elapsed < 1400, `flush waited ${elapsed} ms instead of stopping at its time limit`);
+        assert.strictEqual(later, true);
+        assert.equal(server.requests.filter((r) => r.params.user_details).length, 1);
+        assert.equal(hp.readRequestQueue().length, 0);
     });
 });

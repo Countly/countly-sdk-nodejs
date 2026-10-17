@@ -7,7 +7,7 @@ const Countly = require("../lib/countly");
 const CountlyBulk = require("../lib/countly-bulk");
 const CountlyStorage = require("../lib/countly-storage");
 const hp = require("./helpers/helper_functions");
-const { startMockServer } = require("./helpers/mock_server");
+const { startMockServer, receivedEvents } = require("./helpers/mock_server");
 const { runScript, makeTempDir, removeTempDirs, readStoredFile } = require("./helpers/run_script");
 
 const { StorageTypes } = Countly;
@@ -20,6 +20,26 @@ const oldDefaultDir = path.join(sdkRoot, "data");
 function sleep(ms) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
+    });
+}
+
+/**
+ * Waits until a condition is true, or until the time is up
+ * @param {Function} condition - returns true when the wait is over
+ * @param {Number} timeoutMs - longest time to wait
+ * @returns {Promise} resolves when the condition is true or the time is up
+ */
+function waitUntil(condition, timeoutMs) {
+    return new Promise((resolve) => {
+        const started = Date.now();
+        const check = () => {
+            if (condition() || Date.now() - started > timeoutMs) {
+                resolve();
+                return;
+            }
+            setTimeout(check, 20);
+        };
+        check();
     });
 }
 
@@ -200,5 +220,136 @@ describe("Storage safety tests", () => {
         finally {
             console.warn = originalWarn;
         }
+    });
+
+    it("12- keeps the data in the old location when the new storage folder cannot be created, so it survives a restart", async() => {
+        const cwd = makeTempDir("blocked-default");
+        fs.writeFileSync(path.join(cwd, ".countly-storage"), "a file where the storage folder would go");
+        const first = await runScript("storage_location.js", { DEVICE_ID: "fallback-user" }, 20000, cwd);
+        assert.equal(lastLine(first.stdout).storagePath, oldDefaultDir);
+        assert.equal(readStoredFile(path.join(oldDefaultDir, "__cly_id.json"), "cly_id"), "fallback-user");
+        const second = await runScript("storage_location.js", {}, 20000, cwd);
+        assert.equal(lastLine(second.stdout).deviceId, "fallback-user");
+    });
+
+    it("13- warns when no storage folder can be written, and still sends the data", async() => {
+        const blocker = path.join(makeTempDir("blocked-everywhere"), "blocker");
+        fs.writeFileSync(blocker, "a file where a folder would go");
+        const server = await startMockServer();
+        const warnings = [];
+        const originalWarn = console.warn;
+        console.warn = (...args) => {
+            warnings.push(args.join(" "));
+        };
+        try {
+            Countly.halt(false);
+            Countly.init({ app_key: "YOUR_APP_KEY", url: server.url, storage_path: path.join(blocker, "store"), device_id: "no-disk-user", interval: 100 });
+        }
+        finally {
+            console.warn = originalWarn;
+        }
+        Countly.add_event({ key: "kept_in_memory" });
+        const delivered = await Countly.flush(5);
+        Countly.halt(true);
+        await server.close();
+        assert.ok(warnings.some((w) => w.indexOf("not writable") !== -1), "no warning about the storage folder was printed");
+        assert.strictEqual(delivered, true);
+        assert.ok(receivedEvents(server.requests).some((e) => e.key === "kept_in_memory" && e.device_id === "no-disk-user"));
+    });
+
+    it("14- retries a storage file that is briefly locked, for example by an antivirus, and still replaces it in one step", async() => {
+        const dir = makeTempDir("locked-briefly");
+        const target = path.join(dir, "__cly_id.json");
+        const storage = CountlyStorage.createStorage();
+        storage.initStorage(`${dir}${path.sep}`, StorageTypes.FILE);
+        const originalRename = fs.renameSync;
+        let attempts = 0;
+        fs.renameSync = (from, to) => {
+            if (to === target) {
+                attempts++;
+                if (attempts <= 2) {
+                    throw Object.assign(new Error("EPERM: operation not permitted, rename"), { code: "EPERM" });
+                }
+            }
+            return originalRename(from, to);
+        };
+        let error;
+        try {
+            error = await new Promise((resolve) => {
+                storage.storeSet("cly_id", "locked-user", resolve);
+            });
+        }
+        finally {
+            fs.renameSync = originalRename;
+        }
+        storage.resetStorage();
+        assert.equal(error, null);
+        assert.equal(attempts, 3, "the locked file was not retried until the rename succeeded");
+        assert.equal(readStoredFile(target, "cly_id"), "locked-user");
+        assert.deepStrictEqual(fs.readdirSync(dir).filter((name) => name.endsWith(".tmp")), []);
+    });
+
+    it("15- still saves a storage file that stays locked, by writing it directly", async() => {
+        const dir = makeTempDir("locked-for-good");
+        const target = path.join(dir, "__cly_id.json");
+        const storage = CountlyStorage.createStorage();
+        storage.initStorage(`${dir}${path.sep}`, StorageTypes.FILE);
+        const originalRename = fs.renameSync;
+        let attempts = 0;
+        fs.renameSync = (from, to) => {
+            if (to === target) {
+                attempts++;
+                throw Object.assign(new Error("EBUSY: resource busy or locked, rename"), { code: "EBUSY" });
+            }
+            return originalRename(from, to);
+        };
+        let error;
+        try {
+            error = await new Promise((resolve) => {
+                storage.storeSet("cly_id", "stuck-user", resolve);
+            });
+        }
+        finally {
+            fs.renameSync = originalRename;
+        }
+        storage.resetStorage();
+        assert.equal(error, null);
+        assert.equal(attempts, 4);
+        assert.equal(readStoredFile(target, "cly_id"), "stuck-user");
+        await waitUntil(() => !fs.readdirSync(dir).some((name) => name.endsWith(".tmp")), 1000);
+        assert.deepStrictEqual(fs.readdirSync(dir).filter((name) => name.endsWith(".tmp")), []);
+    });
+
+    it("16- keeps using the old files when moving them to the new folder fails midway, so nothing is lost", () => {
+        const cwd = makeTempDir("interrupted-migration");
+        const folder = path.join(cwd, "abs_store");
+        fs.writeFileSync(`${folder}__cly_id.json`, JSON.stringify({ cly_id: "legacy-user" }));
+        fs.writeFileSync(`${folder}__cly_queue.json`, JSON.stringify({ cly_queue: [{ device_id: "legacy-user", begin_session: 1 }] }));
+        const originalCopy = fs.copyFileSync;
+        let copies = 0;
+        fs.copyFileSync = (from, to) => {
+            copies++;
+            if (copies === 2) {
+                throw Object.assign(new Error("ENOSPC: no space left on device, copyfile"), { code: "ENOSPC" });
+            }
+            return originalCopy(from, to);
+        };
+        const storage = CountlyStorage.createStorage();
+        try {
+            storage.initStorage(folder, StorageTypes.FILE);
+        }
+        finally {
+            fs.copyFileSync = originalCopy;
+        }
+        const storagePath = storage.getStoragePath();
+        const deviceId = storage.storeGet("cly_id");
+        const queue = storage.storeGet("cly_queue");
+        storage.resetStorage();
+        assert.equal(copies, 2);
+        assert.equal(storagePath, cwd);
+        assert.equal(deviceId, "legacy-user");
+        assert.equal(queue.length, 1);
+        assert.deepStrictEqual(fs.readdirSync(folder), [], "files copied before the failure were left in the new folder");
+        assert.equal(fs.existsSync(`${folder}__cly_id.json.migrated`), false);
     });
 });

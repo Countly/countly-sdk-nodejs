@@ -3,37 +3,64 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Version to announce, for example 26.1.0"
+        type: string
+        required: false
+      html_url:
+        description: "Link to the GitHub release"
+        type: string
+        required: false
+      body:
+        description: "Release notes"
+        type: string
+        required: false
+  workflow_call:
+    inputs:
+      tag_name:
+        type: string
+        required: true
+      html_url:
+        type: string
+        required: true
+      body:
+        type: string
+        required: false
+        default: ""
+permissions:
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # To check the github context
-      - name: Dump Github context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
       - name: Send custom JSON data to Slack workflow
         id: slack
-        uses: slackapi/slack-github-action@v1.23.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
+          webhook: ${{ secrets.SLACK_RELEASE }}
+          webhook-type: webhook-trigger
+          # errors, retries and payload-delimiter keep the behaviour of v1: the step fails on an error, posts once and sends every value as text
+          errors: true
+          retries: 0
+          payload-delimiter: "."
           # This data can be any valid JSON from a previous step in the GitHub Action
           payload: |
             {
               "repository": "${{ github.repository }}",
-              "tag_name": "${{ github.event.release.tag_name }}",
+              "tag_name": "${{ inputs.tag_name || github.event.release.tag_name }}",
               "actor": "${{ github.actor }}",
-              "body": ${{ toJSON(github.event.release.body) }},
-              "html_url": "${{ github.event.release.html_url }}"
+              "body": ${{ toJSON(inputs.body || github.event.release.body) }},
+              "html_url": "${{ inputs.html_url || github.event.release.html_url }}"
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RELEASE }}
       - name: Send custom JSON data to Discord
-        uses: sarisia/actions-status-discord@v1.13.0
+        if: ${{ !cancelled() }}
+        uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708 # v1.16.0
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           nodetail: true
-          title: New ${{ github.repository }} version ${{ github.event.release.tag_name }} published by ${{ github.actor }}
+          title: New ${{ github.repository }} version ${{ inputs.tag_name || github.event.release.tag_name }} published by ${{ github.actor }}
           description: |
-            Release URL: ${{ github.event.release.html_url }}
-            Click [here](https://github.com/Countly/countly-server/blob/master/CHANGELOG.md) to view the change log.
-            `${{ github.event.release.body }}`
+            Release URL: ${{ inputs.html_url || github.event.release.html_url }}
+            Click [here](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) to view the change log.
+            `${{ inputs.body || github.event.release.body }}`

@@ -149,4 +149,40 @@ describe("Bulk fix tests", () => {
         assert.ok(bulk);
         assert.ok(warnings.some((w) => w.indexOf("salt") !== -1), "no warning about salt was printed");
     });
+
+    it("8- a bulk request that gets no answer is given up after request_timeout and sent again", async() => {
+        const server = await startMockServer((req, res, entry, count) => {
+            if (count > 1) {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end('{"result":"Success"}');
+            }
+        });
+        const bulk = new CountlyBulk({ app_key: appKey, url: server.url, interval: 100, fail_timeout: 1, request_timeout: 1 });
+        bulk.add_request({ device_id: "bulk-timeout-user", begin_session: 1 });
+        bulk.start();
+        const resent = await server.waitFor((reqs) => bulkInnerRequests(reqs).filter((r) => r.device_id === "bulk-timeout-user").length >= 2, 10000);
+        bulk.stop();
+        await server.close();
+        assert.ok(resent, "the bulk queue stopped after the unanswered request");
+    });
+
+    it("9- a bulk request whose answer is cut off midway is sent again", async() => {
+        const server = await startMockServer((req, res, entry, count) => {
+            if (count === 1) {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.write('{"res');
+                setTimeout(() => req.socket.destroy(), 50);
+                return;
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end('{"result":"Success"}');
+        });
+        const bulk = new CountlyBulk({ app_key: appKey, url: server.url, interval: 100, fail_timeout: 1 });
+        bulk.add_request({ device_id: "bulk-cutoff-user", begin_session: 1 });
+        bulk.start();
+        const resent = await server.waitFor((reqs) => bulkInnerRequests(reqs).filter((r) => r.device_id === "bulk-cutoff-user").length >= 2, 10000);
+        bulk.stop();
+        await server.close();
+        assert.ok(resent, "the bulk queue stopped after the cut-off response");
+    });
 });

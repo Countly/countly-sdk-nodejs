@@ -1,5 +1,6 @@
 ## Next Release
-- ! Minor breaking change ! The SDK now stores its data (device ID, unsent requests and events) in a ".countly-storage" folder in the app's working directory instead of a "data" folder inside the SDK package, where every reinstall or upgrade of the package deleted it and the next start became a new user:
+- ! Minor breaking change ! The SDK now stores its data (device ID, unsent requests and events) in a ".countly-storage" folder in the app's working directory:
+  - Before, it used a "data" folder inside the SDK package, which every reinstall or upgrade of the package deleted, so the next start became a new user
   - A relative "storage_path" is now resolved against the app's working directory instead of the SDK's own folder
   - Files are stored inside the given "storage_path" folder also when the path has no trailing slash
   - Data found at the old location is moved to the new one once, and the old files are kept with a ".migrated" suffix. If the new folder is not writable, the old location stays in use
@@ -9,10 +10,16 @@
 - ! Minor breaking change ! The SDK now keeps the Node.js process running only while it has data to send and the server is answering. A script that records data now ends by itself once the data is delivered; data that cannot be sent yet stays stored and is sent on the next start
 - ! Minor breaking change ! Requests now fail when the server sends nothing for 30 seconds, and are sent again later. The time can be set with the new "request_timeout" init option, in seconds (also for CountlyBulk)
 - ! Minor breaking change ! With "track_errors", an unhandled promise rejection is now recorded as a non-fatal error, as the process keeps running after it. Uncaught exceptions are still recorded as fatal crashes
-- ! Minor breaking change ! Changing the device ID without merge now also clears the stored remote config values, breadcrumbs and calls waiting for consent, and sends the previous user's open view duration and unsaved custom property changes under the previous ID before switching. Remote config values that were still downloading for the previous device ID are not used; the "fetch_remote_config" callback then gets an error
+- ! Minor breaking change ! Changing the device ID without merge now also:
+  - Clears the stored remote config values, breadcrumbs and calls waiting for consent
+  - Sends the previous user's open view duration and unsaved custom property changes under the previous ID before switching
+  - Ignores remote config values that were still downloading for the previous device ID. The "fetch_remote_config" callback then gets an error
 - ! Minor breaking change ! In a cluster, a worker now asks the main process once whether it runs the SDK, and the main process answers. These messages have a "cly" property, and your own "message" handlers in the main process and in workers receive them as well
+- The npm package now contains only the SDK code, README, LICENSE and CHANGELOG. Tests, examples and repository configuration files are no longer included
 - Added a new method "flush" that sends all recorded data right away and tells when it is delivered, for example before a script ends or in a shutdown handler before "process.exit()"
-- Added a new init time flag "standalone_worker" that lets a cluster worker send its own data when the main process does not run the SDK, for example in PM2 cluster mode. Each worker stores its data in its own "worker-<number>" folder, numbered by PM2's instance number, or else by the cluster worker ID (which changes when a worker is restarted, so pass "device_id" to keep one ID)
+- Added a new init time flag "standalone_worker" that lets a cluster worker send its own data when the main process does not run the SDK, for example in PM2 cluster mode:
+  - Each worker stores its data in its own "worker-<number>" folder, numbered by PM2's instance number, or else by the cluster worker ID
+  - The cluster worker ID changes when a worker is restarted, so pass "device_id" to keep one ID
 - A cluster worker whose main process does not run the SDK now prints a warning that its data is not sent, also when logging is off
 - CountlyBulk now prints a warning when "salt" is set, as Countly servers drop bulk data of apps that have a salt configured
 - Fixed a bug where one request that got no answer, or whose answer was cut off, stopped all further sending until the app restarted (also in CountlyBulk)
@@ -27,6 +34,7 @@
 - Fixed a bug where headers added in "http_options" made every GET request fail, so nothing was sent
 - Fixed a bug where "request" cut every value to 256 characters, which broke raw event and user payloads. Raw requests now also count towards the request queue size
 - Fixed a bug where requests containing an apostrophe failed the checksum check of Countly 26.01 and newer servers when "salt" is set. The characters ! ' ( ) * are now percent-encoded
+- Fixed a bug where a value containing half of an emoji, for example a device ID cut in the middle of an emoji, could never be sent and stopped all further sending, also after a restart. Such half characters are now sent as the replacement character "�"
 - Fixed a bug where a CountlyBulk user created with "ip_address" threw an error on most calls
 - Fixed a bug where giving consent to a CountlyBulk user after a "begin_session" or "report_view" call that waited for consent crashed the app. The waiting call is now sent
 - Fixed a bug where the CountlyBulk "start" callback reported an empty queue while data was still waiting for a retry or being sent

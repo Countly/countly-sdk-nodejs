@@ -9,36 +9,76 @@ on:
   pull_request:
     branches: [ master, staging ]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
-     matrix:
-      # mocha 11 requires Node 18.18+, 24 is the active LTS
-      node: [18, 20, 22, 24]
+      fail-fast: false
+      matrix:
+        # the test suite needs Node 18.18+ (mocha 11), the compat job covers the older supported versions
+        os: [ ubuntu-latest ]
+        node: [ 18, 20, 22, 24, 26 ]
+        include:
+          - os: windows-latest
+            node: 24
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Use Node.js ${{ matrix.node }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
         node-version: ${{ matrix.node }}
         cache: 'npm'
     - run: npm ci
-    - run: npm test
+    - name: Lint and test
+      if: matrix.os == 'ubuntu-latest' && matrix.node != 24
+      run: npm test
+    - name: Lint and test with coverage
+      if: matrix.os == 'ubuntu-latest' && matrix.node == 24
+      run: npm run coverage
+    - name: Upload the coverage report
+      if: matrix.os == 'ubuntu-latest' && matrix.node == 24
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: coverage-report
+        path: coverage/
+    # lint runs on Linux only, as Windows checkouts can have CRLF line endings that the lint rules reject
+    - name: Test
+      if: matrix.os == 'windows-latest'
+      run: npm test --ignore-scripts
+
+  compat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [ 10, 12, 14, 16 ]
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Use Node.js ${{ matrix.node }}
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: ${{ matrix.node }}
+    # the SDK has no dependencies, so the check runs without installing packages
+    - run: node test/compat/compat_check.js
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [ build, compat ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Use Node.js 24.x
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
         node-version: 24.x
         cache: 'npm'
@@ -48,3 +88,101 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: bash generateDocs.sh
+
+  version:
+    runs-on: ubuntu-latest
+    needs: [ build, compat ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      new: ${{ steps.version.outputs.new }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Use Node.js 24
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 24
+        package-manager-cache: false
+    - name: Check whether this version is on npm already
+      id: version
+      run: |
+        VERSION=$(node -p "require('./package.json').version")
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        STATUS=0
+        PUBLISHED=$(npm view "countly-sdk-nodejs@$VERSION" version 2> npm-view-error.txt) || STATUS=$?
+        if [ "$STATUS" -eq 0 ] && [ "$PUBLISHED" = "$VERSION" ]; then
+          echo "new=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::$VERSION is on npm already, nothing to release"
+        elif [ "$STATUS" -eq 0 ] || grep -q E404 npm-view-error.txt; then
+          echo "new=true" >> "$GITHUB_OUTPUT"
+        else
+          cat npm-view-error.txt
+          echo "::error::Could not check whether $VERSION is on npm"
+          exit 1
+        fi
+    - name: Check that package.json, the code and the CHANGELOG name the same version
+      if: steps.version.outputs.new == 'true'
+      run: node .github/scripts/check_release.js
+
+  release:
+    runs-on: ubuntu-latest
+    needs: version
+    if: needs.version.outputs.new == 'true'
+    # the npm environment holds the approval step, and npm's trusted publisher setting names it
+    environment: npm
+    permissions:
+      contents: write
+      id-token: write
+    outputs:
+      created: ${{ steps.release.outputs.created }}
+      url: ${{ steps.release.outputs.url }}
+      notes: ${{ steps.release.outputs.notes }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Use Node.js 24
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 24
+        registry-url: https://registry.npmjs.org
+        package-manager-cache: false
+    - name: Publish to npm
+      env:
+        VERSION: ${{ needs.version.outputs.version }}
+      run: |
+        if [ "$(npm view "countly-sdk-nodejs@$VERSION" version 2> /dev/null)" = "$VERSION" ]; then
+          echo "::notice::$VERSION is on npm already, publishing is skipped"
+        else
+          npm publish
+        fi
+    - name: Create the GitHub release
+      id: release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        VERSION: ${{ needs.version.outputs.version }}
+      run: |
+        node .github/scripts/check_release.js --notes > release-notes.md
+        if gh release view "$VERSION" > /dev/null 2>&1; then
+          echo "::notice::The GitHub release $VERSION exists already, so it is not created again and no notice is sent"
+          echo "created=false" >> "$GITHUB_OUTPUT"
+        else
+          gh release create "$VERSION" --title "Countly NodeJS SDK $VERSION" --notes-file release-notes.md --target "$GITHUB_SHA"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+        fi
+        URL=$(gh release view "$VERSION" --json url --jq .url)
+        echo "url=$URL" >> "$GITHUB_OUTPUT"
+        {
+          echo "notes<<RELEASE_NOTES_END"
+          cat release-notes.md
+          echo "RELEASE_NOTES_END"
+        } >> "$GITHUB_OUTPUT"
+
+  # a release created with the workflow token does not start other workflows, so the notice is called directly
+  notify:
+    needs: [ version, release ]
+    if: needs.release.outputs.created == 'true'
+    uses: ./.github/workflows/release_notice.yml
+    with:
+      tag_name: ${{ needs.version.outputs.version }}
+      html_url: ${{ needs.release.outputs.url }}
+      body: ${{ needs.release.outputs.notes }}
+    secrets: inherit
