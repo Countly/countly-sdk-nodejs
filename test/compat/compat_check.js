@@ -74,13 +74,16 @@ function removeFolder(folder) {
 }
 
 /**
- * Starts a mock Countly server that records every request
- * @param {Boolean} ignoreFirst - true to leave the first request unanswered
+ * Starts a mock Countly server that records every request. Settings requests are answered with the given
+ * settings, every other request with Success.
+ * @param {Boolean} ignoreFirst - true to leave the first data request (not a settings request or health check) unanswered
+ * @param {Object=} settings - the "c" object of the settings answer, none by default
  * @returns {Promise<Object>} server url, received requests and a close function
  */
-function startServer(ignoreFirst) {
+function startServer(ignoreFirst, settings) {
     return new Promise((resolve) => {
         var requests = [];
+        var ignored = false;
         var sockets = [];
         var server = http.createServer((req, res) => {
             var body = "";
@@ -93,11 +96,17 @@ function startServer(ignoreFirst) {
                 Object.keys(fromBody).forEach((key) => {
                     params[key] = fromBody[key];
                 });
-                requests.push({ path: req.url.split("?")[0], params: params });
-                if (ignoreFirst && requests.length === 1) {
+                var request = { path: req.url.split("?")[0], params: params };
+                requests.push(request);
+                res.writeHead(200, { "Content-Type": "application/json" });
+                if (request.path === "/o/sdk" && params.method === "sc") {
+                    res.end(JSON.stringify({ v: 2, t: 1, c: settings || {} }));
                     return;
                 }
-                res.writeHead(200, { "Content-Type": "application/json" });
+                if (ignoreFirst && !ignored && typeof params.hc === "undefined") {
+                    ignored = true;
+                    return;
+                }
                 res.end("{\"result\":\"Success\"}");
             });
         });
@@ -239,6 +248,51 @@ async function checkBulk() {
 }
 
 /**
+ * Waits until a condition is true, or until the time is up
+ * @param {Function} condition - returns true when the wait is over
+ * @param {Number} timeoutMs - longest time to wait
+ * @returns {Promise<Boolean>} true if the condition became true
+ */
+async function waitFor(condition, timeoutMs) {
+    var started = Date.now();
+    while (!condition()) {
+        if (Date.now() - started > timeoutMs) {
+            return false;
+        }
+        // eslint-disable-next-line no-await-in-loop
+        await wait(50);
+    }
+    return true;
+}
+
+/**
+ * Fetches the SDK behavior settings, checks that they are applied and stored, that one health check is sent,
+ * and that a device ID change fetches the settings again
+ */
+async function checkBehaviorSettings() {
+    var mock = await startServer(false, { lkl: 9, eqs: 1 });
+    var storage = newFolder("settings");
+    Countly.init({ app_key: "compat-key", url: mock.url, device_id: "compat-settings", app_version: "4.2", storage_path: storage, interval: 100, request_timeout: 3 });
+    var settingsRequests = () => mock.requests.filter((r) => r.path === "/o/sdk" && r.params.method === "sc");
+    var healthChecks = () => mock.requests.filter((r) => typeof r.params.hc !== "undefined");
+    check("settings fetched and applied", await waitFor(() => Countly.maxKeyLength === 9, 5000), `key length ${Countly.maxKeyLength}`);
+    check("health check sent", await waitFor(() => healthChecks().length === 1, 5000));
+    var sbsFile = path.join(storage, "__cly_sbs.json");
+    check("settings stored on disk", await waitFor(() => fs.existsSync(sbsFile) && fs.readFileSync(sbsFile, "utf8").indexOf("\"lkl\":9") !== -1, 5000));
+    var health = healthChecks().length ? JSON.parse(healthChecks()[0].params.hc) : {};
+    check("health check counters sent", ["el", "wl", "sc", "em", "bom", "cbom"].every((key) => typeof health[key] !== "undefined"), JSON.stringify(health));
+    check("health check app version sent", healthChecks().length > 0 && JSON.parse(healthChecks()[0].params.metrics)._app_version === "4.2");
+    Countly.change_id("compat-settings-2", false);
+    check("settings fetched again after a device ID change", await waitFor(() => settingsRequests().some((r) => r.params.device_id === "compat-settings-2"), 5000));
+    Countly.add_event({ key: "compat_limited_key_event" });
+    await Countly.flush(10);
+    check("server limits applied to new data", receivedEvents(mock.requests).some((e) => e.key === "compat_li"));
+    check("one health check per start", healthChecks().length === 1, `${healthChecks().length} health checks`);
+    Countly.halt();
+    await mock.close();
+}
+
+/**
  * Runs one group of checks and records it as failed if it throws
  * @param {String} name - name of the group
  * @param {Function} run - async function with the checks
@@ -256,6 +310,7 @@ async function runGroup(name, run) {
     await runGroup("tracking", checkTracking);
     await runGroup("unanswered request", checkUnansweredRequest);
     await runGroup("bulk", checkBulk);
+    await runGroup("behavior settings", checkBehaviorSettings);
     try {
         removeFolder(workDir);
     }
