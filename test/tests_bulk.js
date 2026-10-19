@@ -2,9 +2,9 @@
 /* global runthis */
 const assert = require("assert");
 const cluster = require("cluster");
+const path = require("path");
 const CountlyBulk = require("../lib/countly-bulk");
 var hp = require("./helpers/helper_functions");
-var storage = require("../lib/countly-storage");
 var testUtils = require("./helpers/test_utils");
 
 // every CountlyBulk instance registers a cluster "fork" listener and this file intentionally creates one instance per test
@@ -14,6 +14,11 @@ const { StorageTypes } = CountlyBulk;
 
 var appKey = "YOUR_APP_KEY";
 var serverUrl = "https://tests.url.cly";
+// relative storage paths are resolved against the working directory, which is the SDK root when tests run
+var customPath = "test/customStorageDirectory/";
+var customFolder = path.resolve(customPath);
+// every bulk instance stores its files in its own folder, named after its app key
+var defaultBulkFolder = path.resolve(".countly-storage", "bulk", appKey);
 
 function validateCrash(validator, nonfatal) {
     assert.ok(validator.crash._os);
@@ -107,7 +112,7 @@ describe("Bulk Tests", () => {
             app_key: appKey,
             url: serverUrl,
         });
-        assert.equal(storage.getStoragePath(), undefined);
+        assert.equal(bulk._getStorage().getStoragePath(), undefined);
         shouldFilesExist(false);
         createBulkData(bulk);
 
@@ -124,37 +129,37 @@ describe("Bulk Tests", () => {
         var bulk = new CountlyBulk({
             app_key: appKey,
             url: serverUrl,
-            storage_path: "../test/customStorageDirectory/",
+            storage_path: customPath,
             storage_type: StorageTypes.FILE,
         });
         shouldFilesExist(true, true);
-        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+        assert.equal(bulk._getStorage().getStoragePath(), customFolder);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(true, true);
-            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            assert.equal(bulk._getStorage().getStoragePath(), customFolder);
             done();
         }, hp.sWait);
     });
 
     // file storage type in config
-    // path should become the default "../bulk_data/"
+    // path should become the default bulk folder of this app key
     it("3- CNR_file", (done) => {
         var bulk = new CountlyBulk({
             app_key: appKey,
             url: serverUrl,
             storage_type: StorageTypes.FILE,
         });
-        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        assert.equal(bulk._getStorage().getStoragePath(), defaultBulkFolder);
         shouldFilesExist(true);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(true);
-            assert.equal(storage.getStoragePath(), "../bulk_data/");
+            assert.equal(bulk._getStorage().getStoragePath(), defaultBulkFolder);
             done();
         }, hp.mWait);
     });
@@ -167,14 +172,14 @@ describe("Bulk Tests", () => {
             url: serverUrl,
             storage_type: StorageTypes.MEMORY,
         });
-        assert.equal(storage.getStoragePath(), undefined);
+        assert.equal(bulk._getStorage().getStoragePath(), undefined);
         shouldFilesExist(false);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(false);
-            assert.equal(storage.getStoragePath(), undefined);
+            assert.equal(bulk._getStorage().getStoragePath(), undefined);
             done();
         }, hp.mWait);
     });
@@ -185,17 +190,17 @@ describe("Bulk Tests", () => {
         var bulk = new CountlyBulk({
             app_key: appKey,
             url: serverUrl,
-            storage_path: "../test/customStorageDirectory/",
+            storage_path: customPath,
             storage_type: StorageTypes.MEMORY,
         });
-        assert.equal(storage.getStoragePath(), undefined);
+        assert.equal(bulk._getStorage().getStoragePath(), undefined);
         shouldFilesExist(false);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(false);
-            assert.equal(storage.getStoragePath(), undefined);
+            assert.equal(bulk._getStorage().getStoragePath(), undefined);
             done();
         }, hp.mWait);
     });
@@ -208,14 +213,14 @@ describe("Bulk Tests", () => {
             url: serverUrl,
             persist_queue: true,
         });
-        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        assert.equal(bulk._getStorage().getStoragePath(), defaultBulkFolder);
         shouldFilesExist(true);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(true);
-            assert.equal(storage.getStoragePath(), "../bulk_data/");
+            assert.equal(bulk._getStorage().getStoragePath(), defaultBulkFolder);
             done();
         }, hp.mWait);
     });
@@ -228,14 +233,14 @@ describe("Bulk Tests", () => {
             url: serverUrl,
             persist_queue: false,
         });
-        assert.equal(storage.getStoragePath(), undefined);
+        assert.equal(bulk._getStorage().getStoragePath(), undefined);
         shouldFilesExist(false);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(false);
-            assert.equal(storage.getStoragePath(), undefined);
+            assert.equal(bulk._getStorage().getStoragePath(), undefined);
             done();
         }, hp.mWait);
     });
@@ -246,17 +251,17 @@ describe("Bulk Tests", () => {
         var bulk = new CountlyBulk({
             app_key: appKey,
             url: serverUrl,
-            storage_path: "../test/customStorageDirectory/",
+            storage_path: customPath,
             persist_queue: true,
         });
-        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+        assert.equal(bulk._getStorage().getStoragePath(), customFolder);
         shouldFilesExist(true);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(true);
-            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            assert.equal(bulk._getStorage().getStoragePath(), customFolder);
             done();
         }, hp.mWait);
     });
@@ -267,17 +272,17 @@ describe("Bulk Tests", () => {
         var bulk = new CountlyBulk({
             app_key: appKey,
             url: serverUrl,
-            storage_path: "../test/customStorageDirectory/",
+            storage_path: customPath,
             persist_queue: false,
         });
-        assert.equal(storage.getStoragePath(), undefined);
+        assert.equal(bulk._getStorage().getStoragePath(), undefined);
         shouldFilesExist(false);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(false);
-            assert.equal(storage.getStoragePath(), undefined);
+            assert.equal(bulk._getStorage().getStoragePath(), undefined);
             done();
         }, hp.mWait);
     });
@@ -291,14 +296,14 @@ describe("Bulk Tests", () => {
             storage_type: StorageTypes.FILE,
             persist_queue: true,
         });
-        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        assert.equal(bulk._getStorage().getStoragePath(), defaultBulkFolder);
         shouldFilesExist(true);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(true);
-            assert.equal(storage.getStoragePath(), "../bulk_data/");
+            assert.equal(bulk._getStorage().getStoragePath(), defaultBulkFolder);
             done();
         }, hp.mWait);
     });
@@ -312,14 +317,14 @@ describe("Bulk Tests", () => {
             storage_type: StorageTypes.FILE,
             persist_queue: true,
         });
-        assert.equal(storage.getStoragePath(), "../bulk_data/");
+        assert.equal(bulk._getStorage().getStoragePath(), defaultBulkFolder);
         shouldFilesExist(true);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(true);
-            assert.equal(storage.getStoragePath(), "../bulk_data/");
+            assert.equal(bulk._getStorage().getStoragePath(), defaultBulkFolder);
             done();
         }, hp.mWait);
     });
@@ -331,17 +336,17 @@ describe("Bulk Tests", () => {
             app_key: appKey,
             url: serverUrl,
             storage_type: StorageTypes.FILE,
-            storage_path: "../test/customStorageDirectory/",
+            storage_path: customPath,
             persist_queue: true,
         });
-        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+        assert.equal(bulk._getStorage().getStoragePath(), customFolder);
         shouldFilesExist(true);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(true);
-            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            assert.equal(bulk._getStorage().getStoragePath(), customFolder);
             done();
         }, hp.mWait);
     });
@@ -353,17 +358,17 @@ describe("Bulk Tests", () => {
             app_key: appKey,
             url: serverUrl,
             storage_type: StorageTypes.FILE,
-            storage_path: "../test/customStorageDirectory/",
+            storage_path: customPath,
             persist_queue: false,
         });
-        assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+        assert.equal(bulk._getStorage().getStoragePath(), customFolder);
         shouldFilesExist(true);
         createBulkData(bulk);
 
         setTimeout(() => {
             validateCreatedBulkData(bulk);
             shouldFilesExist(true);
-            assert.equal(storage.getStoragePath(), "../test/customStorageDirectory/");
+            assert.equal(bulk._getStorage().getStoragePath(), customFolder);
             done();
         }, hp.mWait);
     });

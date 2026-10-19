@@ -3,6 +3,11 @@
   "version": "24.10.4",
   "description": "Countly NodeJS SDK",
   "main": "lib/countly.js",
+  "files": [
+    "lib",
+    "index.js",
+    "CHANGELOG.md"
+  ],
   "directories": {
     "example": "examples",
     "lib": "lib",
@@ -15,11 +20,11 @@
     "docs": "node_modules/.bin/jsdoc lib/countly.js lib/countly-bulk.js lib/countly-bulk-user.js README.md -c jsdoc_conf.json -d docs",
     "pretest": "eslint --ignore-path .eslintignore .",
     "test": "mocha --timeout 180000 test/tests_*.js --exit --allow-uncaught",
-    "coverage": "nyc npm test"
+    "coverage": "nyc --reporter=text --reporter=lcov npm test"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Countly/countly-sdk-nodejs"
+    "url": "git+https://github.com/Countly/countly-sdk-nodejs.git"
   },
   "keywords": [
     "Countly",

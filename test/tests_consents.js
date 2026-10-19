@@ -1,5 +1,4 @@
 var assert = require("assert");
-var fs = require("fs");
 var hp = require("./helpers/helper_functions");
 var Countly = require("../lib/countly");
 
@@ -97,7 +96,7 @@ describe("Internal event consent tests", () => {
         Countly.change_id("Richard Wagner II", false);
         events();
         setTimeout(() => {
-            assert.ok(!fs.existsSync(hp.eventDir));
+            assert.deepStrictEqual(hp.readEventQueue(), []);
             done();
         }, hp.sWait);
     });

@@ -148,4 +148,28 @@ describe("Request queue tests", () => {
             }, hp.sWait);
         }, hp.sWait);
     });
+    it("Raw requests keep their values whole and follow the queue size limit", (done) => {
+        initMain({ queue_size: 3 });
+        var events = [];
+        for (var i = 0; i < 10; i++) {
+            events.push({ key: `purchase_${i}`, count: 1, segmentation: { item: `sku-${i}`, store: "main street" } });
+        }
+        var eventsJson = JSON.stringify(events);
+        Countly.request({ app_key: "YOUR_APP_KEY", device_id: "raw-user", events: eventsJson });
+        setTimeout(() => {
+            var rq = hp.readRequestQueue();
+            assert.equal(rq.length, 1);
+            // the raw value must reach the queue exactly as given, however long it is
+            assert.equal(rq[0].events, eventsJson);
+            assert.equal(JSON.parse(rq[0].events).length, 10);
+            for (var j = 0; j < 5; j++) {
+                Countly.request({ app_key: "YOUR_APP_KEY", device_id: `raw-user-${j}`, begin_session: 1 });
+            }
+            var limited = hp.readRequestQueue();
+            // same limit as for the SDK's own requests: the queue keeps at most queue_size + 1 requests
+            assert.equal(limited.length, 4);
+            assert.equal(limited[limited.length - 1].device_id, "raw-user-4");
+            done();
+        }, hp.sWait);
+    });
 });

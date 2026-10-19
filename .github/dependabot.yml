@@ -2,7 +2,26 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: "/"
+    target-branch: staging
     schedule:
       interval: monthly
     open-pull-requests-limit: 10
     versioning-strategy: increase-if-necessary
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types: [ "minor", "patch" ]
+    ignore:
+      # mocha 12 needs Node 20.19+ while CI still tests Node 18, and eslint 9+ needs a new config format
+      - dependency-name: "mocha"
+        update-types: [ "version-update:semver-major" ]
+      - dependency-name: "eslint"
+        update-types: [ "version-update:semver-major" ]
+  - package-ecosystem: github-actions
+    directory: "/"
+    target-branch: staging
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: [ "*" ]
