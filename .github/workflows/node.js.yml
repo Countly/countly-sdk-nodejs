@@ -124,65 +124,58 @@ jobs:
       if: steps.version.outputs.new == 'true'
       run: node .github/scripts/check_release.js
 
-  release:
+  stage:
     runs-on: ubuntu-latest
     needs: version
     if: needs.version.outputs.new == 'true'
-    # the npm environment holds the approval step, and npm's trusted publisher setting names it
+    # a maintainer approves this job through the npm environment, which npm's trusted publisher setting also names
     environment: npm
     permissions:
-      contents: write
+      contents: read
       id-token: write
-    outputs:
-      created: ${{ steps.release.outputs.created }}
-      url: ${{ steps.release.outputs.url }}
-      notes: ${{ steps.release.outputs.notes }}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Use Node.js 24
       uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
         node-version: 24
+        # npm stage needs npm 11.15.0 or newer, which only Node 24.18.0 and newer ship
+        check-latest: true
         registry-url: https://registry.npmjs.org
         package-manager-cache: false
-    - name: Publish to npm
+    - name: Stage the package on npm
       env:
         VERSION: ${{ needs.version.outputs.version }}
       run: |
         if [ "$(npm view "countly-sdk-nodejs@$VERSION" version 2> /dev/null)" = "$VERSION" ]; then
-          echo "::notice::$VERSION is on npm already, publishing is skipped"
-        else
-          npm publish
+          echo "::notice::$VERSION is on npm already, staging is skipped"
+        elif ! npm stage publish; then
+          echo "::error::Staging $VERSION failed. If $VERSION is already in the Staged Packages tab on npmjs.com, approve or reject it there"
+          exit 1
         fi
-    - name: Create the GitHub release
-      id: release
+
+  # a draft release sends no notice; publishing it after the npm approval starts the Release Notice workflow
+  draft:
+    runs-on: ubuntu-latest
+    needs: [ version, stage ]
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Create the draft GitHub release
       env:
         GH_TOKEN: ${{ github.token }}
         VERSION: ${{ needs.version.outputs.version }}
       run: |
-        node .github/scripts/check_release.js --notes > release-notes.md
         if gh release view "$VERSION" > /dev/null 2>&1; then
-          echo "::notice::The GitHub release $VERSION exists already, so it is not created again and no notice is sent"
-          echo "created=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::The GitHub release $VERSION exists already"
         else
-          gh release create "$VERSION" --title "Countly NodeJS SDK $VERSION" --notes-file release-notes.md --target "$GITHUB_SHA"
-          echo "created=true" >> "$GITHUB_OUTPUT"
+          node .github/scripts/check_release.js --notes > release-notes.md
+          gh release create "$VERSION" --draft --title "Countly NodeJS SDK $VERSION" --notes-file release-notes.md --target "$GITHUB_SHA"
         fi
         URL=$(gh release view "$VERSION" --json url --jq .url)
-        echo "url=$URL" >> "$GITHUB_OUTPUT"
         {
-          echo "notes<<RELEASE_NOTES_END"
-          cat release-notes.md
-          echo "RELEASE_NOTES_END"
-        } >> "$GITHUB_OUTPUT"
-
-  # a release created with the workflow token does not start other workflows, so the notice is called directly
-  notify:
-    needs: [ version, release ]
-    if: needs.release.outputs.created == 'true'
-    uses: ./.github/workflows/release_notice.yml
-    with:
-      tag_name: ${{ needs.version.outputs.version }}
-      html_url: ${{ needs.release.outputs.url }}
-      body: ${{ needs.release.outputs.notes }}
-    secrets: inherit
+          echo "### Next steps for $VERSION"
+          echo "1. Approve $VERSION in the Staged Packages tab of https://www.npmjs.com/package/countly-sdk-nodejs"
+          echo "2. Publish the draft release, which sends the release notice: $URL"
+        } >> "$GITHUB_STEP_SUMMARY"
