@@ -12,18 +12,22 @@ var CountlyStorage = require("../../lib/countly-storage");
 var dir = path.resolve(__dirname, "../../");
 var dir_test = path.resolve(__dirname, "../");
 
-// paths for convenience
-const DIR_CLY = (`${dir}/data`);
-const DIR_CLY_ID = (`${dir}/data/__cly_id.json`);
-const DIR_CLY_ID_type = (`${dir}/data/__cly_id_type.json`);
-const DIR_CLY_event = (`${dir}/data/__cly_event.json`);
-const DIR_CLY_request = (`${dir}/data/__cly_queue.json`);
+// paths for convenience, default storage folder is .countly-storage in the working directory (tests run from the SDK root)
+const DIR_CLY = (`${dir}/.countly-storage`);
+const DIR_CLY_ID = (`${dir}/.countly-storage/__cly_id.json`);
+const DIR_CLY_ID_type = (`${dir}/.countly-storage/__cly_id_type.json`);
+const DIR_CLY_event = (`${dir}/.countly-storage/__cly_event.json`);
+const DIR_CLY_request = (`${dir}/.countly-storage/__cly_queue.json`);
 
-// Bulk paths for convenience
-const DIR_Bulk = (`${dir}/bulk_data`);
-const DIR_Bulk_bulk = (`${dir}/bulk_data/__cly_bulk_queue.json`);
-const DIR_Bulk_event = (`${dir}/bulk_data/__cly_bulk_event.json`);
-const DIR_Bulk_request = (`${dir}/bulk_data/__cly_req_queue.json`);
+// Bulk paths for convenience, the default bulk folder is named after the app key used in the tests
+const DIR_Bulk = (`${dir}/.countly-storage/bulk/YOUR_APP_KEY`);
+const DIR_Bulk_bulk = (`${DIR_Bulk}/__cly_bulk_queue.json`);
+const DIR_Bulk_event = (`${DIR_Bulk}/__cly_bulk_event.json`);
+const DIR_Bulk_request = (`${DIR_Bulk}/__cly_req_queue.json`);
+
+// default folders of SDK versions up to 24.10.4
+const DIR_Old_CLY = (`${dir}/data`);
+const DIR_Old_Bulk = (`${dir}/bulk_data`);
 
 // Custom
 const DIR_Test = (`${dir_test}/customStorageDirectory`);
@@ -115,12 +119,16 @@ async function clearStorage(customPath = null) {
     const relativePath = `../${customPath}`;
     const resolvedCustomPath = path.resolve(__dirname, relativePath);
 
-    await fsp.rm(DIR_CLY, { recursive: true, force: true }).catch(() => { });
-    await fsp.rm(DIR_Bulk, { recursive: true, force: true }).catch(() => { });
-    await fsp.rm(DIR_Test, { recursive: true, force: true }).catch(() => { });
+    // retries cover files that a write of the previous test still holds open for a moment on Windows
+    const rmOptions = { recursive: true, force: true, maxRetries: 10, retryDelay: 50 };
+    await fsp.rm(DIR_CLY, rmOptions).catch(() => { });
+    await fsp.rm(DIR_Bulk, rmOptions).catch(() => { });
+    await fsp.rm(DIR_Test, rmOptions).catch(() => { });
+    await fsp.rm(DIR_Old_CLY, rmOptions).catch(() => { });
+    await fsp.rm(DIR_Old_Bulk, rmOptions).catch(() => { });
 
     if (resolvedCustomPath !== null && typeof resolvedCustomPath === 'string') {
-        await fsp.rm(resolvedCustomPath, { recursive: true, force: true }).catch(() => { });
+        await fsp.rm(resolvedCustomPath, rmOptions).catch(() => { });
     }
 
     const storageExists = await fsp.access(DIR_CLY).then(() => true).catch(() => false);
@@ -172,8 +180,8 @@ function eventValidator(eventObject, eventQueue, time) {
     }
     // common parameter validation
     assert.ok(typeof eventQueue.timestamp !== 'undefined');
-    assert.ok(typeof eventQueue.hour !== 'undefined');
-    assert.ok(typeof eventQueue.dow !== 'undefined');
+    assert.ok(eventQueue.hour > -1 && eventQueue.hour < 24);
+    assert.ok(eventQueue.dow > -1 && eventQueue.dow < 7);
 }
 /**
  * bunch of tests specifically gathered for other validators
@@ -190,8 +198,8 @@ function requestBaseParamValidator(resultingObject, id) {
     assert.ok(typeof resultingObject.sdk_name !== 'undefined');
     assert.ok(typeof resultingObject.sdk_version !== 'undefined');
     assert.ok(typeof resultingObject.timestamp !== 'undefined');
-    assert.ok(resultingObject.dow > -1 && resultingObject.dow < 24);
-    assert.ok(resultingObject.dow >= 0 && resultingObject.dow < 8);
+    assert.ok(resultingObject.hour > -1 && resultingObject.hour < 24);
+    assert.ok(resultingObject.dow > -1 && resultingObject.dow < 7);
 }
 /**
  * bunch of tests specifically gathered for testing crashes
@@ -278,8 +286,8 @@ function viewEventValidator(name, viewObj, time) {
     assert.equal('[CLY]_view', viewObj.key);
     assert.equal(1, viewObj.count);
     assert.ok(typeof viewObj.timestamp !== 'undefined');
-    assert.ok(viewObj.dow > -1 && viewObj.dow < 24);
-    assert.ok(viewObj.dow > 0 && viewObj.dow < 8);
+    assert.ok(viewObj.hour > -1 && viewObj.hour < 24);
+    assert.ok(viewObj.dow > -1 && viewObj.dow < 7);
     assert.equal(name, viewObj.segmentation.name);
     if (typeof time === 'undefined') {
         assert.equal(1, viewObj.segmentation.visit);

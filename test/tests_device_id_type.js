@@ -220,8 +220,8 @@ describe("Device ID type tests", () => {
                     checkRequestsForT(req, cc.deviceIdTypeEnums.DEVELOPER_SUPPLIED);
                     done();
                 }, hp.sWait);
-            }, hp.lWait);
-        }, hp.lWait);
+            }, hp.sWait);
+        }, hp.sWait);
     });
 
     it("9- With stored sdk ID and no new ID, flag set", (done) => {

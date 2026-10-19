@@ -1,8 +1,13 @@
 {
   "name": "countly-sdk-nodejs",
-  "version": "24.10.4",
+  "version": "26.8.0",
   "description": "Countly NodeJS SDK",
   "main": "lib/countly.js",
+  "files": [
+    "lib",
+    "index.js",
+    "CHANGELOG.md"
+  ],
   "directories": {
     "example": "examples",
     "lib": "lib",
@@ -15,11 +20,11 @@
     "docs": "node_modules/.bin/jsdoc lib/countly.js lib/countly-bulk.js lib/countly-bulk-user.js README.md -c jsdoc_conf.json -d docs",
     "pretest": "eslint --ignore-path .eslintignore .",
     "test": "mocha --timeout 180000 test/tests_*.js --exit --allow-uncaught",
-    "coverage": "nyc npm test"
+    "coverage": "nyc --reporter=text --reporter=lcov npm test"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Countly/countly-sdk-nodejs"
+    "url": "git+https://github.com/Countly/countly-sdk-nodejs.git"
   },
   "keywords": [
     "Countly",
@@ -32,14 +37,18 @@
     "url": "https://github.com/Countly/countly-sdk-nodejs/issues"
   },
   "homepage": "https://count.ly/",
+  "overrides": {
+    "diff": "8.0.4",
+    "serialize-javascript": "7.1.0"
+  },
   "devDependencies": {
     "docdash": "2.0.2",
-    "eslint": "6.8.0",
-    "eslint-config-airbnb-base": "14.1.0",
-    "eslint-plugin-import": "2.20.1",
+    "eslint": "8.57.1",
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-plugin-import": "2.32.0",
     "jsdoc": "4.0.5",
-    "markdownlint": "0.26.0",
-    "mocha": "11.7.1",
-    "nyc": "17.1.0"
+    "markdownlint": "0.41.1",
+    "mocha": "11.8.0",
+    "nyc": "18.0.0"
   }
 }
