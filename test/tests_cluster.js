@@ -5,9 +5,15 @@ const hp = require("./helpers/helper_functions");
 const { startMockServer, receivedEvents } = require("./helpers/mock_server");
 const { runScript, makeTempDir, removeTempDirs } = require("./helpers/run_script");
 
-async function runCluster(mode) {
-    const server = await startMockServer();
+async function runCluster(mode, settings) {
+    const server = await startMockServer(settings ? (req, res, entry) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(entry.path === "/o/sdk" ? JSON.stringify({ c: settings }) : '{"result":"Success"}');
+    } : undefined);
     const dir = makeTempDir(`cluster-${mode}`);
+    if (settings) {
+        fs.writeFileSync(path.join(dir, "__cly_sbs.json"), JSON.stringify({ cly_sbs: settings }));
+    }
     const run = await runScript("cluster_app.js", { COUNTLY_URL: server.url, STORAGE_DIR: dir, CLUSTER_MODE: mode, RUN_MS: "8000" }, 30000);
     await server.close();
     return { run, requests: server.requests, dir, output: run.stdout + run.stderr };
@@ -68,5 +74,24 @@ describe("Cluster tests", () => {
         const crash = result.requests.find((r) => r.params.crash);
         assert.equal(crash.params.device_id, "cluster-next-user");
         assert.equal(typeof JSON.parse(crash.params.crash)._logs, "undefined");
+    });
+
+    it("7- only the process that sends the data fetches the SDK behavior settings and sends the health check, also after a user switch in a worker", async() => {
+        const [primary, standalone, switched] = await Promise.all([runCluster("primary_sdk"), runCluster("standalone"), runCluster("worker_switch")]);
+        const settingsIds = (result) => result.requests.filter((r) => r.path === "/o/sdk" && r.params.method === "sc").map((r) => r.params.device_id);
+        const healthIds = (result) => result.requests.filter((r) => typeof r.params.hc !== "undefined").map((r) => r.params.device_id);
+        assert.deepStrictEqual(settingsIds(primary), ["cluster-primary"]);
+        assert.deepStrictEqual(healthIds(primary), ["cluster-primary"]);
+        assert.deepStrictEqual(settingsIds(standalone), ["cluster-worker"]);
+        assert.deepStrictEqual(healthIds(standalone), ["cluster-worker"]);
+        assert.deepStrictEqual(settingsIds(switched), ["cluster-primary", "cluster-next-user"]);
+        assert.deepStrictEqual(healthIds(switched), ["cluster-primary"]);
+    });
+
+    it("8- the data a worker hands to the main process follows the main process's SDK behavior settings", async() => {
+        const result = await runCluster("primary_sdk", { st: false, cet: false });
+        assert.ok(result.requests.some((r) => typeof r.params.hc !== "undefined"), "the main process did not run");
+        assert.equal(receivedEvents(result.requests).filter((e) => e.key === "worker_event").length, 0, "the worker's custom event was recorded although custom events are turned off");
+        assert.equal(result.requests.filter((r) => r.params.begin_session).length, 0, "the worker's session was recorded although sessions are turned off");
     });
 });

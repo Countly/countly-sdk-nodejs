@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const http = require("http");
 
 /**
@@ -83,4 +84,20 @@ function receivedEvents(requests) {
     return events;
 }
 
-module.exports = { startMockServer, receivedEvents };
+/**
+ * Checks a GET request's checksum the way Countly 26.01 servers do: the query is rebuilt with the WHATWG URL
+ * parser, the checksum parameter is removed, and the rest is hashed together with the salt
+ * @param {Object} entry - request recorded by startMockServer, or an object with a url
+ * @param {String} salt - salt configured for the app
+ * @returns {Boolean} true if the server would accept the checksum
+ */
+function passesServerChecksum(entry, salt) {
+    const parsed = new URL(entry.url, "http://localhost");
+    const checksum = parsed.searchParams.get("checksum256");
+    let payload = (parsed.pathname + parsed.search).substring(parsed.pathname.length + 1);
+    payload = payload.replace(`&checksum256=${checksum}`, "").replace(`checksum256=${checksum}`, "");
+    const expected = crypto.createHash("sha256").update(payload + salt).digest("hex").toUpperCase();
+    return expected === String(checksum).toUpperCase();
+}
+
+module.exports = { startMockServer, receivedEvents, passesServerChecksum };

@@ -97,7 +97,7 @@ describe("Testing internal limits", () => {
         setTimeout(() => {
             // read event queue
             var event = hp.readEventQueue()[0];
-            assert.equal(event.key, "[CLY]_vi");
+            assert.equal(event.key, "[CLY]_view");
             assert.equal(event.segmentation.name, "a very l");
             assert.equal(event.segmentation.visit, 1);
             assert.ok(event.segmentation.segment);

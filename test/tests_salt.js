@@ -180,6 +180,8 @@ describe("Salt integration tests", () => {
                 app_key: "YOUR_APP_KEY",
                 url: serverInfo.url,
                 interval: 10,
+                disable_sdk_behavior_settings_updates: true,
+                disable_health_check: true,
             });
 
             Countly.begin_session(true);
@@ -204,6 +206,8 @@ describe("Salt integration tests", () => {
                 app_key: "YOUR_APP_KEY",
                 url: serverInfo.url,
                 interval: 10,
+                disable_sdk_behavior_settings_updates: true,
+                disable_health_check: true,
                 salt: salt,
             });
 
@@ -240,6 +244,8 @@ describe("Salt integration tests", () => {
                 app_key: "YOUR_APP_KEY",
                 url: serverInfo.url,
                 interval: 10,
+                disable_sdk_behavior_settings_updates: true,
+                disable_health_check: true,
                 salt: salt,
             });
 

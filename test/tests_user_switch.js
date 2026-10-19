@@ -187,4 +187,30 @@ describe("User switch and consent tests", () => {
         await server.close();
         assert.deepStrictEqual(Countly.get_remote_config(), { discount: "bob-only-discount" });
     });
+
+    it("10- a consent change made right before a device ID change is sent under the previous user's ID", async() => {
+        const server = await startMockServer();
+        Countly.halt(false);
+        initMain({ url: server.url, interval: 100, require_consent: true, device_id: "consent-before-switch", disable_sdk_behavior_settings_updates: true, disable_health_check: true });
+        Countly.add_consent("events");
+        Countly.change_id("consent-after-switch", false);
+        await sleep(1500);
+        await Countly.flush(5);
+        await server.close();
+        const consents = server.requests.filter((r) => r.params.consent).map((r) => [r.params.device_id, JSON.parse(r.params.consent).events]);
+        assert.deepStrictEqual(consents, [["consent-before-switch", true]]);
+    });
+
+    it("11- flush also sends a consent change made right before it", async() => {
+        const server = await startMockServer();
+        Countly.halt(false);
+        initMain({ url: server.url, interval: 100, require_consent: true, device_id: "consent-flush", disable_sdk_behavior_settings_updates: true, disable_health_check: true });
+        Countly.add_consent("events");
+        Countly.add_event({ key: "with_consent" });
+        const delivered = await Countly.flush(5);
+        const consents = server.requests.filter((r) => r.params.consent).map((r) => JSON.parse(r.params.consent).events);
+        await server.close();
+        assert.strictEqual(delivered, true);
+        assert.deepStrictEqual(consents, [true]);
+    });
 });

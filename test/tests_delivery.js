@@ -1,10 +1,9 @@
 const assert = require("assert");
-const crypto = require("crypto");
 const path = require("path");
 const Countly = require("../lib/countly");
 const cc = require("../lib/countly-common");
 const hp = require("./helpers/helper_functions");
-const { startMockServer, receivedEvents } = require("./helpers/mock_server");
+const { startMockServer, receivedEvents, passesServerChecksum } = require("./helpers/mock_server");
 const { runScript, makeTempDir, removeTempDirs, readStoredFile } = require("./helpers/run_script");
 
 const appKey = "YOUR_APP_KEY";
@@ -12,16 +11,6 @@ const appKey = "YOUR_APP_KEY";
 function answerSuccess(res) {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end('{"result":"Success"}');
-}
-
-// the checksum check of 26.01 servers: the query is rebuilt with the WHATWG URL parser before hashing
-function passesServerChecksum(entry, salt) {
-    const parsed = new URL(entry.url, "http://localhost");
-    const checksum = parsed.searchParams.get("checksum256");
-    let payload = (parsed.pathname + parsed.search).substring(parsed.pathname.length + 1);
-    payload = payload.replace(`&checksum256=${checksum}`, "").replace(`checksum256=${checksum}`, "");
-    const expected = crypto.createHash("sha256").update(payload + salt).digest("hex").toUpperCase();
-    return expected === String(checksum).toUpperCase();
 }
 
 function initSending(config) {
@@ -46,7 +35,7 @@ describe("Delivery tests", () => {
                 answerSuccess(res);
             }
         });
-        initSending({ url: server.url, device_id: "timeout-user", interval: 100, fail_timeout: 1, request_timeout: 1 });
+        initSending({ url: server.url, device_id: "timeout-user", interval: 100, fail_timeout: 1, request_timeout: 1, disable_sdk_behavior_settings_updates: true, disable_health_check: true });
         Countly.user_details({ name: "first" });
         Countly.user_details({ name: "second" });
         const delivered = await server.waitFor((reqs) => reqs.some((r) => r.params.user_details && JSON.parse(r.params.user_details).name === "second"), 10000);
@@ -66,7 +55,7 @@ describe("Delivery tests", () => {
             }
             answerSuccess(res);
         });
-        initSending({ url: server.url, device_id: "cutoff-user", interval: 100, fail_timeout: 1 });
+        initSending({ url: server.url, device_id: "cutoff-user", interval: 100, fail_timeout: 1, disable_sdk_behavior_settings_updates: true, disable_health_check: true });
         Countly.user_details({ name: "cut" });
         const resent = await server.waitFor((reqs) => reqs.length >= 2, 10000);
         await server.close();
@@ -227,7 +216,7 @@ describe("Delivery tests", () => {
 
     it("14- flush resolves true right away when nothing is waiting to be sent", async() => {
         const server = await startMockServer();
-        initSending({ url: server.url, device_id: "idle-user", interval: 10000 });
+        initSending({ url: server.url, device_id: "idle-user", interval: 10000, disable_sdk_behavior_settings_updates: true, disable_health_check: true });
         const started = Date.now();
         const result = await Countly.flush();
         const elapsed = Date.now() - started;
