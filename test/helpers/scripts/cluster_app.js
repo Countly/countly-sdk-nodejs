@@ -12,7 +12,7 @@ const config = {
 };
 
 if (cluster.isMaster) {
-    if (mode === "primary_sdk" || mode === "worker_switch") {
+    if (mode === "primary_sdk" || mode === "worker_switch" || mode === "worker_location") {
         config.device_id = "cluster-primary";
         Countly.init(config);
     }
@@ -31,6 +31,13 @@ else if (mode === "worker_switch") {
         Countly.change_id("cluster-next-user", false);
         Countly.log_error(new Error("after switch"));
     }, 500);
+    setInterval(() => { }, 1000);
+}
+else if (mode === "worker_location") {
+    Countly.init(config);
+    Countly.begin_session();
+    Countly.set_location("TR", "Izmir", "38.4237,27.1428", null);
+    Countly.add_event({ key: "worker_event" });
     setInterval(() => { }, 1000);
 }
 else {
