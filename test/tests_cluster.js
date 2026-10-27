@@ -102,7 +102,7 @@ describe("Cluster tests", () => {
         assert.equal(begin.params.city, undefined);
         const located = result.requests.filter((r) => r.params.city === "Izmir");
         assert.ok(located.length >= 2, "the location request and the event request do not both carry the location");
-        assert.ok(located.some((r) => r.params.events && JSON.parse(r.params.events).some((e) => e.key === "worker_event")), "the worker's event was sent without the location");
+        assert.ok(receivedEvents(located).some((e) => e.key === "worker_event"), "the worker's event was sent without the location");
         located.forEach((r) => {
             assert.equal(r.params.device_id, "cluster-primary");
             assert.equal(r.params.country_code, "TR");

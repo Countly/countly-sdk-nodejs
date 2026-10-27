@@ -1,5 +1,7 @@
 ## XX.XX.XX
-- Added the method `set_location` that sets the user's country code, city, GPS coordinates and IP address after init. When the session has already begun, or sessions are not tracked, the location is sent right away, otherwise with the session start. Every later request carries it, also those that cluster workers hand to the main process
+- Added the method `set_location` that sets the user's country code, city, GPS coordinates and IP address after init:
+  - When the session has already begun, or sessions are not tracked, the location is sent right away, otherwise with the session start
+  - Every later request carries it, also those that cluster workers hand to the main process
 
 ## 26.8.0
 - ! Minor breaking change ! SDK behavior settings are now enabled by default. Changes made in SDK Manager on your server affect the SDK's behavior directly and take precedence over the matching init options:

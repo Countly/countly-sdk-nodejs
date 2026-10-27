@@ -33,13 +33,6 @@ else if (mode === "worker_switch") {
     }, 500);
     setInterval(() => { }, 1000);
 }
-else if (mode === "worker_location") {
-    Countly.init(config);
-    Countly.begin_session();
-    Countly.set_location("TR", "Izmir", "38.4237,27.1428", null);
-    Countly.add_event({ key: "worker_event" });
-    setInterval(() => { }, 1000);
-}
 else {
     config.standalone_worker = mode === "standalone";
     if (mode === "standalone") {
@@ -47,6 +40,9 @@ else {
     }
     Countly.init(config);
     Countly.begin_session();
+    if (mode === "worker_location") {
+        Countly.set_location("TR", "Izmir", "38.4237,27.1428", null);
+    }
     Countly.add_event({ key: "worker_event" });
     console.log(`worker device id: ${Countly.get_device_id()}`);
     setInterval(() => { }, 1000);

@@ -16,6 +16,21 @@ function initMain(extra) {
     });
 }
 
+/**
+ * Returns the location parameters that a queued request carries
+ * @param {Object} request - request read from the request queue
+ * @returns {Object} the request's country_code, city, location and ip_address, without the ones it does not carry
+ */
+function locationOf(request) {
+    var result = {};
+    ["country_code", "city", "location", "ip_address"].forEach((key) => {
+        if (key in request) {
+            result[key] = request[key];
+        }
+    });
+    return result;
+}
+
 describe("Location tests", () => {
     beforeEach(async() => {
         await hp.clearStorage();
@@ -29,16 +44,10 @@ describe("Location tests", () => {
             var rq = hp.readRequestQueue();
             assert.equal(rq.length, 3);
             assert.equal(rq[0].begin_session, 1);
-            assert.equal(rq[0].country_code, undefined);
-            assert.equal(rq[0].city, undefined);
-            assert.equal(rq[0].location, undefined);
-            assert.equal(rq[0].ip_address, undefined);
+            assert.deepStrictEqual(locationOf(rq[0]), {});
             for (var i = 1; i < 3; i++) {
                 hp.requestBaseParamValidator(rq[i]);
-                assert.equal(rq[i].country_code, "TR");
-                assert.equal(rq[i].city, "Izmir");
-                assert.equal(rq[i].location, "38.4237,27.1428");
-                assert.equal(rq[i].ip_address, "10.0.0.1");
+                assert.deepStrictEqual(locationOf(rq[i]), { country_code: "TR", city: "Izmir", location: "38.4237,27.1428", ip_address: "10.0.0.1" });
             }
             assert.equal(rq[1].begin_session, undefined);
             assert.equal(rq[2].end_session, 1);
@@ -53,10 +62,7 @@ describe("Location tests", () => {
             var rq = hp.readRequestQueue();
             assert.equal(rq.length, 1);
             assert.equal(rq[0].begin_session, 1);
-            assert.equal(rq[0].country_code, "TR");
-            assert.equal(rq[0].city, "Izmir");
-            assert.equal(rq[0].location, "38.4237,27.1428");
-            assert.equal(rq[0].ip_address, undefined);
+            assert.deepStrictEqual(locationOf(rq[0]), { country_code: "TR", city: "Izmir", location: "38.4237,27.1428" });
             done();
         }, hp.sWait);
     });
@@ -68,17 +74,9 @@ describe("Location tests", () => {
         setTimeout(() => {
             var rq = hp.readRequestQueue();
             assert.equal(rq.length, 3);
-            assert.equal(rq[0].country_code, "DE");
-            assert.equal(rq[0].city, "Berlin");
-            assert.equal(rq[0].ip_address, "10.0.0.2");
-            assert.equal(rq[1].country_code, "TR");
-            assert.equal(rq[1].city, "Izmir");
-            assert.equal(rq[1].location, undefined);
-            assert.equal(rq[1].ip_address, undefined);
-            assert.equal(rq[2].country_code, undefined);
-            assert.equal(rq[2].city, undefined);
-            assert.equal(rq[2].location, undefined);
-            assert.equal(rq[2].ip_address, undefined);
+            assert.deepStrictEqual(locationOf(rq[0]), { country_code: "DE", city: "Berlin", ip_address: "10.0.0.2" });
+            assert.deepStrictEqual(locationOf(rq[1]), { country_code: "TR", city: "Izmir" });
+            assert.deepStrictEqual(locationOf(rq[2]), {});
             done();
         }, hp.sWait);
     });
@@ -89,7 +87,7 @@ describe("Location tests", () => {
         setTimeout(() => {
             var located = hp.readRequestQueue().filter((r) => r.city === "Izmir");
             assert.equal(located.length, 1);
-            assert.equal(located[0].country_code, "TR");
+            assert.deepStrictEqual(locationOf(located[0]), { country_code: "TR", city: "Izmir" });
             done();
         }, hp.sWait);
     });
@@ -104,8 +102,7 @@ describe("Location tests", () => {
             var rq = hp.readRequestQueue();
             assert.ok(rq.length > 0);
             rq.forEach((r) => {
-                assert.equal(r.city, undefined);
-                assert.equal(r.location, "");
+                assert.deepStrictEqual(locationOf(r), { location: "" });
             });
             done();
         }, hp.sWait);
