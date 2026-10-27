@@ -102,7 +102,8 @@ describe("Storage safety tests", () => {
         const cwd = makeTempDir("default-location");
         const run = await runScript("storage_location.js", { DEVICE_ID: "default-user" }, 20000, cwd);
         const output = lastLine(run.stdout);
-        assert.equal(output.storagePath, path.join(cwd, ".countly-storage"));
+        // the script sees its working folder with symlinks resolved, /private/var instead of /var on macOS
+        assert.equal(output.storagePath, path.join(fs.realpathSync(cwd), ".countly-storage"));
         assert.equal(readStoredFile(path.join(cwd, ".countly-storage", "__cly_id.json"), "cly_id"), "default-user");
         assert.equal(fs.existsSync(path.join(oldDefaultDir, "__cly_id.json")), false);
     });
