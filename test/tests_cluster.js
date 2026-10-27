@@ -94,4 +94,19 @@ describe("Cluster tests", () => {
         assert.equal(receivedEvents(result.requests).filter((e) => e.key === "worker_event").length, 0, "the worker's custom event was recorded although custom events are turned off");
         assert.equal(result.requests.filter((r) => r.params.begin_session).length, 0, "the worker's session was recorded although sessions are turned off");
     });
+
+    it("9- a location set in a worker is sent with the data the main process sends after it", async() => {
+        const result = await runCluster("worker_location");
+        const begin = result.requests.find((r) => r.params.begin_session === "1");
+        assert.ok(begin, "the worker's session did not reach the main process");
+        assert.equal(begin.params.city, undefined);
+        const located = result.requests.filter((r) => r.params.city === "Izmir");
+        assert.ok(located.length >= 2, "the location request and the event request do not both carry the location");
+        assert.ok(receivedEvents(located).some((e) => e.key === "worker_event"), "the worker's event was sent without the location");
+        located.forEach((r) => {
+            assert.equal(r.params.device_id, "cluster-primary");
+            assert.equal(r.params.country_code, "TR");
+            assert.equal(r.params.location, "38.4237,27.1428");
+        });
+    });
 });
