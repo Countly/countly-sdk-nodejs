@@ -47,7 +47,7 @@
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-plugin-import": "2.32.0",
     "jsdoc": "4.0.5",
-    "markdownlint": "0.41.1",
+    "markdownlint": "0.42.0",
     "mocha": "11.8.0",
     "nyc": "18.0.0"
   }
