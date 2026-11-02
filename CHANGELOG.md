@@ -2,6 +2,12 @@
 - Added the method `set_location` that sets the user's country code, city, GPS coordinates and IP address after init:
   - When the session has already begun, or sessions are not tracked, the location is sent right away, otherwise with the session start
   - Every later request carries it, also those that cluster workers hand to the main process
+- Added the method `stop` that stops the SDK and keeps its stored data, so that `init` can be called again, for example with another app key:
+  - What is still open is queued under the current app key first: the open view's duration, unsaved custom user properties, recorded events and the end of the open session. The next `init` sends it with its own `url`, `salt` and `http_options`
+  - Await `flush` before `stop` to send the queued data first. Otherwise a request that was being sent at the stop is sent once more, and with memory storage the data is not kept
+  - Calling `init` again without `stop` is still ignored, and now logs that `stop` is needed
+
+- Mitigated an issue where some calls made before `init` crashed the app or kept the session from starting. Events, views, sessions, raw requests and device ID changes are now ignored until `init`
 
 ## 26.8.0
 - ! Minor breaking change ! SDK behavior settings are now enabled by default. Changes made in SDK Manager on your server affect the SDK's behavior directly and take precedence over the matching init options:

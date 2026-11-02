@@ -109,4 +109,19 @@ describe("Cluster tests", () => {
             assert.equal(r.params.location, "38.4237,27.1428");
         });
     });
+
+    it("10- after the main process stops Countly and starts it again with another app key, also many times, a worker's data is sent once, under the key in use when it was recorded", async() => {
+        const result = await runCluster("primary_restart");
+        const appKeysOf = (eventKey) => result.requests.filter((r) => r.params.events && JSON.parse(r.params.events).some((e) => e.key === eventKey)).map((r) => r.params.app_key);
+        assert.deepStrictEqual(appKeysOf("before_restart"), ["YOUR_APP_KEY"]);
+        assert.deepStrictEqual(appKeysOf("after_restart"), ["SECOND_APP_KEY"]);
+        assert.equal(result.output.indexOf("MaxListenersExceededWarning"), -1, "every init added listeners to the worker that stop did not remove");
+    });
+
+    it("11- a standalone worker that stopped Countly does not hand its calls to a main process that runs Countly", async() => {
+        const result = await runCluster("standalone_stop");
+        assert.ok(result.requests.some((r) => r.params.device_id === "cluster-primary"), "the main process sent nothing");
+        assert.deepStrictEqual(receivedEvents(result.requests).filter((e) => e.key === "while_stopped"), []);
+        assert.deepStrictEqual(result.requests.filter((r) => r.params.device_id === "while-stopped-user"), [], "the worker changed the main process's device ID");
+    });
 });
