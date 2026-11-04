@@ -67,9 +67,9 @@ function startMockServer(handler) {
 }
 
 /**
- * Lists the events of all received requests in arrival order, each with the device_id of its request
+ * Lists the events of all received requests in arrival order, each with the device_id and app_key of its request
  * @param {Array} requests - entries recorded by startMockServer
- * @returns {Array} events with a device_id field added
+ * @returns {Array} events with device_id and app_key fields added
  */
 function receivedEvents(requests) {
     const events = [];
@@ -77,6 +77,7 @@ function receivedEvents(requests) {
         if (entry.params.events) {
             JSON.parse(entry.params.events).forEach((event) => {
                 event.device_id = entry.params.device_id;
+                event.app_key = entry.params.app_key;
                 events.push(event);
             });
         }

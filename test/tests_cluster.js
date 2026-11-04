@@ -112,7 +112,7 @@ describe("Cluster tests", () => {
 
     it("10- after the main process stops Countly and starts it again with another app key, also many times, a worker's data is sent once, under the key in use when it was recorded", async() => {
         const result = await runCluster("primary_restart");
-        const appKeysOf = (eventKey) => result.requests.filter((r) => r.params.events && JSON.parse(r.params.events).some((e) => e.key === eventKey)).map((r) => r.params.app_key);
+        const appKeysOf = (eventKey) => receivedEvents(result.requests).filter((e) => e.key === eventKey).map((e) => e.app_key);
         assert.deepStrictEqual(appKeysOf("before_restart"), ["YOUR_APP_KEY"]);
         assert.deepStrictEqual(appKeysOf("after_restart"), ["SECOND_APP_KEY"]);
         assert.equal(result.output.indexOf("MaxListenersExceededWarning"), -1, "every init added listeners to the worker that stop did not remove");

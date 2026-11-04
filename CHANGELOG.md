@@ -6,7 +6,6 @@
   - What is still open is queued under the current app key first: the open view's duration, unsaved custom user properties, recorded events and the end of the open session. The next `init` sends it with its own `url`, `salt` and `http_options`
   - Await `flush` before `stop` to send the queued data first. Otherwise a request that was being sent at the stop is sent once more, and with memory storage the data is not kept
   - Calling `init` again without `stop` is still ignored, and now logs that `stop` is needed
-
 - Mitigated an issue where some calls made before `init` crashed the app or kept the session from starting. Events, views, sessions, raw requests and device ID changes are now ignored until `init`
 
 ## 26.8.0

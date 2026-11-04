@@ -13,7 +13,7 @@ const config = {
 };
 
 if (cluster.isMaster) {
-    if (mode === "primary_sdk" || mode === "worker_switch" || mode === "worker_location" || mode === "primary_restart" || mode === "standalone_stop") {
+    if (mode !== "worker_only" && mode !== "standalone") {
         config.device_id = "cluster-primary";
         Countly.init(config);
     }
