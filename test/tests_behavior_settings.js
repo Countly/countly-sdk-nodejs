@@ -359,8 +359,9 @@ describe("SDK behavior settings tests", () => {
         const slow = server.requests.find((r) => r.params.user_details && JSON.parse(r.params.user_details).name === "slow");
         const next = server.requests.find((r) => r.params.user_details && JSON.parse(r.params.user_details).name === "next");
         assert.ok(next.receivedAt - slow.receivedAt >= 2900, `the next request came ${next.receivedAt - slow.receivedAt} ms after the slow one`);
+        await Countly.flush(1);
         const counters = CountlyStorage.storeGet("cly_hc", null);
-        assert.deepStrictEqual([counters.bom, counters.cbom], [1, 1]);
+        assert.deepStrictEqual([counters.bom, counters.cbom, counters.lc], [1, 1, { w320: 1 }]);
     });
 
     it("20- the developer's backoff opt-out wins over the server's backoff settings", async() => {
@@ -421,10 +422,10 @@ describe("SDK behavior settings tests", () => {
         });
         const dir = makeTempDir("sbs-backoff-flush");
         seed(dir, "cly_sbs", backoff);
-        startSdk(server, dir, { device_id: "backoff-flush-user", disable_health_check: true });
+        startSdk(server, dir, { device_id: "backoff-flush-user", disable_health_check: true, session_update: 1 });
         Countly.user_details({ name: "slow" });
         await server.waitFor((reqs) => reqs.some((r) => r.params.user_details), 5000);
-        await storedValue("cly_hc", { el: 0, wl: 0, sc: -1, em: "", bom: 1, cbom: 1 });
+        await storedValue("cly_hc", { el: 0, wl: 1, sc: -1, em: "", bom: 1, cbom: 1, fu: {}, lc: { w320: 1 } });
         Countly.user_details({ name: "urgent" });
         await sleep(500);
         const sentBeforeFlush = server.requests.some((r) => r.params.user_details && JSON.parse(r.params.user_details).name === "urgent");
