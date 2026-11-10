@@ -109,4 +109,37 @@ describe("Cluster tests", () => {
             assert.equal(r.params.location, "38.4237,27.1428");
         });
     });
+
+    it("10- a server URL change, an app key change and the queue methods called in a worker apply to the main process's queue", async() => {
+        const runSwitch = async(queueOp) => {
+            const serverA = await startMockServer((req, res) => {
+                res.writeHead(503);
+                res.end("down");
+            });
+            const serverB = await startMockServer();
+            await runScript("cluster_app.js", { COUNTLY_URL: serverA.url, COUNTLY_URL_B: serverB.url, STORAGE_DIR: makeTempDir(`cluster-switch-${queueOp}`), CLUSTER_MODE: "worker_app_switch", QUEUE_OP: queueOp, RUN_MS: "8000" }, 30000);
+            await serverA.close();
+            await serverB.close();
+            const data = serverB.requests.filter((r) => r.path === "/i" && typeof r.params.hc === "undefined");
+            return {
+                keys: data.map((r) => r.params.app_key),
+                devices: data.map((r) => r.params.device_id),
+                events: receivedEvents(data).map((e) => e.key),
+                sessions: data.filter((r) => r.params.begin_session || r.params.end_session).map((r) => (r.params.begin_session ? "begin" : "end")),
+                settingsKeys: serverB.requests.filter((r) => r.params.method === "sc").map((r) => r.params.app_key),
+                aKeys: serverA.requests.filter((r) => r.path === "/i" && typeof r.params.hc === "undefined").map((r) => r.params.app_key),
+            };
+        };
+        const [replaced, removed, flushed] = await Promise.all([runSwitch("replace"), runSwitch("remove"), runSwitch("flush")]);
+        [replaced, removed, flushed].forEach((result) => {
+            assert.ok(result.keys.length > 0, "nothing reached the new server");
+            result.keys.forEach((key) => assert.equal(key, "cluster-app-b"));
+            result.devices.forEach((id) => assert.equal(id, "cluster-primary"));
+            assert.deepStrictEqual(result.settingsKeys, ["cluster-app-b"]);
+            assert.ok(result.aKeys.indexOf("YOUR_APP_KEY") !== -1, "the queued requests were never tried at the first server");
+        });
+        assert.deepStrictEqual([replaced.events, replaced.sessions], [["before_switch", "after_switch"], ["begin", "end", "begin"]]);
+        assert.deepStrictEqual([removed.events, removed.sessions], [["after_switch"], ["begin"]]);
+        assert.deepStrictEqual([flushed.events, flushed.sessions], [["after_switch"], []]);
+    });
 });

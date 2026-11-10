@@ -4,6 +4,13 @@
   - Every later request carries it, also those that cluster workers hand to the main process
 - Added method usage and log codes to the SDK health check
 - Log lines now use the levels of the SDK development guide
+- Added the method `change_server_url` that changes the server URL after init:
+  - Every later request goes to the new server, also the requests queued before the change
+  - Right after the change, the SDK sends the consent state while consent is required, fetches the SDK behavior settings and downloads remote config if it is downloaded automatically
+- Added the method `change_app_key` that changes the app key after init:
+  - The open view, the recorded events, unsaved custom property changes and the running session are closed with the previous app key first, then a session begins for the new app if one was running
+  - Requests queued before the change keep their app key, the stored remote config values are cleared, and the new app is caught up as after a server URL change
+- Added the queue methods `flush_queues`, `replace_all_app_keys_in_queue_with_current_app_key` and `remove_different_app_keys_from_queue`
 
 - Mitigated an issue where the health check counted every failed request as an SDK error
 - Mitigated an issue where every call without consent was logged as an error
