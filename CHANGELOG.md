@@ -3,6 +3,7 @@
   - When the session has already begun, or sessions are not tracked, the location is sent right away, otherwise with the session start
   - Every later request carries it, also those that cluster workers hand to the main process
 - Added method usage and log codes to the SDK health check
+- Added the `log_listener` init option, a function that receives every log message of the SDK and its level ("error", "warning", "info", "debug" or "verbose"), also while `debug` is off. It is called inside the SDK's own calls, so it should return quickly and must not call the SDK
 - Log lines now use the levels of the SDK development guide
 
 - Mitigated an issue where the health check counted every failed request as an SDK error
