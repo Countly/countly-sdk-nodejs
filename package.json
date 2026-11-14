@@ -20,7 +20,8 @@
     "docs": "node_modules/.bin/jsdoc lib/countly.js lib/countly-bulk.js lib/countly-bulk-user.js README.md -c jsdoc_conf.json -d docs",
     "pretest": "eslint --ignore-path .eslintignore .",
     "test": "mocha --timeout 180000 test/tests_*.js --exit --allow-uncaught",
-    "coverage": "nyc --reporter=text --reporter=lcov npm test"
+    "coverage": "nyc --reporter=text --reporter=lcov npm test",
+    "requests:update": "node test/helpers/request_scenarios.js"
   },
   "repository": {
     "type": "git",
