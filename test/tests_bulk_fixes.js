@@ -185,4 +185,81 @@ describe("Bulk fix tests", () => {
         await server.close();
         assert.ok(resent, "the bulk queue stopped after the cut-off response");
     });
+
+    it("10- events reach the server cut to the internal limits set on the bulk instance", async() => {
+        const server = await startMockServer();
+        const bulk = new CountlyBulk({ app_key: appKey, url: server.url, interval: 100, max_key_length: 4, max_value_size: 5, max_segmentation_values: 2 });
+        bulk.add_event("limits-user", { key: "checkout_completed", segmentation: { category: "overlong-value", plan: "pro", coupon: "dropped" } });
+        bulk.start();
+        const sent = await server.waitFor((reqs) => bulkInnerRequests(reqs).some((r) => r.device_id === "limits-user"), 10000);
+        bulk.stop();
+        await server.close();
+        assert.ok(sent, "the event was not sent");
+        const { events } = bulkInnerRequests(server.requests).filter((r) => r.device_id === "limits-user")[0];
+        assert.equal(events.length, 1);
+        assert.equal(events[0].key, "chec");
+        assert.deepStrictEqual(events[0].segmentation, { cate: "overl", plan: "pro" });
+    });
+
+    it("11- events added to the bulk instance keep to the default internal limits", () => {
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1" });
+        const segmentation = {};
+        for (let i = 0; i < 101; i++) {
+            segmentation[`${i}-${"k".repeat(200)}`] = "v".repeat(300);
+        }
+        bulk.add_event("default-limits-user", { key: "e".repeat(200), segmentation: segmentation });
+        const event = bulk._getBulkEventQueue()["default-limits-user"][0];
+        assert.equal(event.key, "e".repeat(128));
+        const keys = Object.keys(event.segmentation);
+        assert.equal(keys.length, 100);
+        keys.forEach((key, i) => {
+            assert.equal(key, `${i}-${"k".repeat(200)}`.substring(0, 128));
+            assert.equal(event.segmentation[key], "v".repeat(256));
+        });
+    });
+
+    it("12- events of a bulk user keep to the internal limits set on the bulk instance", () => {
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1", max_key_length: 4, max_value_size: 5 });
+        bulk.add_user({ device_id: "limits-bulk-user" }).add_event({ key: "checkout_completed", segmentation: { category: "overlong-value" } });
+        const events = bulk._getBulkEventQueue()["limits-bulk-user"];
+        assert.equal(events.length, 1);
+        assert.equal(events[0].key, "chec");
+        assert.deepStrictEqual(events[0].segmentation, { cate: "overl" });
+    });
+
+    it("13- events that a cluster worker hands to the main process keep to the main process's internal limits", async() => {
+        const server = await startMockServer();
+        const run = runScript("bulk_cluster_limits.js", { COUNTLY_URL: server.url, RUN_MS: "8000" }, 30000);
+        const sent = await server.waitFor((reqs) => bulkInnerRequests(reqs).some((r) => r.device_id === "cluster-limits-user"), 20000);
+        const result = await run;
+        await server.close();
+        assert.ok(sent, `the worker's event was not sent: ${result.stderr}`);
+        const { events } = bulkInnerRequests(server.requests).filter((r) => r.device_id === "cluster-limits-user")[0];
+        assert.equal(events.length, 1);
+        assert.equal(events[0].key, "chec");
+        assert.deepStrictEqual(events[0].segmentation, { cate: "overl" });
+    });
+
+    it("14- a bulk user keeps its settings whole when the bulk instance has low internal limits", () => {
+        // the limits are shorter than the setting names and values, and allow one setting only
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1", max_key_length: 8, max_value_size: 5, max_segmentation_values: 1 });
+        const settings = { ip_address: "203.0.113.7", country_code: "TR", city: "Istanbul", require_consent: true };
+        const withoutConsent = bulk.add_user({ device_id: "settings-user-without-consent", ...settings });
+        withoutConsent.begin_session();
+        withoutConsent.add_event({ key: "purchase" });
+        const withConsent = bulk.add_user({ device_id: "settings-user-with-consent", ...settings });
+        withConsent.add_consent(["sessions", "location", "events"]);
+        withConsent.begin_session();
+        withConsent.add_event({ key: "purchase" });
+
+        const requests = bulk._getBulkRequestQueue();
+        assert.equal(requests.filter((r) => r.device_id === "settings-user-without-consent").length, 0, "a request of the user without consent was queued");
+        assert.equal(bulk._getBulkEventQueue()["settings-user-without-consent"], undefined, "an event of the user without consent was queued");
+        const session = requests.find((r) => r.device_id === "settings-user-with-consent" && r.begin_session === 1);
+        assert.ok(session, "the session of the user with consent was not queued");
+        assert.equal(session.ip_address, "203.0.113.7");
+        assert.equal(session.country_code, "TR");
+        assert.equal(session.city, "Istanbul");
+        assert.equal(bulk._getBulkEventQueue()["settings-user-with-consent"].length, 1);
+    });
 });
