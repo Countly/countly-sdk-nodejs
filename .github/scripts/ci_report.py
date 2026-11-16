@@ -80,8 +80,7 @@ def defused(text):
 
 
 def plain(name):
-    """Returns an untrusted name, such as a workflow, job or artifact name, as text on one line that cannot mention
-    anyone, link anywhere or change the report's table and sections."""
+    """Returns an untrusted workflow, job or artifact name as one line of text without mentions, links or markup."""
     text = " ".join(str(name).split())
     text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     text = text.replace("[", "&#91;").replace("]", "&#93;").replace("|", "&#124;")
