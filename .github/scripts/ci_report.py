@@ -79,6 +79,15 @@ def defused(text):
     return re.sub(r"<(/?)(details|summary)", r"&lt;\1\2", text, flags=re.IGNORECASE)
 
 
+def plain(name):
+    """Returns an untrusted workflow, job or artifact name as one line of text without mentions, links or markup."""
+    text = " ".join(str(name).split())
+    text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    text = text.replace("[", "&#91;").replace("]", "&#93;").replace("|", "&#124;")
+    text = re.sub(r"(?i):/(?=/)|\bwww(?=\.)", r"\g<0>&#8203;", text)
+    return re.sub(r"@(?=[A-Za-z0-9])", "@&#8203;", text)
+
+
 def fragments(repo, run):
     """Returns the report fragments the run uploaded, each as a dict with key, title, summary and details."""
     found = []
@@ -92,7 +101,7 @@ def fragments(repo, run):
         key = artifact["name"][len(FRAGMENT_PREFIX):]
         data = archive.read(FRAGMENT_FILE)[:MAX_FRAGMENT_BYTES].decode("utf-8", "replace")
         lines = defused(data).replace("\r\n", "\n").split("\n")
-        title = lines[0].strip() or key
+        title = lines[0].strip() or plain(key)
         summary = (lines[1].strip() if len(lines) > 1 else "")[:MAX_SUMMARY_CHARS]
         details = "\n".join(lines[2:]).strip()
         if len(details) > MAX_DETAILS_CHARS:
@@ -133,14 +142,14 @@ def body(repo, sha, runs):
             parts = parts[:MAX_CELL_SUMMARIES] + [f"{len(parts) - MAX_CELL_SUMMARIES} more below"]
         failed = failing_jobs(repo, run) if result in ("failure", "timed_out") else []
         if failed:
-            parts.insert(0, "Failed: " + ", ".join(failed))
+            parts.insert(0, "Failed: " + ", ".join(plain(name) for name in failed))
         summary = "; ".join(parts)
         icon = "⏳ running" if result == "running" else ICONS.get(result, result)
         cell = summary.replace("|", "\\|")
-        rows.append(f"| [{run['name']}]({run['html_url']}) | {icon} | {cell} |")
+        rows.append(f"| [{plain(run['name'])}]({run['html_url']}) | {icon} | {cell} |")
         for fragment in found:
             opened = " open" if result in ("failure", "timed_out") and FAILING.search(fragment["summary"]) else ""
-            heading = joined(run["name"], label(run, fragment))
+            heading = joined(plain(run["name"]), label(run, fragment))
             if fragment["summary"]:
                 heading += f", {fragment['summary']}"
             details = fragment["details"] or "No details."
