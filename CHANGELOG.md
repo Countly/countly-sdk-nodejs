@@ -15,6 +15,7 @@
 - Mitigated an issue where `add_event` and `end_event` threw an error when called without an event
 - Mitigated an issue where events added to `CountlyBulk` ignored its `max_key_length`, `max_value_size` and `max_segmentation_values` limits
 - Mitigated an issue where bulk users ignored the limits set for `CountlyBulk` and used the default limits instead
+- Mitigated an issue where the custom metrics of `report_trace` ignored the `max_key_length`, `max_value_size` and `max_segmentation_values` limits
 
 ## 26.8.0
 - ! Minor breaking change ! SDK behavior settings are now enabled by default. Changes made in SDK Manager on your server affect the SDK's behavior directly and take precedence over the matching init options:

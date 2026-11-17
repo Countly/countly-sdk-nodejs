@@ -252,4 +252,27 @@ describe("Testing internal limits", () => {
             done();
         }, hp.sWait);
     });
+    it("6. Check APM trace truncation", (done) => {
+        // init Countly
+        initLimitsMain();
+        // custom metrics keep to the limits, the reserved network metrics stay whole
+        Countly.report_trace({
+            type: "network",
+            name: "/checkout/payment",
+            stz: 1700000000000,
+            etz: 1700000001330,
+            apm_metrics: { response_time: 1330, response_payload_size: 120, response_code: 200, request_payload_size: 70, cpu_usage_percent: 45, memory_used_mb: 512, disk_reads_count: 7, net_errors_count: 2 },
+        });
+        // a trace without metrics is still refused
+        Countly.report_trace({ type: "device", name: "no_metrics", stz: 1700000000000, etz: 1700000001000 });
+        // test
+        setTimeout(() => {
+            var rq = hp.readRequestQueue();
+            assert.equal(rq.length, 1);
+            var apm = JSON.parse(rq[0].apm);
+            assert.equal(apm.name, "/checkou");
+            assert.deepStrictEqual(apm.apm_metrics, { response_time: 1330, response_payload_size: 120, response_code: 200, request_payload_size: 70, cpu_usag: 45, memory_u: 512, disk_rea: 7 });
+            done();
+        }, hp.sWait);
+    });
 });

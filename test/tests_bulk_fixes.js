@@ -285,4 +285,21 @@ describe("Bulk fix tests", () => {
         const request = bulk._getBulkRequestQueue().find((r) => r.device_id === "own-limits-user");
         assert.deepStrictEqual(request.user_details, { name: "Long nam", custom: {} });
     });
+
+    it("17- custom APM metrics of a bulk user keep to the internal limits, and the reserved metrics stay whole", () => {
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1", max_key_length: 8, max_segmentation_values: 2 });
+        const user = bulk.add_user({ device_id: "apm-limits-user" });
+        user.report_trace({
+            type: "network",
+            name: "/checkout",
+            stz: 1700000000000,
+            etz: 1700000001330,
+            apm_metrics: { response_time: 1330, response_payload_size: 120, response_code: 200, request_payload_size: 70, cpu_usage_percent: 45, memory_used_mb: 512, disk_reads_count: 7 },
+        });
+        assert.strictEqual(user.report_trace({ type: "device", name: "no_metrics", stz: 1700000000000, etz: 1700000001000 }), user);
+        const traces = bulk._getBulkRequestQueue().filter((r) => r.device_id === "apm-limits-user" && r.apm).map((r) => JSON.parse(r.apm));
+        assert.equal(traces.length, 1, "a trace without metrics was queued");
+        assert.equal(traces[0].name, "/checkou");
+        assert.deepStrictEqual(traces[0].apm_metrics, { response_time: 1330, response_payload_size: 120, response_code: 200, request_payload_size: 70, cpu_usag: 45, memory_u: 512 });
+    });
 });
