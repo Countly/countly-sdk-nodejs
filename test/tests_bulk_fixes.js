@@ -262,4 +262,27 @@ describe("Bulk fix tests", () => {
         assert.equal(session.city, "Istanbul");
         assert.equal(bulk._getBulkEventQueue()["settings-user-with-consent"].length, 1);
     });
+
+    it("15- a bulk user's profile, custom properties, views and traces keep to the internal limits set on the bulk instance", () => {
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1", max_key_length: 4, max_value_size: 5, max_segmentation_values: 1 });
+        const user = bulk.add_user({ device_id: "instance-limits-user" });
+        user.user_details({ name: "Long name", custom: { plan: "enterprise", team: "dropped" } });
+        user.custom_set("department", "engineering").custom_save();
+        user.report_view("Checkout page", 1700000000, 5);
+        user.report_trace({ type: "device", name: "app_start", stz: 1700000000000, etz: 1700000001000, apm_metrics: { duration: 1000 } });
+
+        const requests = bulk._getBulkRequestQueue().filter((r) => r.device_id === "instance-limits-user");
+        assert.equal(requests.length, 4);
+        assert.deepStrictEqual(requests.find((r) => r.user_details && r.user_details.name).user_details, { name: "Long ", custom: { plan: "enter" } });
+        assert.deepStrictEqual(requests.find((r) => r.user_details && !r.user_details.name).user_details, { custom: { depa: "engin" } });
+        assert.equal(requests.find((r) => r.events).events[0].segmentation.name, "Check");
+        assert.equal(JSON.parse(requests.find((r) => r.apm).apm).name, "app_");
+    });
+
+    it("16- a bulk user's own limits take precedence over the ones set on the bulk instance", () => {
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1", max_value_size: 5 });
+        bulk.add_user({ device_id: "own-limits-user", max_value_size: 8 }).user_details({ name: "Long name here" });
+        const request = bulk._getBulkRequestQueue().find((r) => r.device_id === "own-limits-user");
+        assert.deepStrictEqual(request.user_details, { name: "Long nam", custom: {} });
+    });
 });
