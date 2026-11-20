@@ -285,4 +285,85 @@ describe("Bulk fix tests", () => {
         const request = bulk._getBulkRequestQueue().find((r) => r.device_id === "own-limits-user");
         assert.deepStrictEqual(request.user_details, { name: "Long nam", custom: {} });
     });
+
+    it("17- custom APM metrics of a bulk user keep to the internal limits, and the reserved metrics stay whole", () => {
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1", max_key_length: 8, max_segmentation_values: 2 });
+        const user = bulk.add_user({ device_id: "apm-limits-user" });
+        user.report_trace({
+            type: "network",
+            name: "/checkout",
+            stz: 1700000000000,
+            etz: 1700000001330,
+            apm_metrics: { response_time: 1330, response_payload_size: 120, response_code: 200, request_payload_size: 70, cpu_usage_percent: 45, memory_used_mb: 512, disk_reads_count: 7 },
+        });
+        assert.strictEqual(user.report_trace({ type: "device", name: "no_metrics", stz: 1700000000000, etz: 1700000001000 }), user);
+        const traces = bulk._getBulkRequestQueue().filter((r) => r.device_id === "apm-limits-user" && r.apm).map((r) => JSON.parse(r.apm));
+        assert.equal(traces.length, 1, "a trace without metrics was queued");
+        assert.equal(traces[0].name, "/checkou");
+        assert.deepStrictEqual(traces[0].apm_metrics, { response_time: 1330, response_payload_size: 120, response_code: 200, request_payload_size: 70, cpu_usag: 45, memory_u: 512 });
+    });
+
+    it("18- crash reports of a bulk user keep to the stack trace, breadcrumb and crash segmentation limits", () => {
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1", max_key_length: 4, max_value_size: 5, max_segmentation_values: 1, max_breadcrumb_count: 2, max_stack_trace_lines_per_thread: 2, max_stack_trace_line_length: 10 });
+        const error = "Error: something failed\n    at first (a.js:1:1)\n    at second (a.js:2:2)\n\nThread 2 started\n    at third (b.js:3:3)\n    at fourth (b.js:4:4)";
+        const logs = "first step\nsecond step\nthird step";
+        const crash = { _os: "Linux", _os_version: "6", _app_version: "1.0", _error: error, _logs: logs, _custom: { library: "version-1.2.3", other: "dropped" }, _nonfatal: true };
+        bulk.add_user({ device_id: "crash-limits-user" }).report_crash(crash, 1700000000);
+        const request = bulk._getBulkRequestQueue().find((r) => r.device_id === "crash-limits-user");
+        assert.equal(request.timestamp, 1700000000);
+        assert.deepStrictEqual(request.crash, {
+            _os: "Linux",
+            _os_version: "6",
+            _app_version: "1.0",
+            _error: "Error: som\n    at fir\n\nThread 2 s\n    at thi",
+            _logs: "secon\nthird",
+            _custom: { libr: "versi" },
+            _nonfatal: true,
+        });
+        assert.equal(crash._error, error, "the reported crash object was changed");
+        assert.equal(crash._logs, logs, "the reported crash object was changed");
+    });
+
+    it("19- a native crash dump of a bulk user is sent whole, while the same text in a JavaScript crash is cut", () => {
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1", max_stack_trace_lines_per_thread: 2, max_stack_trace_line_length: 10 });
+        const dump = "A".repeat(30000);
+        const user = bulk.add_user({ device_id: "native-crash-user" });
+        user.report_crash({ _os: "Android", _os_version: "14", _app_version: "1.0", _error: dump, _native_cpp: true });
+        user.report_crash({ _os: "Android", _os_version: "14", _app_version: "1.0", _error: dump });
+        const errors = bulk._getBulkRequestQueue().filter((r) => r.device_id === "native-crash-user").map((r) => r.crash._error);
+        assert.equal(errors.length, 2);
+        assert.equal(errors[0], dump);
+        assert.equal(errors[1], "AAAAAAAAAA");
+    });
+
+    it("20- without set limits, a bulk crash keeps 50 threads of 30 lines of 200 characters, 20,000 characters in all, and 100 breadcrumbs", () => {
+        const bulk = new CountlyBulk({ app_key: appKey, url: "http://127.0.0.1:1" });
+        const user = bulk.add_user({ device_id: "default-crash-user" });
+        const threads = [];
+        for (let i = 0; i < 60; i++) {
+            threads.push(`Thread ${i}`);
+        }
+        const lines = [];
+        for (let i = 0; i < 40; i++) {
+            lines.push(`line ${i} ${"x".repeat(250)}`);
+        }
+        const fullThreads = [];
+        for (let i = 0; i < 5; i++) {
+            fullThreads.push(new Array(30).fill("y".repeat(200)).join("\n"));
+        }
+        const breadcrumbs = [];
+        for (let i = 0; i < 101; i++) {
+            breadcrumbs.push(`crumb ${i} ${"z".repeat(300)}`);
+        }
+        const base = { _os: "Linux", _os_version: "6", _app_version: "1.0" };
+        user.report_crash({ ...base, _error: threads.join("\n\n") });
+        user.report_crash({ ...base, _error: lines.join("\n") });
+        user.report_crash({ ...base, _error: fullThreads.join("\n\n"), _logs: breadcrumbs.join("\n") });
+        const crashes = bulk._getBulkRequestQueue().filter((r) => r.device_id === "default-crash-user").map((r) => r.crash);
+        assert.equal(crashes.length, 3);
+        assert.equal(crashes[0]._error, threads.slice(0, 50).join("\n\n"));
+        assert.equal(crashes[1]._error, lines.slice(0, 30).map((line) => line.substring(0, 200)).join("\n"));
+        assert.equal(crashes[2]._error, fullThreads.join("\n\n").substring(0, 20000));
+        assert.equal(crashes[2]._logs, breadcrumbs.slice(1).map((crumb) => crumb.substring(0, 256)).join("\n"));
+    });
 });

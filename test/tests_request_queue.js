@@ -126,6 +126,25 @@ describe("Request queue tests", () => {
             done();
         }, hp.sWait);
     });
+    it("App start is reported as an app_start trace that lasts from the process start until the call", (done) => {
+        // initialize SDK
+        initMain();
+        var before = Date.now();
+        Countly.report_app_start();
+        // read request queue
+        setTimeout(() => {
+            var rq = hp.readRequestQueue();
+            assert.equal(rq.length, 1);
+            hp.requestBaseParamValidator(rq[0]);
+            var apm = JSON.parse(rq[0].apm);
+            assert.equal(apm.type, "device");
+            assert.equal(apm.name, "app_start");
+            assert.ok(apm.etz >= before && apm.etz <= Date.now());
+            assert.equal(apm.apm_metrics.duration, apm.etz - apm.stz);
+            assert.ok(Math.abs(apm.apm_metrics.duration - (process.uptime() * 1000)) < 1000, `duration ${apm.apm_metrics.duration} is not the process uptime`);
+            done();
+        }, hp.sWait);
+    });
     it("Request queue persists order across halt and re-init", (done) => {
         // initialize SDK
         initMain();
