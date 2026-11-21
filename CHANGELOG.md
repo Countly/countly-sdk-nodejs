@@ -8,6 +8,7 @@
 - Added the method `change_server_url` that changes the server URL after init
 - Added the method `change_app_key` that changes the app key after init
 - Added the queue methods `flush_queues`, `replace_all_app_keys_in_queue_with_current_app_key` and `remove_different_app_keys_from_queue`
+- Added the `enable_request_compression` init option. Request bodies between 1 KB and 1 MB are then sent gzip-compressed, once the server's SDK behavior settings answer says it reads them
 
 - Mitigated an issue where the health check counted every failed request as an SDK error
 - Mitigated an issue where every call without consent was logged as an error
